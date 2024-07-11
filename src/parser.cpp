@@ -3,6 +3,9 @@
 #include "../nlohmann/json.hpp"
 #include <fstream>
 #include <iostream>
+#include <bits/stdc++.h>
+// For the gcd function
+#include <algorithm>
 
 using json = nlohmann::json;
 
@@ -36,8 +39,8 @@ int convert_end_time(int end_time){
     }
 }
 
-// Parse a JSON object into an Intervention object
-Intervention parse_intervention(json data){
+// Parse a JSON object into an Node object
+Node parse_intervention(json data){
     string id = data.at("id");
     int node_id = data.at("node_id");
     int duration = data.at("duration");
@@ -52,15 +55,15 @@ Intervention parse_intervention(json data){
         }
     }
     map<string, int> quantities = data.at("quantities");
-    return Intervention(id, node_id, duration, start_window, end_window, is_long, skills, quantities);
+    return Node(id, node_id, duration, start_window, end_window, is_long, skills, quantities);
 }
 
 
-// Parse a JSON object into a Warehouse object
-Warehouse parse_warehouse(json data){
+// Parse a JSON object into a Node object
+Node parse_warehouse(json data){
     int node_id = data.at("node_id");
     string ope_base = data.at("ope_base");
-    return Warehouse(ope_base, node_id);
+    return Node(ope_base, node_id);
 }
 
 
@@ -109,7 +112,7 @@ Instance parse_file(string filename){
     // Get the interventions
     vector<json> interventions_data = data.at("step_manager").at("interventions");
     for (int i = 0; i < interventions_data.size(); i++){
-        Intervention intervention = parse_intervention(interventions_data[i]);
+        Node intervention = parse_intervention(interventions_data[i]);
         nodes.push_back(intervention);
         node_id_to_index[intervention.id] = i;
     }
@@ -121,7 +124,7 @@ Instance parse_file(string filename){
     // Get the warehouses and add them to the nodes
     vector<json> warehouses_data = data.at("step_manager").at("warehouses");
     for (int i = 0; i < warehouses_data.size(); i++){
-        Warehouse warehouse = parse_warehouse(warehouses_data[i]);
+        Node warehouse = parse_warehouse(warehouses_data[i]);
         nodes.push_back(warehouse);
         node_id_to_index[warehouse.id] = i + nb_interventions;
     }
@@ -240,6 +243,38 @@ Instance parse_file(string filename){
         }
     }
 
+    // Finally, compute the big M for the objective function
+    // M is computed using : M = (END_DAY - min(durations .> 0)) * maxspeed * cost_per_km / gcd(durations)
+    // We first put all the durations in a vector
+    vector<int> durations = vector<int>();
+    // Enumerate through the nodes
+    for (int i = 0; i < nb_interventions; i++){
+        // Only keep the durations that are greater than 0
+        if (nodes[i].duration > 0){
+            durations.push_back(nodes[i].duration);
+        }
+    }
+    int min_duration = *min_element(durations.begin(), durations.end());
+    // We now compute the gcd of the durations
+    int gcd_durations = durations[0];
+    for (int i = 1; i < durations.size(); i++){
+        gcd_durations = __gcd(gcd_durations, durations[i]);
+    }
+    // We finally compute the maximum speed using the ditance and time matrices
+    double max_speed = 0;
+    for (int i = 0; i < distance_matrix.size(); i++){
+        for (int j = 0; j < distance_matrix[i].size(); j++){
+            if (distance_matrix[i][j] > 0 && time_matrix[i][j] > 0){
+                max_speed = max(max_speed, distance_matrix[i][j] / time_matrix[i][j]);
+            }
+        }
+    }
+    double M = (END_DAY - min_duration) * max_speed * cost_per_km / gcd_durations;
+
+    // Print the value of M
+    cout << "Big M: " << M << endl;
+    
+
     // We can now build the instance object
     return Instance(
         nb_interventions,
@@ -247,6 +282,7 @@ Instance parse_file(string filename){
         nb_vehicles,
         cost_per_km,
         tech_cost,
+        M,
         node_id_to_index,
         nodes,
         vehicles,

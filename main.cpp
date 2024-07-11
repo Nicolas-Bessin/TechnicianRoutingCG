@@ -1,4 +1,5 @@
 #include "src/parser.h"
+#include "src/cg_solver.h"
 #include <iostream>
 
 
@@ -9,5 +10,6 @@ int main(int, char**){
     string filename = "../data/instance_1.json";
     Instance instance = parse_file(filename);
 
+    cg_solver(instance, 1000);
 }
 
