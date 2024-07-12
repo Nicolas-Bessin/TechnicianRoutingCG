@@ -17,6 +17,7 @@ void preprocess_interventions(Instance &instance){
         Node* intervention = &(instance.nodes[i]);
         // Is the intervention a long intervention?
         if (intervention->is_long) {
+            nb_non_ambiguous++;
             intervention->is_ambiguous = false;
             continue;
         }

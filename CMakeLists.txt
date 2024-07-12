@@ -4,6 +4,13 @@ cmake_minimum_required(VERSION 3.20)
 # C++ standard
 set(CMAKE_CXX_STANDARD 23)
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+	set(CMAKE_CXX_FLAGS  "/O2 /w  /DNDEBUG")
+else()
+	set(CMAKE_CXX_FLAGS  "-O3 -w -pthread -DNDEBUG")
+endif()
+
+
 #Project information
 set(PROJECT_VERSION 0.1)
 project(technician_routing VERSION ${PROJECT_VERSION} DESCRIPTION "Technician routing using column generation")
@@ -15,8 +22,10 @@ if (NOT DEFINED ENV{GUROBI_HOME} AND NOT DEFINED GUROBI_DIR)
     message(FATAL_ERROR "No cache variable named GUROBI_DIR is defined, and GUROBI_HOME was not found in the environment variables. Please, define one of them.")
 endif ()
 
+
 # Add the cmake folder to the module path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
+
 
 # Add the Gurobi headers from /opt/gurobi/include
 find_package(GUROBI REQUIRED)
@@ -37,3 +46,4 @@ add_executable(technician_routing
 
 #Link against the Gurobi library
 target_link_libraries(technician_routing PUBLIC gurobi)
+#target_link_libraries(technician_routing PUBLIC pathwyse)

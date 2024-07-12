@@ -16,8 +16,8 @@ class Node {
         bool is_intervention;
         // Number of vehicles that can perform the intervention (left empty for warehouses)
         int nb_vehicles;
-        // Skills required to perform the intervention (left empty for warehouses)
-        std::set<std::string> required_skills;
+        // Skills required to perform the intervention (left empty for warehouses) (counting the number of technicians needed with each skill)
+        std::map<std::string, int> required_skills;
         // Duration of the intervention
         int duration;
         // Time window for the intervention
@@ -39,7 +39,7 @@ class Node {
             this->is_intervention = false;
         };
         // Full constructor for interventions
-        Node(std::string id, int node_id, int duration, int start_window, int end_window, bool is_long, std::set<std::string> skills, std::map<std::string, int> quantities){
+        Node(std::string id, int node_id, int duration, int start_window, int end_window, bool is_long, std::map<std::string, int> skills, std::map<std::string, int> quantities){
             this->id = id;
             this->node_id = node_id;
             this->duration = duration;
@@ -81,7 +81,8 @@ class Technician {
 class Vehicle {
     public:
         int id;
-        std::set<std::string> skills;
+        // Counts the number of technicians that have each skill in the vehicle
+        std::map<std::string, int> skills;
         std::vector<Node*> interventions;
         int depot;
         std::map<std::string, int> capacities;
@@ -90,7 +91,7 @@ class Vehicle {
         int end_window;
         double cost;
         // Constructor
-        Vehicle(int id, std::set<std::string> skills, std::vector<Node*> interventions, int depot, std::map<std::string, int> capacities, int start_window, int lunch_window, int end_window, double cost){
+        Vehicle(int id, std::map<std::string, int> skills, std::vector<Node*> interventions, int depot, std::map<std::string, int> capacities, int start_window, int lunch_window, int end_window, double cost){
             this->id = id;
             this->skills = skills;
             this->interventions = interventions;

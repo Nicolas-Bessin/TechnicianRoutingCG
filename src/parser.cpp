@@ -52,11 +52,12 @@ Node parse_intervention(json data){
     int start_window = convert_start_time(data.at("start_window"));
     int end_window = convert_end_time(data.at("end_window"));
     bool is_long = duration >= LONG_INTERVENTION;
-    set<string> skills = set<string>();
-    // In the JSON object, skills are stored as lists of lists of strings
-    for (auto skill : data.at("skills")){
-        for (auto s : skill){
-            skills.insert(s);
+    map<string, int> skills = map<string, int>();
+    // data.at("skills") is a list of list of skills (i.e the skills needed by each technician)
+    for (auto skills_per_tech : data.at("skills")){
+        for (auto skill : skills_per_tech){
+            // If the skill is not in the map, it's initialized to 0
+            skills[skill] += 1;
         }
     }
     map<string, int> quantities = data.at("quantities");
@@ -174,11 +175,12 @@ Instance parse_file(string filename){
     // We now construct one vehicle per team
     vector<Vehicle> vehicles = vector<Vehicle>();
     for (int i = 0; i < tech_id_per_team.size(); i++){
-        // Build the available skills for the vehicle
-        set<string> skills = set<string>();
+        // Build the map of available skills for the vehicle
+        map<string, int> skills = map<string, int>();
         for (int j = 0; j < tech_id_per_team[i].size(); j++){
             for (auto skill : technicians[tech_id_per_team[i][j]].skills){
-                skills.insert(skill);
+                // If accessing the skill for the first time, it is initialized to 0
+                skills[skill] += 1;
             }
         }
         // We will build the list of interventions for the vehicle later
@@ -217,12 +219,21 @@ Instance parse_file(string filename){
     vector<vector<bool>> has_skill = vector<vector<bool>>(nb_interventions, vector<bool>(nb_vehicles, false));
     for (int i = 0; i < nb_interventions; i++){
         for (int j = 0; j < nb_vehicles; j++){
-            bool has_all_skills = true;
-            for (auto skill : nodes[i].required_skills){
-                bool has_skill = vehicles[j].skills.contains(skill);
-                has_all_skills = has_all_skills && has_skill;
+            // We must ensure that the vehicle has enough technicians with each skill to do the intervention
+            bool can_do_intervention = true;
+            for (auto const& [skill, quantity] : nodes[i].required_skills){
+                // If the skill needed for the intervention is not in the vehicle, the vehicle cannot do the intervention
+                if (vehicles[j].skills.find(skill) == vehicles[j].skills.end()){
+                    can_do_intervention = false;
+                    break;
+                }
+                // If the vehicle does not have enough technicians with the skill, the vehicle cannot do the intervention
+                if (vehicles[j].skills[skill] < quantity){
+                    can_do_intervention = false;
+                    break;
+                }
             }
-            has_skill[i][j] = has_all_skills;
+            has_skill[i][j] = can_do_intervention;
         }
     }
 
