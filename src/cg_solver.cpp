@@ -54,6 +54,30 @@ void cg_solver(Instance instance, double time_limit){
 
         // Solve the master problem
         master.optimize();
+
+        // Get the duals of the constraints
+        vector<double> alphas;
+        for (int i = 0; i < intervention_constraints.size(); i++){
+            alphas.push_back(intervention_constraints[i].get(GRB_DoubleAttr_Pi));
+        }
+        vector<double> betas;
+        for (int i = 0; i < vehicle_constraints.size(); i++){
+            betas.push_back(vehicle_constraints[i].get(GRB_DoubleAttr_Pi));
+        }
+
+        // Print the duals
+        cout << "Duals of the intervention constraints: ";
+        for (int i = 0; i < alphas.size(); i++){
+            cout << alphas[i] << " ";
+        }
+        cout << endl;
+        cout << "Duals of the vehicle constraints: ";
+        for (int i = 0; i < betas.size(); i++){
+            cout << betas[i] << " ";
+        }
+        cout << endl;
+
+        
     } catch(GRBException e) {
         cout << "Error code = " << e.getErrorCode() << endl;
         cout << e.getMessage() << endl;
