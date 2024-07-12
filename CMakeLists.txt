@@ -40,10 +40,12 @@ add_executable(technician_routing
     src/instance.h
     src/parser.h 
     src/parser.cpp
-    src/cg_solver.h
-    src/cg_solver.cpp
+    src/master.h
+    src/master.cpp
     src/preprocessing.h
     src/preprocessing.cpp
+    src/pricing.h
+    src/pricing.cpp
 )
 
 #Link against the Gurobi library

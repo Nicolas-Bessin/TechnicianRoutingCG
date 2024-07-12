@@ -14,8 +14,10 @@ using namespace std;
 class Route {
     public:
         int id;
-        double reduced_cost;
+        // Total cost of the route
         double total_cost;
+        // Reduced cost of the route at the time of creation
+        double reduced_cost;
         // Total duration of the interventions along the route
         double total_duration;
         // Total travel time along the route
@@ -34,10 +36,10 @@ class Route {
             this->start_times = vector<double>(number_of_nodes, 0);
         }
         // Constructor
-        Route(int id, double reduced_cost, double total_cost, double total_duration, double travel_time, int vehicle_id, vector<int> is_in_route, vector<double> start_times){
+        Route(int id, double total_cost, double reduced_cost, double total_duration, double travel_time, int vehicle_id, vector<int> is_in_route, vector<double> start_times){
             this->id = id;
-            this->reduced_cost = reduced_cost;
             this->total_cost = total_cost;
+            this->reduced_cost = reduced_cost;
             this->total_duration = total_duration;
             this->travel_time = travel_time;
             this->vehicle_id = vehicle_id;

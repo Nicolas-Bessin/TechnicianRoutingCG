@@ -1,5 +1,5 @@
 #include <gurobi_c++.h>
-#include "cg_solver.h"
+#include "master.h"
 
 using namespace std;
 

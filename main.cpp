@@ -1,6 +1,6 @@
 #include "src/parser.h"
 #include "src/preprocessing.h"
-#include "src/cg_solver.h"
+#include "src/master.h"
 #include <iostream>
 #include "pathwyse/core/solver.h"
 
