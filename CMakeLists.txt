@@ -31,6 +31,8 @@ add_executable(technician_routing
     src/parser.cpp
     src/cg_solver.h
     src/cg_solver.cpp
+    src/preprocessing.h
+    src/preprocessing.cpp
 )
 
 #Link against the Gurobi library

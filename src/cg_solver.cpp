@@ -1,3 +1,4 @@
+#include <gurobi_c++.h>
 #include "cg_solver.h"
 
 using namespace std;
@@ -77,7 +78,7 @@ void cg_solver(Instance instance, double time_limit){
         }
         cout << endl;
 
-        
+
     } catch(GRBException e) {
         cout << "Error code = " << e.getErrorCode() << endl;
         cout << e.getMessage() << endl;

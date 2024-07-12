@@ -1,12 +1,13 @@
 #include "parser.h"
 #include "constants.h"
 #include "../nlohmann/json.hpp"
-#include <fstream>
 #include <iostream>
 #include <bits/stdc++.h>
 // For the gcd function
 #include <algorithm>
 
+
+using namespace std;
 using json = nlohmann::json;
 
 // Convert a start time into a relative time 
@@ -14,9 +15,11 @@ using json = nlohmann::json;
 // Lunch break not included in the work time measurement
 int convert_start_time(int start_time){
     if (start_time < START_MORNING){
-        return START_MORNING;
+        return 0;
     } else if (start_time < END_MORNING){
         return start_time - START_MORNING;
+    } else if (start_time < START_AFTERNOON){
+        return MID_DAY;
     } else if (start_time < END_AFTERNOON){
         return start_time - START_MORNING - LUNCH_BREAK;
     } else {
@@ -32,6 +35,8 @@ int convert_end_time(int end_time){
         return 0;
     } else if (end_time < END_MORNING){
         return end_time - START_MORNING;
+    } else if (end_time < START_AFTERNOON){
+        return MID_DAY;
     } else if (end_time < END_AFTERNOON){
         return end_time - START_MORNING - LUNCH_BREAK;
     } else {
@@ -46,7 +51,7 @@ Node parse_intervention(json data){
     int duration = data.at("duration");
     int start_window = convert_start_time(data.at("start_window"));
     int end_window = convert_end_time(data.at("end_window"));
-    bool is_long = duration > 120;
+    bool is_long = duration >= LONG_INTERVENTION;
     set<string> skills = set<string>();
     // In the JSON object, skills are stored as lists of lists of strings
     for (auto skill : data.at("skills")){
@@ -229,7 +234,6 @@ Instance parse_file(string filename){
                 nb_vehicles_for_intervention++;
             }
         }
-        cout << "Intervention " << i << " can be done by " << nb_vehicles_for_intervention << " vehicles" << endl;
         // Update this count in the corresponding intervention
         nodes[i].nb_vehicles = nb_vehicles_for_intervention;
     }
@@ -273,7 +277,6 @@ Instance parse_file(string filename){
 
     // Print the value of M
     cout << "Big M: " << M << endl;
-    
 
     // We can now build the instance object
     return Instance(
