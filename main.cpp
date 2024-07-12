@@ -2,6 +2,7 @@
 #include "src/preprocessing.h"
 #include "src/cg_solver.h"
 #include <iostream>
+#include "pathwyse/core/solver.h"
 
 //using namespace std;
 

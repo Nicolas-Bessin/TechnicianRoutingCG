@@ -26,11 +26,13 @@ endif ()
 # Add the cmake folder to the module path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
-
 # Add the Gurobi headers from /opt/gurobi/include
 find_package(GUROBI REQUIRED)
 
 include_directories(${GUROBI_INCLUDE_DIRS})
+
+# Add the pathwyse subdirectory
+add_subdirectory(pathwyse)
 
 #Source code
 add_executable(technician_routing
@@ -46,4 +48,6 @@ add_executable(technician_routing
 
 #Link against the Gurobi library
 target_link_libraries(technician_routing PUBLIC gurobi)
-#target_link_libraries(technician_routing PUBLIC pathwyse)
+
+# Add the pathwyse core library
+target_link_libraries(technician_routing PUBLIC pathwyse_core)
