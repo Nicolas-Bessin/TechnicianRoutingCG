@@ -27,22 +27,27 @@ void find_best_route(const Instance& instance, const Vehicle& vehicle, const vec
     problem.initProblem();
 
     // We use a default cost for the objective function
-    double init_value = beta + vehicle.cost;
-    DefaultCost* objective = new DefaultCost(init_value);
+    DefaultCost* objective = new DefaultCost();
     objective->initData(false, n_interventions_v + 2);
     for (int i = 0; i < n_interventions_v; i++) {
+        // Set the cost relative the node itself
+        const Node* intervention_i = &(instance.nodes[vehicle.interventions[i]]);
+        // Get the duration of the next intervention
+        double duration = intervention_i->duration;
+        // Set the cost of the intervention
+        double node_cost = alphas.at(vehicle.interventions[i]) - instance.M * duration;
+        objective->setNodeCost(i, node_cost);
+        // Then set the arc costs for every arc leaving the intervention
         for (int j = 0; j < n_interventions_v; j++) {
             if (i == j) continue;
             // First step is adding an arc to the underlying network
             problem.setNetworkArc(i, j);
-            // Get the two interventions referenced by the indices i and j
-            const Node* intervention_i = &(instance.nodes[vehicle.interventions[i]]);
+            // Get the intervention referenced by the index j
+
             const Node* intervention_j = &(instance.nodes[vehicle.interventions[j]]);
-            // Get the duration of the next intervention
-            double duration = intervention_i->duration;
             // Get the distance between the two interventions
             double distance = metric(intervention_i, intervention_j, instance.distance_matrix);
-            double arc_cost = alphas.at(vehicle.interventions[i]) - instance.M * duration + instance.cost_per_km * distance;
+            double arc_cost = instance.cost_per_km * distance;
             objective->setArcCost(i, j, arc_cost);  
         }
     }
@@ -53,7 +58,8 @@ void find_best_route(const Instance& instance, const Vehicle& vehicle, const vec
         // Outgoing arcs from the warehouse
         problem.setNetworkArc(origin, i);
         double distance_out = metric(&(instance.nodes[vehicle.depot]), intervention, instance.distance_matrix);
-        objective->setArcCost(origin, i, instance.cost_per_km * distance_out);
+        // Set the arc cost, also adding the fixed cost of leaving the depot
+        objective->setArcCost(origin, i, instance.cost_per_km * distance_out + vehicle.cost + beta);
         // Incoming arcs to the warehouse
         problem.setNetworkArc(i, destination);
         // Distance is probably the same as the outgoing distance but eh we never know
