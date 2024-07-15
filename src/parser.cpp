@@ -194,8 +194,9 @@ Instance parse_file(string filename){
                 cout << "Technician " << tech_id_per_team[i][0] << " has operationnal base " << technicians[tech_id_per_team[i][0]].operationnal_base << endl;
             }
         }
-        // The depot is the index of the operationnal base in the nodes vector
-        int depot = node_id_to_index[operationnal_base];
+        // Get the depot node
+        int depot_id = node_id_to_index[operationnal_base];
+        Node* depot = &nodes[depot_id];
         // Build the capacities of the vehicles as the min of the capacities each technician for each ressource
         map<string, int> capacities = map<string, int>();
         for (int j = 0; j < number_ressources; j++){

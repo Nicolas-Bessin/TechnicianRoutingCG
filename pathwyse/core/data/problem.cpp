@@ -44,6 +44,15 @@ void Problem::initProblem(){
     initDataCollection();
 }
 
+//Custom initialization for use directly within a c++ codebase (without using a file)
+void Problem::initProblem(int n_nodes, bool cycles, bool complete) {
+    this->n_nodes = n_nodes;
+    this->cycles = cycles;
+    this->complete = complete;
+    // Then use the same initProblem() method as before
+    initProblem();
+}
+
 void Problem::printStatus(){
     std::string status;
 

@@ -5,6 +5,12 @@ DefaultCost::DefaultCost() {
     init_value = 0;
 }
 
+// Custom constructor
+DefaultCost::DefaultCost(double init_value) {
+    name = "DefaultCost";
+    this->init_value = init_value;
+}
+
 int DefaultCost::extend(int current_value, int i, int j, bool direction) {
     int dest_node = direction ? j : i;
     return current_value + data->getArcCost(i, j) + data->getNodeCost(dest_node);

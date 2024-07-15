@@ -25,6 +25,7 @@ public:
 
     //Problem setup
     void initProblem();
+    void initProblem(int n_nodes, bool cycles, bool complete);
 
     //Name
     void setName(std::string name) {this->name = name;}

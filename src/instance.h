@@ -58,6 +58,7 @@ class Node {
         ~Node(){}
 };
 
+double metric(Node* node1, Node* node2, std::vector<std::vector<double>> metric_matrix);
 
 class Technician {
     public:
@@ -83,15 +84,17 @@ class Vehicle {
         int id;
         // Counts the number of technicians that have each skill in the vehicle
         std::map<std::string, int> skills;
+        // List of interventions that the vehicle can perform
         std::vector<Node*> interventions;
-        int depot;
+        // Warehouse where the vehicle is based
+        Node* depot;
         std::map<std::string, int> capacities;
         int start_window;
         int lunch_window;
         int end_window;
         double cost;
         // Constructor
-        Vehicle(int id, std::map<std::string, int> skills, std::vector<Node*> interventions, int depot, std::map<std::string, int> capacities, int start_window, int lunch_window, int end_window, double cost){
+        Vehicle(int id, std::map<std::string, int> skills, std::vector<Node*> interventions, Node* depot, std::map<std::string, int> capacities, int start_window, int lunch_window, int end_window, double cost){
             this->id = id;
             this->skills = skills;
             this->interventions = interventions;

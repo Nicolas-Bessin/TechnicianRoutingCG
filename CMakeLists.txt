@@ -38,6 +38,7 @@ add_subdirectory(pathwyse)
 add_executable(technician_routing
     main.cpp
     src/instance.h
+    src/instance.cpp
     src/parser.h 
     src/parser.cpp
     src/master.h

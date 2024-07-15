@@ -7,6 +7,7 @@ class DefaultCost: public Resource {
 
 public:
     DefaultCost();
+    DefaultCost(double init_value);
     ~DefaultCost() = default;
 
     int extend(int current_value, int i, int j, bool direction) override;
