@@ -57,6 +57,7 @@ void preprocess_interventions(Instance &instance){
     cout << "Number of non-ambiguous interventions: " << nb_non_ambiguous << endl;
     cout << "Number of interventions that we could reduce the time window for: " << nb_reductions << endl;
     cout << "Number of ambiguous interventions: " << nb_ambiguous << endl;
+    cout << "----------------------------------------" << endl;
 
     return;
 }

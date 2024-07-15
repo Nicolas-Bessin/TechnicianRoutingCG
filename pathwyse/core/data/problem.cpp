@@ -18,6 +18,20 @@ Problem::Problem() {
     setStatus(PROBLEM_INDETERMINATE);
 }
 
+Problem::Problem(std::string name, int n_nodes, int origin, int destination, int n_res, bool cycles, bool complete, bool directed) {
+    this->name = name;
+    this->n_nodes = n_nodes;
+    this->origin = origin;
+    this->destination = destination;
+    this->n_res = n_res;
+    this->cycles = cycles;
+    this->complete = complete;
+    this->directed = directed;
+    objective = nullptr;
+    bound_labels = nullptr;
+    setStatus(PROBLEM_INDETERMINATE);
+}
+
 Problem::~Problem() {
     delete objective;
     delete bound_labels;
@@ -44,14 +58,6 @@ void Problem::initProblem(){
     initDataCollection();
 }
 
-//Custom initialization for use directly within a c++ codebase (without using a file)
-void Problem::initProblem(int n_nodes, bool cycles, bool complete) {
-    this->n_nodes = n_nodes;
-    this->cycles = cycles;
-    this->complete = complete;
-    // Then use the same initProblem() method as before
-    initProblem();
-}
 
 void Problem::printStatus(){
     std::string status;
@@ -73,6 +79,11 @@ void Problem::printStatus(){
     std::cout << "Problem Status: " << status <<  std::endl;
 }
 
+/** Graph management **/
+void Problem::setNetworkArc(int i, int j) {
+    network.setArc(i, j);
+    n_arcs++;
+}
 /** Objective and Resource management **/
 //Initialize Objective data structures
 void Problem::initObjective(Resource *objective) {
@@ -110,6 +121,8 @@ int Problem::addResource(int type) {
 
     resources.push_back(res);
     res->initData(compress_data, n_nodes);
+    // Update the number of resources
+    n_res++;
 
     return index;
 }
@@ -618,6 +631,10 @@ void Problem::printProblem(){
     std::cout<< "Number of nodes: " << getNumNodes() << std::endl;
     std::cout<<"Origin: " << this->origin << std::endl;
     std::cout<<"Destination: " << this->destination << std::endl;
+    std::cout<<"Ressources: ";
+    for (auto & r: resources)
+        std::cout << r->getName() << " ";
+    std::cout<<std::endl;
     std::cout<<"Upperbounds: ";
     for(auto & r: resources)
         std::cout << r->getUB()<< " ";

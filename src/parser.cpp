@@ -184,7 +184,7 @@ Instance parse_file(string filename){
             }
         }
         // We will build the list of interventions for the vehicle later
-        vector<Node*> interventions = vector<Node*>();
+        vector<int> interventions = vector<int>();
         // Check that every technician in the team has the same operationnal base
         string operationnal_base = technicians[tech_id_per_team[i][0]].operationnal_base;
         for (int j = 1; j < tech_id_per_team[i].size(); j++){
@@ -195,8 +195,7 @@ Instance parse_file(string filename){
             }
         }
         // Get the depot node
-        int depot_id = node_id_to_index[operationnal_base];
-        Node* depot = &nodes[depot_id];
+        int depot = node_id_to_index[operationnal_base];
         // Build the capacities of the vehicles as the min of the capacities each technician for each ressource
         map<string, int> capacities = map<string, int>();
         for (int j = 0; j < number_ressources; j++){
@@ -254,7 +253,7 @@ Instance parse_file(string filename){
     for (int v = 0; v < nb_vehicles; v++){
         for (int i = 0; i < nb_interventions; i++){
             if (has_skill[i][v]){
-                vehicles[v].interventions.push_back(&nodes[i]);
+                vehicles[v].interventions.push_back(i);
             }
         }
     }

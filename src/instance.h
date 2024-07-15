@@ -37,6 +37,7 @@ class Node {
             this->id = id;
             this->node_id = node_id;
             this->is_intervention = false;
+            this->duration = 0;
         };
         // Full constructor for interventions
         Node(std::string id, int node_id, int duration, int start_window, int end_window, bool is_long, std::map<std::string, int> skills, std::map<std::string, int> quantities){
@@ -58,7 +59,7 @@ class Node {
         ~Node(){}
 };
 
-double metric(Node* node1, Node* node2, std::vector<std::vector<double>> metric_matrix);
+double metric(const Node* node1, const Node* node2, std::vector<std::vector<double>> metric_matrix);
 
 class Technician {
     public:
@@ -83,18 +84,19 @@ class Vehicle {
     public:
         int id;
         // Counts the number of technicians that have each skill in the vehicle
-        std::map<std::string, int> skills;
-        // List of interventions that the vehicle can perform
-        std::vector<Node*> interventions;
-        // Warehouse where the vehicle is based
-        Node* depot;
+        std::map<std::string, int> skills; 
+        // List of indexes of interventions that the vehicle can perform
+        // (indexes with respect to the nodes std::vector in the instance)
+        std::vector<int> interventions;
+        // Index of the depot in the nodes std::vector
+        int depot;
         std::map<std::string, int> capacities;
         int start_window;
         int lunch_window;
         int end_window;
         double cost;
         // Constructor
-        Vehicle(int id, std::map<std::string, int> skills, std::vector<Node*> interventions, Node* depot, std::map<std::string, int> capacities, int start_window, int lunch_window, int end_window, double cost){
+        Vehicle(int id, std::map<std::string, int> skills, std::vector<int> interventions, int depot, std::map<std::string, int> capacities, int start_window, int lunch_window, int end_window, double cost){
             this->id = id;
             this->skills = skills;
             this->interventions = interventions;

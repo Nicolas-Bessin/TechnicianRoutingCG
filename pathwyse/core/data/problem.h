@@ -21,11 +21,12 @@ public:
     /** Problem Management **/
     //Constructors and destructors
     Problem();
+    // Custom constructor
+    Problem(std::string name, int n_nodes, int origin, int destination, int n_res, bool cycles, bool complete, bool directed);
     ~Problem();
 
     //Problem setup
     void initProblem();
-    void initProblem(int n_nodes, bool cycles, bool complete);
 
     //Name
     void setName(std::string name) {this->name = name;}
@@ -53,6 +54,8 @@ public:
     bool isDataCompressed(){return compress_data;}
 
     /** Graph management**/
+    //Custom method : Add an arc to the underlying graph
+    void setNetworkArc(int i, int j);
     //Get distance (coordinate based)
     int getCoordDistance(int i, int j) {return network.getCoordDistance(i, j);}
 
@@ -78,9 +81,9 @@ public:
     //Resource management
     int addResource(int type);
     void createResources(std::vector<int> & resources_type);
-    void setRes(Resource* res){resources.push_back(res);}
+    void setRes(Resource* res){resources.push_back(res); n_res++;}
     void setRes(int position, Resource* res){resources[position] = res;}
-    void setResources(std::vector<Resource*> resources){this->resources = resources;}
+    void setResources(std::vector<Resource*> resources){this->resources = resources; n_res = resources.size();}
 
     //Insert sets of consumptions f
     void setArcConsumption(int i, int j,  std::vector<int> consumption);
