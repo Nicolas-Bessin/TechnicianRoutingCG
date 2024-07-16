@@ -10,6 +10,30 @@
 using namespace std;
 
 
+// Structure to represent a solution of the master problem
+struct MasterSolution {
+    // Coefficients of the variables in the master problem
+    vector<double> coefficients;
+    // Dual values associated with the interventions
+    vector<double> alphas;
+    // Dual values associated with the vehicles
+    vector<double> betas;
+    // Objective value of the master problem
+    double objective_value;
+    // Empty constructor
+    MasterSolution(){}
+    // Constructor
+    MasterSolution(vector<double> coefficients, vector<double> alphas, vector<double> betas, double objective_value){
+        this->coefficients = coefficients;
+        this->alphas = alphas;
+        this->betas = betas;
+        this->objective_value = objective_value;
+    }
+    // Destructor
+    ~MasterSolution(){}
+};
+
+
 // Class Route : represents a sequence of nodes, starting at the warehouse, going through interventions and ending at the warehouse
 class Route {
     public:

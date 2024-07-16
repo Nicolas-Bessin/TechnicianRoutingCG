@@ -3,7 +3,7 @@
 
 using namespace std;
 
-void cg_solver(Instance instance, double time_limit){
+MasterSolution cg_solver(Instance instance, double time_limit){
     // Very first step is to create a "dumb" empty route
     vector<Route*> routes;
     Route* empty_route = new Route(0, 0, instance.nodes.size());
@@ -56,6 +56,15 @@ void cg_solver(Instance instance, double time_limit){
         // Solve the master problem
         master.optimize();
 
+        // Get the objective value
+        double objective_value = master.get(GRB_DoubleAttr_ObjVal);
+        
+        // Get the coefficients of the variables
+        vector<double> coefficients;
+        for (int i = 0; i < variables.size(); i++){
+            coefficients.push_back(variables[i].get(GRB_DoubleAttr_X));
+        }
+
         // Get the duals of the constraints
         vector<double> alphas;
         for (int i = 0; i < intervention_constraints.size(); i++){
@@ -78,6 +87,10 @@ void cg_solver(Instance instance, double time_limit){
         }
         cout << endl;
 
+        // Return the duals by building a solution
+        return MasterSolution(coefficients, alphas, betas, objective_value);
+
+
 
     } catch(GRBException e) {
         cout << "Error code = " << e.getErrorCode() << endl;
@@ -87,5 +100,5 @@ void cg_solver(Instance instance, double time_limit){
     }
 
     
-    return;
+    return MasterSolution();
 }

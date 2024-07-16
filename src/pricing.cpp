@@ -35,7 +35,7 @@ void find_best_route(const Instance& instance, const Vehicle& vehicle, const vec
         // Get the duration of the next intervention
         double duration = intervention_i->duration;
         // Set the cost of the intervention
-        double node_cost = alphas.at(vehicle.interventions[i]) - instance.M * duration;
+        double node_cost = alphas.at(vehicle.interventions[i]);// - instance.M * duration;
         objective->setNodeCost(i, node_cost);
         // Then set the arc costs for every arc leaving the intervention
         for (int j = 0; j < n_interventions_v; j++) {
@@ -64,14 +64,13 @@ void find_best_route(const Instance& instance, const Vehicle& vehicle, const vec
         problem.setNetworkArc(i, destination);
         // Distance is probably the same as the outgoing distance but eh we never know
         double distance_in = metric(intervention, &(instance.nodes[vehicle.depot]), instance.distance_matrix);
-        // When going from an intervention, we have to pay the cost of the intervention
-        double duration = intervention->duration;
-        double arc_cost = alphas.at(vehicle.interventions[i]) - instance.M * duration + instance.cost_per_km * distance_in;
+        // Here we only consider the cost of travelng, the node costs have already been set
+        double arc_cost = instance.cost_per_km * distance_in;
         objective->setArcCost(i, destination, arc_cost);
     }
 
     // Set this resource as the objective function
-    problem.initObjective(objective);
+    problem.setObjective(objective);
 
     // We then want to add the capacity ressources to the problem
     int nb_ressources = instance.capacities_labels.size();
@@ -148,7 +147,7 @@ void find_best_route(const Instance& instance, const Vehicle& vehicle, const vec
     problem.printProblem();
 
     // We now want to solve the problem
-    Solver* solver = new Solver();
+    Solver* solver = new Solver("../pathwyse.set");
     solver->setCustomProblem(problem);
     solver->setupAlgorithms();
     solver->solve();
@@ -167,17 +166,27 @@ void find_best_route(const Instance& instance, const Vehicle& vehicle, const vec
         int true_i = tour[i] == origin || tour[i] == destination ? vehicle.depot : vehicle.interventions[tour[i]];
         int true_j = tour[i + 1] == origin || tour[i + 1] == destination ? vehicle.depot : vehicle.interventions[tour[i + 1]];
         cout << "Current time : " << current_time << endl;
+        // Print the current node
+        cout << "Intervention : " << true_i << " - ";
+        cout << "Time window : " << instance.nodes[true_i].start_window << " - " << instance.nodes[true_i].end_window;;
+        // Print the duration of the intervention i
+        cout << " - Duration : " << instance.nodes[true_i].duration << endl;
+        // Print the step taken in the tour
         cout << "Tour step : " << true_i << " -> " << true_j << endl;
-        // Print the duration of the intervention
-        cout << "Duration : " << instance.nodes[true_i].duration << endl;
         // Print the time it takes to go from intervention i to intervention j
-        cout << "Travel time : " << instance.time_matrix[true_i][true_j] << endl;
-        // Print the time window of the intervention
-        cout << "Time window : " << instance.nodes[true_j].start_window << " - " << instance.nodes[true_j].end_window << endl;
+        double travel_time = metric(&(instance.nodes[true_i]), &(instance.nodes[true_j]), instance.time_matrix);
+        cout << "Travel time : " << travel_time << endl;
         // Update the current time
-        current_time += instance.nodes[true_i].duration + instance.time_matrix[true_i][true_j];
-        
+        current_time += instance.nodes[true_i].duration + travel_time; 
     }
+    // Dumpt the intervention info on the last intervention
+    int true_last = tour[tour_length - 1] == origin || tour[tour_length - 1] == destination ? vehicle.depot : vehicle.interventions[tour[tour_length - 1]];
+    cout << "Current time : " << current_time << endl;
+    cout << "Intervention : " << true_last << " - ";
+    cout << "Time window : " << instance.nodes[true_last].start_window << " - " << instance.nodes[true_last].end_window;
+    cout << " - Duration : " << instance.nodes[true_last].duration << endl;
+    cout << "----------------------------------------" << endl;
+    cout << "Final time : " << current_time + instance.nodes[true_last].duration << endl;
     
     return;
 

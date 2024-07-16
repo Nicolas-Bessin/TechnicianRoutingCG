@@ -78,6 +78,9 @@ public:
     //Objective initialization
     void initObjective(Resource* objective = nullptr);
 
+    // Custom : objective setter
+    void setObjective(Resource* objective) {this->objective = objective;}
+
     //Resource management
     int addResource(int type);
     void createResources(std::vector<int> & resources_type);

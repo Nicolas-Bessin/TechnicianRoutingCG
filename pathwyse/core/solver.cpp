@@ -18,6 +18,22 @@ Solver::Solver() {
 }
 
 /**
+ * Custom Solver Constructor. Builds the solver with specified parameters.
+ * 
+ * @param file_path - Configuration file path.
+ */
+Solver::Solver(std::string file_path) {
+    setStatus(SOLVER_START);
+    solver_version = "0.1";
+    optimization_round = 0;
+    problem = nullptr;
+    main_algorithm = nullptr;
+    readConfiguration(file_path);
+    setupOutput();
+    printWelcome();
+}
+
+/**
  * Solver Deconstructor. Destroys the solver.
  */
 Solver::~Solver() {

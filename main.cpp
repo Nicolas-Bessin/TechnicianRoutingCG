@@ -38,11 +38,9 @@ int main(int, char**){
     //     cout << " - Number of vehicles : " << intervention->nb_vehicles << endl;
     // }
 
-    //cg_solver(instance, 1000);
-    // Build a fake alphas vector with 49 zeros
-    vector<double> alphas(77, 0.0);
+    MasterSolution solution = cg_solver(instance, 1000);
 
-    find_best_route(instance, instance.vehicles.at(0), alphas, 0.0);
+    find_best_route(instance, instance.vehicles.at(0), solution.alphas, solution.betas.at(0));
 
     return 0;
 }

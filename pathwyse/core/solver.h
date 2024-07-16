@@ -12,6 +12,8 @@ public:
 
     /** Solver management **/
     Solver();
+    // Custom constructor to load specified parameters from a file
+    Solver(std::string file_path);
     ~Solver();
 
     //General solver methods
