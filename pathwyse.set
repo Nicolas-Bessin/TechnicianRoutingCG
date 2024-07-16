@@ -11,7 +11,7 @@ problem/scaling = 100.0
 problem/scaling/target = objective
 
 ensemble/algorithms = PWDefaultRelaxDom,PWDefaultRelaxQueue
-ensemble/active = 0
+ensemble/active = 1
 
 main_algorithm = PWDefault
 

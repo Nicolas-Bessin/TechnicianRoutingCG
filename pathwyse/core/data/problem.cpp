@@ -18,6 +18,7 @@ Problem::Problem() {
     setStatus(PROBLEM_INDETERMINATE);
 }
 
+// Custom constructor : set problem parameters
 Problem::Problem(std::string name, int n_nodes, int origin, int destination, int n_res, bool cycles, bool complete, bool directed) {
     this->name = name;
     this->n_nodes = n_nodes;

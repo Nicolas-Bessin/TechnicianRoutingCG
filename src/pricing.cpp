@@ -4,7 +4,7 @@
 #include "../pathwyse/core/solver.h"
 
 // First, we want to define the network on which we will solve the problem
-void find_best_route(const Instance& instance, const Vehicle& vehicle, const vector<double> &alphas, const double beta) {
+void find_best_route(Instance& instance, const Vehicle& vehicle, const vector<double> &alphas, const double beta) {
     // Get the number of nodes in the problem : equal to the number of available interventions + 2
     // +1 for the "depature" warehouse and +1 for the "arrival" warehouse (even tough it is the same place)
     int n_interventions_v = vehicle.interventions.size();
@@ -19,7 +19,7 @@ void find_best_route(const Instance& instance, const Vehicle& vehicle, const vec
         origin,
         destination,
         0,
-        true,
+        false,
         false,
         true
     );
@@ -167,10 +167,17 @@ void find_best_route(const Instance& instance, const Vehicle& vehicle, const vec
         int true_j = tour[i + 1] == origin || tour[i + 1] == destination ? vehicle.depot : vehicle.interventions[tour[i + 1]];
         cout << "Current time : " << current_time << endl;
         // Print the current node
-        cout << "Intervention : " << true_i << " - ";
+        cout << "Intervention : " << true_i << " - " << "id : " << instance.nodes[true_i].id << " - ";
         cout << "Time window : " << instance.nodes[true_i].start_window << " - " << instance.nodes[true_i].end_window;;
         // Print the duration of the intervention i
         cout << " - Duration : " << instance.nodes[true_i].duration << endl;
+        // Print the resources consumptions of the intervention i
+        cout << "Consumptions : " << endl;
+        for (string label : instance.capacities_labels) {
+            int quantity = instance.nodes[true_i].quantities[label];
+            cout << label << " : " << quantity << " - ";
+        }
+        cout << endl;
         // Print the step taken in the tour
         cout << "Tour step : " << true_i << " -> " << true_j << endl;
         // Print the time it takes to go from intervention i to intervention j

@@ -39,7 +39,8 @@ int main(int, char**){
     // }
 
     MasterSolution solution = cg_solver(instance, 1000);
-
+    cout << "Cost of vehicle 0 : " << instance.vehicles.at(0).cost << endl;
+    cout << "----------------------------------------------" << endl;
     find_best_route(instance, instance.vehicles.at(0), solution.alphas, solution.betas.at(0));
 
     return 0;
