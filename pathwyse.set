@@ -1,4 +1,4 @@
-verbosity = 4
+verbosity = 3
 
 problem/memory_threshold = 10000
 
@@ -11,7 +11,7 @@ problem/scaling = 100.0
 problem/scaling/target = objective
 
 ensemble/algorithms = PWDefaultRelaxDom,PWDefaultRelaxQueue
-ensemble/active = 1
+ensemble/active = 0
 
 main_algorithm = PWDefault
 

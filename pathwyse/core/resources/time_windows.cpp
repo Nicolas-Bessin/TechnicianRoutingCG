@@ -14,6 +14,9 @@ void TimeWindow::init(int origin, int destination) {
     for(int i = 0; i < node_upper_bound.size(); i++)
         if(i != destination)
             upper_bound = std::max(upper_bound, node_upper_bound[i] + data->getNodeCost(i) + data->getArcCost(i, destination));
+
+    // The upper bound also has to respect the time window of the destination node
+    upper_bound = std::min(upper_bound, node_upper_bound[destination]);
 }
 
 int TimeWindow::extend(int current_value, int i, int j, bool direction) {
