@@ -4,8 +4,8 @@
 #include <iostream>
 #include "../pathwyse/core/solver.h"
 
-// First, we want to define the network on which we will solve the problem
-void find_best_route(Instance& instance, const Vehicle& vehicle, const vector<double> &alphas, const double beta) {
+
+Problem create_pricing_instance(const Instance& instance, const Vehicle& vehicle) {
     // Get the number of nodes in the problem : equal to the number of available interventions + 2
     // +1 for the "depature" warehouse and +1 for the "arrival" warehouse (even tough it is the same place)
     int n_interventions_v = vehicle.interventions.size();
@@ -32,21 +32,14 @@ void find_best_route(Instance& instance, const Vehicle& vehicle, const vector<do
     DefaultCost* objective = new DefaultCost();
     objective->initData(false, n_interventions_v + 2);
 
+    // Set the costs of the arcs
     for (int i = 0; i < n_interventions_v; i++) {
-        // Set the cost relative the node itself
         const Node* intervention_i = &(instance.nodes[vehicle.interventions[i]]);
-        // Get the duration of the next intervention
-        double duration = intervention_i->duration;
-        // Set the cost of the intervention
-        double node_cost = alphas.at(vehicle.interventions[i]) - instance.M * duration;
-        objective->setNodeCost(i, node_cost);
-        // Then set the arc costs for every arc leaving the intervention
         for (int j = 0; j < n_interventions_v; j++) {
             if (i == j) continue;
             // First step is adding an arc to the underlying network
             problem.setNetworkArc(i, j);
             // Get the intervention referenced by the index j
-
             const Node* intervention_j = &(instance.nodes[vehicle.interventions[j]]);
             // Get the distance between the two interventions
             double distance = metric(intervention_i, intervention_j, instance.distance_matrix);
@@ -62,7 +55,7 @@ void find_best_route(Instance& instance, const Vehicle& vehicle, const vector<do
         problem.setNetworkArc(origin, i);
         double distance_out = metric(&(instance.nodes[vehicle.depot]), intervention, instance.distance_matrix);
         // Set the arc cost, also adding the fixed cost of leaving the depot
-        objective->setArcCost(origin, i, instance.cost_per_km * distance_out + vehicle.cost + beta);
+        objective->setArcCost(origin, i, instance.cost_per_km * distance_out + vehicle.cost );
         // Incoming arcs to the warehouse
         problem.setNetworkArc(i, destination);
         // Distance is probably the same as the outgoing distance but eh we never know
@@ -146,8 +139,6 @@ void find_best_route(Instance& instance, const Vehicle& vehicle, const vector<do
         double travel_time_in = metric(intervention, &(instance.nodes[vehicle.depot]), instance.time_matrix);
         time_window->setArcCost(i, destination, travel_time_in);
     }
-    // Add a 0 cost arc between the warehouse and the warehouse
-    //time_window->setArcCost(origin, destination, 0);
     // Add the time window ressource to the vector of ressources
     time_window->init(origin, destination);
     ressources.push_back(time_window);
@@ -162,12 +153,38 @@ void find_best_route(Instance& instance, const Vehicle& vehicle, const vector<do
     ressources.push_back(node_limit);
 
     // Set the ressources of the problem
-    // Only get the first ressource for now
-    //vector<Resource*> ressources_to_set{ressources[3]};
-    //problem.setResources(ressources_to_set);
     problem.setResources(ressources);
     problem.printProblem();
 
+    return problem;
+}
+
+
+void update_pricing_instance(Problem& pricing_problem, const vector<double>& alphas, double beta,
+        const Instance& instance, const Vehicle& vehicle) {
+    // Get the number of nodes in the problem : equal to the number of available interventions + 2
+    int n_interventions_v = vehicle.interventions.size();
+    int origin = n_interventions_v;
+    int destination = origin + 1;
+    // Get the objective function of the problem
+    DefaultCost* objective = (DefaultCost*) pricing_problem.getObj();
+    // Put in the node costs : alpha_i - M * duration_i
+    for (int i = 0; i < n_interventions_v; i++) {
+        const Node* intervention = &(instance.nodes[vehicle.interventions[i]]);
+        double node_cost = alphas[i] - instance.M * intervention->duration;
+        objective->setNodeCost(i, node_cost);
+    }
+    // Finally, put the fixed part of the cost on the starting node
+    objective->setNodeCost(origin, beta + vehicle.cost);
+
+    return;
+}
+
+
+vector<Route> solve_pricing_problem(Problem& problem, int pool_size, const Instance& instance, const Vehicle& vehicle) {
+    // Get the origin and destination of the problem
+    int origin = problem.getOrigin();
+    int destination = problem.getDestination();
     // We now want to solve the problem
     Solver* solver = new Solver("../pathwyse.set");
     solver->setCustomProblem(problem);
@@ -175,51 +192,111 @@ void find_best_route(Instance& instance, const Vehicle& vehicle, const vector<do
     solver->solve();
     solver->printBestSolution();
     // Get the solution we found
-    Path path = solver->getBestSolution();
-    // Extract the tour from the solution and convert it to a vector
-    list<int> tour_list = path.getTour();
-    vector<int> tour{tour_list.begin(), tour_list.end()};
-    // Print the tour
-    cout << "----------------------------------------" << endl;
-    int tour_length = tour.size();
-    int current_time = 0;
-    for (int i = 0; i < tour_length - 1; i++) {
-        //cout << tour[i] << " -> " << tour[i + 1] << endl;
-        int true_i = tour[i] == origin || tour[i] == destination ? vehicle.depot : vehicle.interventions[tour[i]];
-        int true_j = tour[i + 1] == origin || tour[i + 1] == destination ? vehicle.depot : vehicle.interventions[tour[i + 1]];
-        cout << "Current time : " << current_time << endl;
-        // Print the current node
-        cout << "Intervention : " << true_i << " - " << "id : " << instance.nodes[true_i].id << " - ";
-        cout << "Time window : " << instance.nodes[true_i].start_window << " - " << instance.nodes[true_i].end_window;;
-        // Print the duration of the intervention i
-        cout << " - Duration : " << instance.nodes[true_i].duration << endl;
-        // Print the resources consumptions of the intervention i
-        cout << "Consumptions : ";
-        for (string label : instance.capacities_labels) {
-            int quantity = instance.nodes[true_i].quantities[label];
-            cout << label << " : " << quantity << " - ";
+    vector<Path> solutions = solver->getBestSolutions(pool_size);
+    cout << "Solver found " << solver->getNumberOfSolutions() << " solutions" << endl;
+    // Convert each Path object to a Route object
+    vector<Route> routes;
+    for (auto path : solutions) {
+        // Get the sequence as a vector of integers
+        list<int> tour_list = path.getTour();
+        vector<int> tour(tour_list.begin(), tour_list.end());
+        // Get all the info we need to build a Route object
+        double total_cost = vehicle.cost;
+        double total_duration = 0;
+        vector<int> is_in_route(instance.nodes.size(), 0);
+        vector<double> start_times(instance.nodes.size(), 0);
+        double reduced_cost = - path.getObjective(); // (We got the max reduced cost by minimizing the opposite of the reduced cost)
+        // Keep track of the time ellapsed
+        double current_time = 0;
+        for (int i = 0; i < tour.size() - 1; i++) {
+            int true_i = tour[i] == origin || tour[i] == destination ? vehicle.depot : vehicle.interventions[tour[i]];
+            int true_j = tour[i + 1] == origin || tour[i + 1] == destination ? vehicle.depot : vehicle.interventions[tour[i + 1]];
+            // Check that the route is elementary :
+            if (is_in_route[true_i] == 1) {
+                cout << "Intervention " << true_i << " is already in the route" << endl;
+            }
+            // Update the is_in_route and start_times vectors
+            is_in_route[true_i] = 1;
+            start_times[true_i] = current_time;
+            // Get the duration, and travel time and distance between the two interventions
+            int duration = instance.nodes[true_i].duration;
+            double travel_time = metric(&(instance.nodes[true_i]), &(instance.nodes[true_j]), instance.time_matrix);
+            double travel_distance = metric(&(instance.nodes[true_i]), &(instance.nodes[true_j]), instance.distance_matrix);
+            // Update the running total cost, duration of interventions and travel time
+            total_cost += instance.cost_per_km * travel_distance;
+            total_duration += duration;
+            // Perform some feasibility checks
+            // Is the time window for i respected ?
+            if (current_time < instance.nodes[true_i].start_window || current_time + duration > instance.nodes[true_i].end_window) {
+                cout << "Time window for intervention " << true_i << " not respected" << endl;
+            }
+            // Update the current time
+            double start_time_next = instance.nodes[true_j].start_window;
+            current_time = std::max(current_time + duration + travel_time, start_time_next); 
         }
-        cout << endl;
-        // Print the step taken in the tour
-        cout << "Tour step : " << true_i << " -> " << true_j << endl;
-        // Print the time it takes to go from intervention i to intervention j
-        double travel_time = metric(&(instance.nodes[true_i]), &(instance.nodes[true_j]), instance.time_matrix);
-        double travel_distance = metric(&(instance.nodes[true_i]), &(instance.nodes[true_j]), instance.distance_matrix);
-        cout << "Travel time : " << travel_time << " - Travel distance : " << travel_distance << endl;
-        // Update the current time
-        double start_time_next = instance.nodes[true_j].start_window;
-        current_time = std::max(current_time + instance.nodes[true_i].duration + travel_time, start_time_next); 
+        // Add the checks related to the last intervention
+        int true_last = tour.back() == origin || tour.back() == destination ? vehicle.depot : vehicle.interventions[tour.back()];
+        is_in_route[true_last] = 1;
+        start_times[true_last] = current_time;
+        if (current_time < instance.nodes[true_last].start_window || current_time > instance.nodes[true_last].end_window) {
+            cout << "Time window for intervention " << true_last << " not respected" << endl;
+        }
+        // Also check that the last intervention is well and truly the vehicle's depot
+        if (true_last != vehicle.depot) {
+            cout << "Last intervention is not the depot" << endl;
+        }
+        routes.push_back(Route(total_cost, reduced_cost, total_duration, vehicle.id, is_in_route, start_times));
     }
-    // Dumpt the intervention info on the last intervention
-    int true_last = tour[tour_length - 1] == origin || tour[tour_length - 1] == destination ? vehicle.depot : vehicle.interventions[tour[tour_length - 1]];
-    cout << "Current time : " << current_time << endl;
-    cout << "Intervention : " << true_last << " - ";
-    cout << "Time window : " << instance.nodes[true_last].start_window << " - " << instance.nodes[true_last].end_window;
-    cout << " - Duration : " << instance.nodes[true_last].duration << endl;
-    cout << "----------------------------------------" << endl;
-    cout << "Final time : " << current_time + instance.nodes[true_last].duration << endl;
+
     
-    return;
-
-
+    return routes;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Deadcode : printing of a tour
+// for (int i = 0; i < tour.size() - 1; i++) {
+//             //cout << tour[i] << " -> " << tour[i + 1] << endl;
+//             int true_i = tour[i] == origin || tour[i] == destination ? vehicle.depot : vehicle.interventions[tour[i]];
+//             int true_j = tour[i + 1] == origin || tour[i + 1] == destination ? vehicle.depot : vehicle.interventions[tour[i + 1]];
+//             cout << "Current time : " << current_time << endl;
+//             // Print the current node
+//             cout << "Intervention : " << true_i << " - " << "id : " << instance.nodes[true_i].id << " - ";
+//             cout << "Time window : " << instance.nodes[true_i].start_window << " - " << instance.nodes[true_i].end_window;;
+//             // Print the duration of the intervention i
+//             cout << " - Duration : " << instance.nodes[true_i].duration << endl;
+//             // Print the resources consumptions of the intervention i
+//             cout << "Consumptions : ";
+//             for (string label : instance.capacities_labels) {
+//                 int quantity = instance.nodes[true_i].quantities.at(label);
+//                 cout << label << " : " << quantity << " - ";
+//             }
+//             cout << endl;
+//             // Print the step taken in the tour
+//             cout << "Tour step : " << true_i << " -> " << true_j << endl;
+//             // Print the time it takes to go from intervention i to intervention j
+//             double travel_time = metric(&(instance.nodes[true_i]), &(instance.nodes[true_j]), instance.time_matrix);
+//             double travel_distance = metric(&(instance.nodes[true_i]), &(instance.nodes[true_j]), instance.distance_matrix);
+//             cout << "Travel time : " << travel_time << " - Travel distance : " << travel_distance << endl;
+//             // Update the current time
+//             double start_time_next = instance.nodes[true_j].start_window;
+//             current_time = std::max(current_time + instance.nodes[true_i].duration + travel_time, start_time_next); 
+//         }
+//         // Dumpt the intervention info on the last intervention
+//         int true_last = tour[tour_length - 1] == origin || tour[tour_length - 1] == destination ? vehicle.depot : vehicle.interventions[tour[tour_length - 1]];
+//         cout << "Current time : " << current_time << endl;
+//         cout << "Intervention : " << true_last << " - ";
+//         cout << "Time window : " << instance.nodes[true_last].start_window << " - " << instance.nodes[true_last].end_window;
+//         cout << " - Duration : " << instance.nodes[true_last].duration << endl;
+//         cout << "----------------------------------------" << endl;
+//         cout << "Final time : " << current_time + instance.nodes[true_last].duration << endl;

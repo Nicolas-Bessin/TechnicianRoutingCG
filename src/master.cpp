@@ -6,7 +6,7 @@ using namespace std;
 MasterSolution cg_solver(Instance instance, double time_limit){
     // Very first step is to create a "dumb" empty route
     vector<Route*> routes;
-    Route* empty_route = new Route(0, 0, instance.nodes.size());
+    Route* empty_route = new Route(0, instance.nodes.size());
     //routes.push_back(empty_route);
 
     try {
