@@ -15,21 +15,21 @@ ensemble/active = 0
 
 main_algorithm = PWDefault
 
-algo/default/autoconfig = 1
+algo/default/autoconfig = 0
 algo/default/timelimit = 0.05
 algo/default/parallel = 1
-algo/default/bidirectional = 1
+algo/default/bidirectional = 0
 algo/default/bidirectional/split = 0.5
 algo/default/reserve = 100000000
 
-algo/default/use_visited = 0
+algo/default/use_visited = 1
 algo/default/compare_unreachables = 0
-algo/default/dssr = standard
+algo/default/dssr = off
 algo/default/ng = off
 algo/default/ng/set_size = 8
 
 algo/default/candidate/type = node
-algo/default/join/type = ordered
+algo/default/join/type = naive
 
 data_collection/level = -1
 output/write = 0

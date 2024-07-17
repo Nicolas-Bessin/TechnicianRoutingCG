@@ -10,11 +10,11 @@
 // This is used in the initialization of each pricing sub problem
 //   @param instance: the instance of the problem
 //   @param vehicle: the vehicle that will perform the routes
-Problem create_pricing_instance(const Instance &instance, const Vehicle &vehicle);
+Problem* create_pricing_instance(const Instance &instance, const Vehicle &vehicle);
 
 
 // Update a pricing problem with the dual values given by the master problem
-void update_pricing_instance(Problem& pricing_problem, const vector<double> &alphas, double beta,
+void update_pricing_instance(Problem* pricing_problem, const vector<double> &alphas, double beta,
         const Instance &instance, const Vehicle &vehicle);
 
 
@@ -24,5 +24,5 @@ void update_pricing_instance(Problem& pricing_problem, const vector<double> &alp
     @param instance: the instance of the problem
     @param vehicle: the vehicle that will perform the routes
 */
-vector<Route> solve_pricing_problem(Problem& pricing_problem, int pool_size, const Instance &instance, const Vehicle &vehicle);
+vector<Route> solve_pricing_problem(Problem* pricing_problem, int pool_size, const Instance &instance, const Vehicle &vehicle);
 

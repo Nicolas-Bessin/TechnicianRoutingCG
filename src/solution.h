@@ -76,42 +76,4 @@ class Route {
             this->is_in_route = is_in_route;
             this->start_times = start_times;
         }
-        // Destructor
-        ~Route(){}
 };
-
-
-//Class Solution : represents a solution to the problem
-class Solution {
-    public:
-        // List of routes in the solution
-        vector<Route*> routes;
-        // Coefficients for these routes (value of the variables in the master problem)
-        vector<double> coefficients;
-        // Dual values associated with the interventions
-        vector<double> alphas;
-        // Dual values associated with the vehicles
-        vector<double> betas;
-        // Total cost of the solution
-        double total_cost;
-        // Total duration of the solution
-        double total_duration;
-        // Total travel time of the solution
-        double total_travel_time;
-        // Empty constructor
-        Solution(){}
-        // Constructor
-        Solution(vector<Route*> routes, vector<double> coefficients, vector<double> alphas, vector<double> betas, double total_cost, double total_duration, double total_travel_time){
-            this->routes = routes;
-            this->coefficients = coefficients;
-            this->alphas = alphas;
-            this->betas = betas;
-            this->total_cost = total_cost;
-            this->total_duration = total_duration;
-            this->total_travel_time = total_travel_time;
-        }
-        // Destructor
-        ~Solution(){}
-        
-};
-

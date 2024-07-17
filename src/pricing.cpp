@@ -5,7 +5,7 @@
 #include "../pathwyse/core/solver.h"
 
 
-Problem create_pricing_instance(const Instance& instance, const Vehicle& vehicle) {
+Problem* create_pricing_instance(const Instance& instance, const Vehicle& vehicle) {
     // Get the number of nodes in the problem : equal to the number of available interventions + 2
     // +1 for the "depature" warehouse and +1 for the "arrival" warehouse (even tough it is the same place)
     int n_interventions_v = vehicle.interventions.size();
@@ -14,7 +14,7 @@ Problem create_pricing_instance(const Instance& instance, const Vehicle& vehicle
     // Get the number of ressources in the problem
 
     // Create a new instance of the Problem class
-    Problem problem = Problem(
+    Problem* problem = new Problem(
         std::to_string(vehicle.id),
         n_interventions_v + 2,
         origin,
@@ -25,7 +25,7 @@ Problem create_pricing_instance(const Instance& instance, const Vehicle& vehicle
         true
     );
     // Initialize the problem
-    problem.initProblem();
+    problem->initProblem();
 
 
     // Initialize the objective function
@@ -38,7 +38,7 @@ Problem create_pricing_instance(const Instance& instance, const Vehicle& vehicle
         for (int j = 0; j < n_interventions_v; j++) {
             if (i == j) continue;
             // First step is adding an arc to the underlying network
-            problem.setNetworkArc(i, j);
+            problem->setNetworkArc(i, j);
             // Get the intervention referenced by the index j
             const Node* intervention_j = &(instance.nodes[vehicle.interventions[j]]);
             // Get the distance between the two interventions
@@ -52,12 +52,12 @@ Problem create_pricing_instance(const Instance& instance, const Vehicle& vehicle
         // get the intervention referenced by the index i
         const Node* intervention = &(instance.nodes[vehicle.interventions[i]]);
         // Outgoing arcs from the warehouse
-        problem.setNetworkArc(origin, i);
+        problem->setNetworkArc(origin, i);
         double distance_out = metric(&(instance.nodes[vehicle.depot]), intervention, instance.distance_matrix);
         // Set the arc cost, also adding the fixed cost of leaving the depot
         objective->setArcCost(origin, i, instance.cost_per_km * distance_out + vehicle.cost );
         // Incoming arcs to the warehouse
-        problem.setNetworkArc(i, destination);
+        problem->setNetworkArc(i, destination);
         // Distance is probably the same as the outgoing distance but eh we never know
         double distance_in = metric(intervention, &(instance.nodes[vehicle.depot]), instance.distance_matrix);
         // Here we only consider the cost of travelng, the node costs have already been set
@@ -66,7 +66,7 @@ Problem create_pricing_instance(const Instance& instance, const Vehicle& vehicle
     }
 
     // Set this resource as the objective function
-    problem.setObjective(objective);
+    problem->setObjective(objective);
 
 
     // We then want to add the capacity ressources to the problem
@@ -153,21 +153,21 @@ Problem create_pricing_instance(const Instance& instance, const Vehicle& vehicle
     ressources.push_back(node_limit);
 
     // Set the ressources of the problem
-    problem.setResources(ressources);
+    problem->setResources(ressources);
     //problem.printProblem();
 
     return problem;
 }
 
 
-void update_pricing_instance(Problem& pricing_problem, const vector<double>& alphas, double beta,
+void update_pricing_instance(Problem* pricing_problem, const vector<double>& alphas, double beta,
         const Instance& instance, const Vehicle& vehicle) {
     // Get the number of nodes in the problem : equal to the number of available interventions + 2
     int n_interventions_v = vehicle.interventions.size();
     int origin = n_interventions_v;
     int destination = origin + 1;
     // Get the objective function of the problem
-    DefaultCost* objective = (DefaultCost*) pricing_problem.getObj();
+    DefaultCost* objective = (DefaultCost*) pricing_problem->getObj();
     // Put in the node costs : alpha_i - M * duration_i
     for (int i = 0; i < n_interventions_v; i++) {
         const Node* intervention = &(instance.nodes[vehicle.interventions[i]]);
@@ -181,13 +181,13 @@ void update_pricing_instance(Problem& pricing_problem, const vector<double>& alp
 }
 
 
-vector<Route> solve_pricing_problem(Problem& problem, int pool_size, const Instance& instance, const Vehicle& vehicle) {
+vector<Route> solve_pricing_problem(Problem* problem, int pool_size, const Instance& instance, const Vehicle& vehicle) {
     // Get the origin and destination of the problem
-    int origin = problem.getOrigin();
-    int destination = problem.getDestination();
+    int origin = problem->getOrigin();
+    int destination = problem->getDestination();
     // We now want to solve the problem
     Solver* solver = new Solver("../pathwyse.set");
-    solver->setCustomProblem(problem);
+    solver->setCustomProblem(*problem);
     solver->setupAlgorithms();
     solver->solve();
     // If the problem is indeterminate (time limit reached, we return an empty vector)
@@ -205,6 +205,10 @@ vector<Route> solve_pricing_problem(Problem& problem, int pool_size, const Insta
         // Get the sequence as a vector of integers
         list<int> tour_list = path.getTour();
         vector<int> tour(tour_list.begin(), tour_list.end());
+        // Check that we found an elementary path
+        if (!path.isElementary()) {
+            cout << "Vehicle " << vehicle.id << " : Path is not elementary" << endl;
+        }
         // Get all the info we need to build a Route object
         double total_cost = vehicle.cost;
         double total_duration = 0;
@@ -216,10 +220,6 @@ vector<Route> solve_pricing_problem(Problem& problem, int pool_size, const Insta
         for (int i = 0; i < tour.size() - 1; i++) {
             int true_i = tour[i] == origin || tour[i] == destination ? vehicle.depot : vehicle.interventions[tour[i]];
             int true_j = tour[i + 1] == origin || tour[i + 1] == destination ? vehicle.depot : vehicle.interventions[tour[i + 1]];
-            // Check that the route is elementary :
-            if (is_in_route[true_i] == 1) {
-                cout << "Intervention " << true_i << " is already in the route" << endl;
-            }
             // Update the is_in_route and start_times vectors
             is_in_route[true_i] = 1;
             start_times[true_i] = current_time;
