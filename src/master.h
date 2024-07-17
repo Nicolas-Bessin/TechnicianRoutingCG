@@ -2,4 +2,4 @@
 #pragma once
 #include "solution.h"
 
-MasterSolution cg_solver(Instance instance, double time_limit);
+MasterSolution cg_solver(const Instance& instance, const vector<Route>& routes, double time_limit);

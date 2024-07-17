@@ -15,7 +15,7 @@ Problem create_pricing_instance(const Instance& instance, const Vehicle& vehicle
 
     // Create a new instance of the Problem class
     Problem problem = Problem(
-        "Constrained Vehicle Routing Problem",
+        std::to_string(vehicle.id),
         n_interventions_v + 2,
         origin,
         destination,
@@ -154,7 +154,7 @@ Problem create_pricing_instance(const Instance& instance, const Vehicle& vehicle
 
     // Set the ressources of the problem
     problem.setResources(ressources);
-    problem.printProblem();
+    //problem.printProblem();
 
     return problem;
 }
@@ -190,10 +190,10 @@ vector<Route> solve_pricing_problem(Problem& problem, int pool_size, const Insta
     solver->setCustomProblem(problem);
     solver->setupAlgorithms();
     solver->solve();
-    solver->printBestSolution();
+    //solver->printBestSolution();
     // Get the solution we found
     vector<Path> solutions = solver->getBestSolutions(pool_size);
-    cout << "Solver found " << solver->getNumberOfSolutions() << " solutions" << endl;
+    //cout << "Solver found " << solver->getNumberOfSolutions() << " solutions" << endl;
     // Convert each Path object to a Route object
     vector<Route> routes;
     for (auto path : solutions) {

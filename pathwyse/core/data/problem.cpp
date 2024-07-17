@@ -33,7 +33,9 @@ Problem::Problem(std::string name, int n_nodes, int origin, int destination, int
     setStatus(PROBLEM_INDETERMINATE);
 }
 
+
 Problem::~Problem() {
+    //std::cout << "Deleting Problem " << name << std::endl;
     delete objective;
     delete bound_labels;
     for(auto& r: resources)

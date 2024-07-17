@@ -3,6 +3,9 @@
         "iostream": "cpp",
         "array": "cpp",
         "tuple": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "print": "cpp",
+        "format": "cpp",
+        "ostream": "cpp"
     }
 }

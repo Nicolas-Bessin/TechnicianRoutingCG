@@ -13,19 +13,44 @@ int main(int, char**){
     Instance instance = parse_file(default_filename);
     preprocess_interventions(instance);
 
-    MasterSolution solution = cg_solver(instance, 1000);
-    cout << "Cost of vehicle 0 : " << instance.vehicles.at(0).cost << endl;
-    cout << "----------------------------------------------" << endl;
-    // Define the sub problem for the first vehicle
-    Problem princing0 = create_pricing_instance(instance, instance.vehicles.at(0));
-    // Update it with the dual values
-    update_pricing_instance(princing0, solution.alphas, solution.betas.at(0), instance, instance.vehicles.at(0));
-    // Solve the sub problem
-    vector<Route> routes0 = solve_pricing_problem(princing0, 5, instance, instance.vehicles.at(0));
-    // Print the reduced cost of the routes
-    for (int i = 0; i < routes0.size(); i++){
-        cout << "Reduced cost of route " << i << " : " << routes0.at(i).reduced_cost << endl;
+
+    // Create a dummy route for the first vehicle
+    vector<Route> routes;
+    routes.push_back(Route(0, instance.number_interventions));
+
+    // Main loop of the column generation algorithm
+    int iteration = 0;
+    bool stop = false;
+    MasterSolution solution;
+    while (!stop){
+        // Solve the master problem
+        solution = cg_solver(instance, routes, 60);
+        // Solve each pricing sub problem
+        bool is_any_route_added = false;
+        for (auto vehicle : instance.vehicles){
+            Problem pricing_problem = create_pricing_instance(instance, vehicle);
+            update_pricing_instance(pricing_problem, solution.alphas, solution.betas.at(vehicle.id), instance, vehicle);
+            vector<Route> best_new_routes = solve_pricing_problem(pricing_problem, 5, instance, vehicle);
+            //cout << "Vehicle " << vehicle.id << " : " << best_new_routes.size() << " routes found" << endl;
+            // Go through the returned routes, and add them to the master problem if they have a positive reduced cost
+            for (auto route : best_new_routes){
+                if (route.reduced_cost > 0){
+                    //cout << "Route added with reduced cost " << route.reduced_cost << endl;
+                    routes.push_back(route);
+                    is_any_route_added = true;
+                }
+            }
+        }
+        // If no route was added, we stop the algorithm
+        if (!is_any_route_added || iteration > 3){
+            stop = true;
+        }
+        cout << "Iteration " << iteration << " - Objective value : " << solution.objective_value << endl;
+        iteration++;
     }
+
+    cout << "End of the algorithm after " << iteration << " iterations" << endl;
+    cout << "Objective value : " << solution.objective_value << endl;
 
     return 0;
 }
