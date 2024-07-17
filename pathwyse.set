@@ -19,7 +19,7 @@ algo/default/autoconfig = 0
 algo/default/timelimit = 0.05
 algo/default/parallel = 1
 algo/default/bidirectional = 0
-algo/default/bidirectional/split = 0.5
+algo/default/bidirectional/split = 0.25
 algo/default/reserve = 100000000
 
 algo/default/use_visited = 1
@@ -29,7 +29,7 @@ algo/default/ng = off
 algo/default/ng/set_size = 8
 
 algo/default/candidate/type = node
-algo/default/join/type = naive
+algo/default/join/type = ordered
 
 data_collection/level = -1
 output/write = 0
