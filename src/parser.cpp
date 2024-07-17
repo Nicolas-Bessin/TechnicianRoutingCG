@@ -100,6 +100,14 @@ Instance parse_file(string filename){
     double tech_cost = constants.at("tech_cost");
     int number_ressources = constants.at("capacities_size");
     vector<string> ressources = constants.at("capacities_labels");
+    // Remove "JOU", "MA" and "AP" from those labels
+    vector<string> removed_ressources = vector<string>{"JOU", "MA", "AP"};
+    for (auto element : removed_ressources){
+        auto pos = find(ressources.begin(), ressources.end(), element);
+        if (pos != ressources.end()){
+            ressources.erase(pos);
+        }
+    };
 
     // Print the main constants
     cout << "Cost per km: " << cost_per_km << endl;

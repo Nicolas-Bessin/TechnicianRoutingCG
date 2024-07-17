@@ -31,10 +31,20 @@ struct MasterSolution {
         this->betas = betas;
         this->objective_value = objective_value;
     }
-    // Destructor
-    ~MasterSolution(){}
 };
 
+// Solution to the integer version of the problem
+struct IntegerSolution {
+    vector<int> coefficients;
+    double objective_value;
+    // Empty constructor
+    IntegerSolution(){}
+    // Constructor
+    IntegerSolution(vector<int> coefficients, double objective_value){
+        this->coefficients = coefficients;
+        this->objective_value = objective_value;
+    }
+};
 
 // Class Route : represents a sequence of nodes, starting at the warehouse, going through interventions and ending at the warehouse
 class Route {

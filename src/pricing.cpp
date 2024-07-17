@@ -190,6 +190,11 @@ vector<Route> solve_pricing_problem(Problem& problem, int pool_size, const Insta
     solver->setCustomProblem(problem);
     solver->setupAlgorithms();
     solver->solve();
+    // If the problem is indeterminate (time limit reached, we return an empty vector)
+    if (solver->getProblem()->getStatus() == PROBLEM_INDETERMINATE) {
+        cout << "Time limit reached for vehicle " << vehicle.id << endl;
+        return vector<Route>();
+    }
     //solver->printBestSolution();
     // Get the solution we found
     vector<Path> solutions = solver->getBestSolutions(pool_size);

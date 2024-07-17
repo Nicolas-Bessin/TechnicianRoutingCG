@@ -3,3 +3,5 @@
 #include "solution.h"
 
 MasterSolution cg_solver(const Instance& instance, const vector<Route>& routes, double time_limit);
+
+IntegerSolution solve_integer_problem(const Instance& instance, const vector<Route>& routes, double time_limit);
