@@ -47,6 +47,8 @@ add_executable(technician_routing
     src/preprocessing.cpp
     src/pricing.h
     src/pricing.cpp
+    src/analysis.h
+    src/analysis.cpp
 )
 
 #Link against the Gurobi library

@@ -2,6 +2,7 @@
 #include "src/preprocessing.h"
 #include "src/master.h"
 #include "src/pricing.h"
+#include "src/analysis.h"
 #include "pathwyse/core/solver.h"
 
 #include <memory>   
@@ -36,7 +37,7 @@ int main(int, char**){
     int pricing_time = 0;
 
     // Global time limit for the column generation algorithm of 60 seconds
-    int time_limit = 15 * 1000;
+    int time_limit = 60 * 1000;
 
     // Count the number of time each vehicle's sub problem reached the time limit
     vector<int> time_limit_reached(instance.vehicles.size(), 0);
@@ -117,6 +118,30 @@ int main(int, char**){
         }
     }
 
+    // Solution analysis
+    cout << "Number of covered interventions : " << count_covered_interventions(integer_solution, routes, instance);
+    cout << " / " << instance.number_interventions << endl;
+
+    cout << "Number of used vehicles : " << count_used_vehicles(integer_solution, routes, instance);
+    cout << " / " << instance.vehicles.size() << endl;
+
+    // Check that all routes are feasible
+    bool all_feasible = true;
+    for (int i = 0; i < routes.size(); i++){
+        const Route& route = routes.at(i);
+        if (!is_route_feasible(route, instance)){
+            cout << "Route " << i << " is not feasible" << endl;
+            all_feasible = false;
+        }
+    }
+    if (all_feasible){
+        cout << "All routes are feasible" << endl;
+    }
+
+    cout << "Time spent travelling : " << time_spent_travelling(integer_solution, routes, instance) << " minutes" << endl;
+    cout << "Time spent working : " << time_spent_working(integer_solution, routes, instance) << " minutes" << endl;
+    cout << "Time spent waiting : " << time_spent_waiting(integer_solution, routes, instance) << " minutes" << endl;
+    
     return 0;
 }
 

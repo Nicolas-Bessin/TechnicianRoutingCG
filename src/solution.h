@@ -51,9 +51,15 @@ struct Route {
     double reduced_cost;
     // Total duration of the interventions along the route
     double total_duration;
+    // Total travelling time of the route
+    double total_travelling_time;
+    // Total waiting time of the route
+    double total_waiting_time;
     // Index of the vehicle that will perform the route
     int vehicle_id;
-    // List of nodes in the route (1 if the intervention is in the route, 0 otherwise)
+    // Sequence of nodes in the route (not strictly necessary for the problem but useful for analysis)
+    std::vector<int> id_sequence;
+    // List of nodes in the route (1 if the node is in the route, 0 otherwise)
     std::vector<int> is_in_route;
     // Start time of these interventions
     std::vector<double> start_times;
@@ -62,14 +68,19 @@ struct Route {
         this->vehicle_id = vehicle_id;
         this->is_in_route = std::vector<int>(number_of_nodes, 0);
         this->start_times = std::vector<double>(number_of_nodes, 0);
+        this->id_sequence = std::vector<int>();
     }
     // Constructor
-    Route(double total_cost, double reduced_cost, double total_duration, int vehicle_id, std::vector<int> is_in_route, std::vector<double> start_times){
+    Route(int vehicle_id, double total_cost, double reduced_cost, double total_duration, double total_travelling_time, double total_waiting_time,
+            std::vector<int> id_sequence, std::vector<int> is_in_route, std::vector<double> start_times){
         this->total_cost = total_cost;
         this->reduced_cost = reduced_cost;
         this->total_duration = total_duration;
+        this->total_travelling_time = total_travelling_time;
+        this->total_waiting_time = total_waiting_time;
         this->vehicle_id = vehicle_id;
         this->is_in_route = is_in_route;
         this->start_times = start_times;
+        this->id_sequence = id_sequence;
     }
 };

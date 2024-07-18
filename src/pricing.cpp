@@ -221,6 +221,9 @@ vector<Route> solve_pricing_problem(unique_ptr<Problem> & problem, int pool_size
         // Get all the info we need to build a Route object
         double total_cost = vehicle.cost;
         double total_duration = 0;
+        double total_travelling_time = 0;
+        double total_waiting_time = 0;
+        vector<int> id_sequence;
         vector<int> is_in_route(instance.nodes.size(), 0);
         vector<double> start_times(instance.nodes.size(), 0);
         double reduced_cost = - path.getObjective(); // (We got the max reduced cost by minimizing the opposite of the reduced cost)
@@ -229,6 +232,8 @@ vector<Route> solve_pricing_problem(unique_ptr<Problem> & problem, int pool_size
         for (int i = 0; i < tour.size() - 1; i++) {
             int true_i = tour[i] == origin || tour[i] == destination ? vehicle.depot : vehicle.interventions[tour[i]];
             int true_j = tour[i + 1] == origin || tour[i + 1] == destination ? vehicle.depot : vehicle.interventions[tour[i + 1]];
+            // Update the sequence of interventions
+            id_sequence.push_back(true_i);
             // Update the is_in_route and start_times vectors
             is_in_route[true_i] = 1;
             start_times[true_i] = current_time;
@@ -239,27 +244,21 @@ vector<Route> solve_pricing_problem(unique_ptr<Problem> & problem, int pool_size
             // Update the running total cost, duration of interventions and travel time
             total_cost += instance.cost_per_km * travel_distance;
             total_duration += duration;
-            // Perform some feasibility checks
-            // Is the time window for i respected ?
-            if (current_time < instance.nodes[true_i].start_window || current_time + duration > instance.nodes[true_i].end_window) {
-                cout << "Time window for intervention " << true_i << " not respected" << endl;
-            }
+            total_travelling_time += travel_time;
+            
             // Update the current time
             double start_time_next = instance.nodes[true_j].start_window;
+            double waiting_time = std::max(0.0, start_time_next - (current_time + duration + travel_time));
+            total_waiting_time += waiting_time;
             current_time = std::max(current_time + duration + travel_time, start_time_next); 
         }
         // Add the checks related to the last intervention
         int true_last = tour.back() == origin || tour.back() == destination ? vehicle.depot : vehicle.interventions[tour.back()];
+        id_sequence.push_back(true_last);
         is_in_route[true_last] = 1;
         start_times[true_last] = current_time;
-        if (current_time < instance.nodes[true_last].start_window || current_time > instance.nodes[true_last].end_window) {
-            cout << "Time window for intervention " << true_last << " not respected" << endl;
-        }
-        // Also check that the last intervention is well and truly the vehicle's depot
-        if (true_last != vehicle.depot) {
-            cout << "Last intervention is not the depot" << endl;
-        }
-        routes.push_back(Route(total_cost, reduced_cost, total_duration, vehicle.id, is_in_route, start_times));
+        
+        routes.push_back(Route(vehicle.id, total_cost, reduced_cost, total_duration, total_travelling_time, total_waiting_time, id_sequence, is_in_route, start_times));
     }
 
     
