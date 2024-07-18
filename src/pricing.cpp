@@ -1,11 +1,17 @@
 #include "pricing.h"
 #include "constants.h"
-#include <map>
-#include <iostream>
 #include "../pathwyse/core/solver.h"
 
+#include <map>
+#include <iostream>
+#include <memory>
 
-Problem* create_pricing_instance(const Instance& instance, const Vehicle& vehicle) {
+using std::vector, std::cout, std::endl, std::list;
+using std::unique_ptr, std::make_unique;
+
+
+unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehicle& vehicle) {
+    
     // Get the number of nodes in the problem : equal to the number of available interventions + 2
     // +1 for the "depature" warehouse and +1 for the "arrival" warehouse (even tough it is the same place)
     int n_interventions_v = vehicle.interventions.size();
@@ -154,13 +160,13 @@ Problem* create_pricing_instance(const Instance& instance, const Vehicle& vehicl
 
     // Set the ressources of the problem
     problem->setResources(ressources);
-    //problem.printProblem();
+    //problem->printProblem();
 
-    return problem;
+    return unique_ptr<Problem>(problem);
 }
 
 
-void update_pricing_instance(Problem* pricing_problem, const vector<double>& alphas, double beta,
+void update_pricing_instance(unique_ptr<Problem> & pricing_problem, const vector<double>& alphas, double beta,
         const Instance& instance, const Vehicle& vehicle) {
     // Get the number of nodes in the problem : equal to the number of available interventions + 2
     int n_interventions_v = vehicle.interventions.size();
@@ -181,7 +187,7 @@ void update_pricing_instance(Problem* pricing_problem, const vector<double>& alp
 }
 
 
-vector<Route> solve_pricing_problem(Problem* problem, int pool_size, const Instance& instance, const Vehicle& vehicle) {
+vector<Route> solve_pricing_problem(unique_ptr<Problem> & problem, int pool_size, const Instance& instance, const Vehicle& vehicle) {
     // Get the origin and destination of the problem
     int origin = problem->getOrigin();
     int destination = problem->getDestination();

@@ -1,7 +1,8 @@
 #include <gurobi_c++.h>
 #include "master.h"
 
-using namespace std;
+using std::vector;
+using std::cout, std::endl;
 
 MasterSolution cg_solver(const Instance& instance, const vector<Route>& routes, double time_limit){
     try {

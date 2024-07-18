@@ -6,9 +6,10 @@
 // For the gcd function
 #include <algorithm>
 
-
-using namespace std;
 using json = nlohmann::json;
+using std::vector, std::string, std::map, std::set;
+using std::ifstream, std::cout, std::endl;
+using std::min, std::max, std::__gcd;
 
 // Convert a start time into a relative time 
 // 0 is the beginning of the work day
@@ -54,9 +55,9 @@ Node parse_intervention(json data){
     bool is_long = duration >= LONG_INTERVENTION;
     map<string, int> skills = map<string, int>();
     // data.at("skills") is a list of list of skills (i.e the skills needed by each technician)
-    for (auto skills_per_tech : data.at("skills")){
-        for (auto skill : skills_per_tech){
-            // If the skill is not in the map, it's initialized to 0
+    for (const auto &skills_per_tech : data.at("skills")){
+        for (const auto &skill : skills_per_tech){
+            // If the skill is not in the map, it's initialized to 0 using the [] access operator
             skills[skill] += 1;
         }
     }
@@ -77,7 +78,7 @@ Node parse_warehouse(json data){
 Technician parse_technician(json data){
     string id = data.at("id");
     set<string> skills = set<string>();
-    for (auto skill : data.at("skills")){
+    for (const auto &skill : data.at("skills")){
         skills.insert(skill);
     }
     map<string, int> capacities = data.at("capacities");
@@ -102,7 +103,7 @@ Instance parse_file(string filename){
     vector<string> ressources = constants.at("capacities_labels");
     // Remove "JOU", "MA" and "AP" from those labels
     vector<string> removed_ressources = vector<string>{"JOU", "MA", "AP"};
-    for (auto element : removed_ressources){
+    for (const auto &element : removed_ressources){
         auto pos = find(ressources.begin(), ressources.end(), element);
         if (pos != ressources.end()){
             ressources.erase(pos);
@@ -171,7 +172,7 @@ Instance parse_file(string filename){
         }
     }
     // We then add every technician not into a fixed team as a team of one
-    for (auto tech : technicians){
+    for (const auto &tech : technicians){
         if (tech_in_team.find(tech.first) == tech_in_team.end()){
             tech_id_per_team.push_back(vector<string>{tech.first});
         }
@@ -186,8 +187,8 @@ Instance parse_file(string filename){
         // Build the map of available skills for the vehicle
         map<string, int> skills = map<string, int>();
         for (int j = 0; j < tech_id_per_team[i].size(); j++){
-            for (auto skill : technicians[tech_id_per_team[i][j]].skills){
-                // If accessing the skill for the first time, it is initialized to 0
+            for (const auto &skill : technicians[tech_id_per_team[i][j]].skills){
+                // If accessing the skill for the first time, it is initialized to 0 by the [] operator
                 skills[skill] += 1;
             }
         }
@@ -229,7 +230,7 @@ Instance parse_file(string filename){
         for (int j = 0; j < nb_vehicles; j++){
             // We must ensure that the vehicle has enough technicians with each skill to do the intervention
             bool can_do_intervention = true;
-            for (auto const& [skill, quantity] : nodes[i].required_skills){
+            for (const auto & [skill, quantity] : nodes[i].required_skills){
                 // If the skill needed for the intervention is not in the vehicle, the vehicle cannot do the intervention
                 if (vehicles[j].skills.find(skill) == vehicles[j].skills.end()){
                     can_do_intervention = false;

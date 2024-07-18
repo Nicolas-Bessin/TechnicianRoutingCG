@@ -1,8 +1,7 @@
 #include "preprocessing.h"
 #include <iostream>
 
-using namespace std;
-
+using std::cout, std::endl;
 
 void preprocess_interventions(Instance &instance){
     // Number of already non-ambiguous interventions
