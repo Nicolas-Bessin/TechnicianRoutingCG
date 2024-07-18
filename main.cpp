@@ -36,7 +36,7 @@ int main(int, char**){
     int pricing_time = 0;
 
     // Global time limit for the column generation algorithm of 60 seconds
-    int time_limit = 60 * 1000;
+    int time_limit = 15 * 1000;
 
     // Count the number of time each vehicle's sub problem reached the time limit
     vector<int> time_limit_reached(instance.vehicles.size(), 0);

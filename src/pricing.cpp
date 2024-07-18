@@ -127,6 +127,15 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
     time_window->init(origin, destination);
     ressources.push_back(time_window);
 
+    // Create a node limit ressource set to the number of nodes in the problem
+    NodeLim* node_limit = new NodeLim();
+    node_limit->initData(false, n_interventions_v + 2);
+    node_limit->setName("Node Limit");
+    // Set the UB and LB of the node limit ressource
+    node_limit->setUB(n_interventions_v + 2);
+    // add the node limit ressource to the vector of ressources
+    ressources.push_back(node_limit);
+
 
     // We then want to add the capacity ressources to the problem
     int nb_capacities = instance.capacities_labels.size();
@@ -151,15 +160,6 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
         // Add it to the vector of ressources
         ressources.push_back(capacity);
     }
-
-    // Finaly, create a node limit ressource set to the number of nodes in the problem
-    NodeLim* node_limit = new NodeLim();
-    node_limit->initData(false, n_interventions_v + 2);
-    node_limit->setName("Node Limit");
-    // Set the UB and LB of the node limit ressource
-    node_limit->setUB(n_interventions_v + 2);
-    // add the node limit ressource to the vector of ressources
-    ressources.push_back(node_limit);
 
     // Set the ressources of the problem
     problem->setResources(ressources);
