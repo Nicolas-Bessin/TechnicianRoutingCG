@@ -6,8 +6,10 @@
 #include <iostream>
 #include <memory>
 
-using std::vector, std::cout, std::endl, std::list;
-using std::unique_ptr, std::make_unique;
+
+using std::cout, std::endl;
+using std::vector, std::list, std::string;
+using std::unique_ptr;
 
 
 unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehicle& vehicle) {
@@ -74,34 +76,10 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
     // Set this resource as the objective function
     problem->setObjective(objective);
 
-
-    // We then want to add the capacity ressources to the problem
-    int nb_ressources = instance.capacities_labels.size();
     // Create a vector of ressources for the problem
     vector<Resource*> ressources;
-    // For every label of capacity, we create a new capacity ressource
-    for (int k = 0; k < nb_ressources; k++) {
-        // Create a new capacity ressource
-        Capacity* capacity = new Capacity();
-        capacity->initData(false, n_interventions_v + 2);
-        // Set the name of the ressource
-        capacity->setName(instance.capacities_labels[k]);
-        // Set its upper bound
-        capacity->setUB(vehicle.capacities.at(instance.capacities_labels[k]));
-        // Set the node consumptions for the ressource
-        for (int i = 0; i < n_interventions_v; i++) {
-            // Get the intervention referenced by the index i
-            const Node* intervention = &(instance.nodes[vehicle.interventions[i]]);
-            // Get the capacity consumption of the intervention
-            int consumption = intervention->quantities.at(instance.capacities_labels[k]);
-            // Set the capacity consumption of the intervention
-            capacity->setNodeCost(i, consumption);
-        }
-        // Add it to the vector of ressources
-        ressources.push_back(capacity);
-    }
 
-    // Also add the time window ressource to the problem
+    // Add the time window ressource to the problem as the critical ressource
     TimeWindow* time_window = new TimeWindow();
     time_window->initData(false, n_interventions_v + 2);
     time_window->setName("Time Window");
@@ -148,6 +126,31 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
     // Add the time window ressource to the vector of ressources
     time_window->init(origin, destination);
     ressources.push_back(time_window);
+
+
+    // We then want to add the capacity ressources to the problem
+    int nb_capacities = instance.capacities_labels.size();
+    // For every label of capacity, we create a new capacity ressource
+    for (const string & label : instance.capacities_labels) {
+        // Create a new capacity ressource
+        Capacity* capacity = new Capacity();
+        capacity->initData(false, n_interventions_v + 2);
+        // Set the name of the ressource
+        capacity->setName(label);
+        // Set its upper bound
+        capacity->setUB(vehicle.capacities.at(label));
+        // Set the node consumptions for the ressource
+        for (int i = 0; i < n_interventions_v; i++) {
+            // Get the intervention referenced by the index i
+            const Node* intervention = &(instance.nodes[vehicle.interventions[i]]);
+            // Get the capacity consumption of the intervention
+            int consumption = intervention->quantities.at(label);
+            // Set the capacity consumption of the intervention
+            capacity->setNodeCost(i, consumption);
+        }
+        // Add it to the vector of ressources
+        ressources.push_back(capacity);
+    }
 
     // Finaly, create a node limit ressource set to the number of nodes in the problem
     NodeLim* node_limit = new NodeLim();

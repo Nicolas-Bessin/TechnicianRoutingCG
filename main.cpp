@@ -36,7 +36,7 @@ int main(int, char**){
     int pricing_time = 0;
 
     // Global time limit for the column generation algorithm of 60 seconds
-    int time_limit = 10 * 1000;
+    int time_limit = 60 * 1000;
 
     // Count the number of time each vehicle's sub problem reached the time limit
     vector<int> time_limit_reached(instance.vehicles.size(), 0);
@@ -51,11 +51,12 @@ int main(int, char**){
         solution = cg_solver(instance, routes, 60);
         auto end = chrono::steady_clock::now();
         int diff = chrono::duration_cast<chrono::milliseconds>(end - start).count();
-        cout << "Master problem solved in " << diff << " ms" << endl;
+        cout << "Master problem solved in " << diff << " ms \n";
         master_time += diff;
         // Solve each pricing sub problem
         auto start_pricing = chrono::steady_clock::now();
-        bool is_any_route_added = false;
+        int n_added_routes = 0;
+
         for (int v = 0; v < instance.vehicles.size(); v++){
             Vehicle vehicle = instance.vehicles.at(v);
             update_pricing_instance(pricing_problems.at(v), solution.alphas, solution.betas.at(vehicle.id), instance, vehicle);
@@ -69,17 +70,17 @@ int main(int, char**){
                 if (route.reduced_cost > 0){
                     //cout << "Route added with reduced cost " << route.reduced_cost << endl;
                     routes.push_back(route);
-                    is_any_route_added = true;
+                    n_added_routes++;
                 }
             }
         }
         auto end_pricing = chrono::steady_clock::now();
         int diff_pricing = chrono::duration_cast<chrono::milliseconds>(end_pricing - start_pricing).count();
-        cout << "Pricing sub problems solved in " << diff_pricing << " ms" << endl;
+        cout << "Pricing sub problems solved in " << diff_pricing << " ms - Added " << n_added_routes << " routes \n";
         pricing_time += diff_pricing;
-        cout << "Iteration " << iteration << " - Objective value : " << solution.objective_value << endl;
+        cout << "Iteration " << iteration << " - Objective value : " << solution.objective_value << "\n";
         // If no route was added, we stop the algorithm
-        if (!is_any_route_added){
+        if (n_added_routes == 0){
             stop = true;
         }
         iteration++;
