@@ -1,8 +1,11 @@
 #include "analysis.h"
 #include <map>
 #include <string>
+#include <set>
+#include <algorithm>
 
-using std::vector, std::map, std::string;
+using std::vector, std::map, std::string, std::set;
+using std::find;
 using std::cout, std::endl;
 
 int count_covered_interventions(const IntegerSolution& solution, const vector<Route>& routes, const Instance& instance) {
@@ -183,4 +186,36 @@ double time_spent_waiting(const IntegerSolution& solution, const vector<Route>& 
         }
     }
     return total_time;
+}
+
+
+int count_coverable_interventions(const IntegerSolution& solution, const vector<Route>& routes, const Instance& instance) {
+    int nb_routes = routes.size();
+    int nb_interventions = instance.number_interventions;
+    set<int> coverable_inters;
+    // Get the indexes of the vehicles used in the solution
+    vector<int> used_vehicles;
+    for (int i = 0; i < nb_routes; i++) {
+        if (solution.coefficients[i] > 0) {
+            used_vehicles.push_back(routes[i].vehicle_id);
+        }
+    }
+
+    // Go through all interventions
+    for (int i = 0; i < nb_interventions; i++) {
+        // Check if the intervention can be performed by the vehicles used in the solution
+        const Node& intervention = instance.nodes[i];
+        bool can_be_covered = false;
+        for (int vehicle_id : used_vehicles) {
+            const Vehicle& vehicle = instance.vehicles[vehicle_id];
+            if (find(vehicle.interventions.begin(), vehicle.interventions.end(), i) != vehicle.interventions.end()) {
+                can_be_covered = true;
+                break;
+            }
+        }
+        if (can_be_covered) {
+            coverable_inters.insert(i);
+        }
+    }
+    return coverable_inters.size();
 }

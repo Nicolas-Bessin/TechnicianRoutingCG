@@ -125,6 +125,8 @@ int main(int, char**){
     cout << "Number of used vehicles : " << count_used_vehicles(integer_solution, routes, instance);
     cout << " / " << instance.vehicles.size() << endl;
 
+    cout << "Number of interventions that can be covered : " << count_coverable_interventions(integer_solution, routes, instance) << endl;
+
     // Check that all routes are feasible
     bool all_feasible = true;
     for (int i = 0; i < routes.size(); i++){
