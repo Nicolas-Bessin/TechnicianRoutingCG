@@ -56,7 +56,7 @@ struct Node {
     }
 };
 
-double metric(const Node* node1, const Node* node2, std::vector<std::vector<double>> metric_matrix);
+double metric(const Node& node1, const Node& node2, std::vector<std::vector<double>> metric_matrix);
 
 struct Technician {
     std::string id;

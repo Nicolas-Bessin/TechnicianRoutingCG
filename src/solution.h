@@ -84,3 +84,11 @@ struct Route {
         this->id_sequence = id_sequence;
     }
 };
+
+
+// Checks if two routes are equal
+// That is, if they have :
+// - the same vehicle_id
+// - the same sequence vector
+// - the same start times
+bool operator==(const Route& lhs, const Route& rhs);

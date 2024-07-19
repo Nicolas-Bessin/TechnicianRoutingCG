@@ -45,6 +45,8 @@ add_executable(technician_routing
     src/master.cpp
     src/preprocessing.h
     src/preprocessing.cpp
+    src/solution.h
+    src/solution.cpp
     src/pricing.h
     src/pricing.cpp
     src/analysis.h

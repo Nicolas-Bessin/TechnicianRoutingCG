@@ -120,7 +120,7 @@ bool is_route_feasible(const Route& route, const Instance& instance) {
         }
         // Update the current time
         const Node& next_intervention = instance.nodes[route.id_sequence[i + 1]];
-        double travel_time = metric(&intervention, &next_intervention, instance.time_matrix);
+        double travel_time = metric(intervention, next_intervention, instance.time_matrix);
         current_time += duration + travel_time;
         // If we arrive too early, we will wait
         if (current_time < next_intervention.start_window) {
@@ -218,4 +218,50 @@ int count_coverable_interventions(const IntegerSolution& solution, const vector<
         }
     }
     return coverable_inters.size();
+}
+
+
+int count_routes_with_duplicates(const vector<Route>& routes) {
+    int nb_routes = routes.size();
+    vector<int8_t> has_duplicate(nb_routes, 0);
+
+    for (int i = 0; i < nb_routes; i++) {
+        for (int j = i + 1; j < nb_routes; j++) {
+            if (routes[i] == routes[j]) {
+                has_duplicate[i] = 1;
+                has_duplicate[j] = 1;
+            }
+        }
+    }
+
+    int count = 0;
+    for (int i = 0; i < nb_routes; i++) {
+        count += has_duplicate[i];
+    }
+    return count;
+}
+
+int count_used_routes_with_duplicates(const IntegerSolution& solution, const vector<Route>& routes) {
+    int nb_routes = routes.size();
+    vector<int8_t> is_used_and_has_duplicate(nb_routes, 0);
+    vector<int> number_of_duplicates(nb_routes, 0);
+    for (int i = 0; i < nb_routes; i++) {
+        for (int j = i + 1; j < nb_routes; j++) {
+            if (routes[i] == routes[j]) {
+                number_of_duplicates[i]++;
+                number_of_duplicates[j]++;
+                if (solution.coefficients[i] > 0 ) {
+                    is_used_and_has_duplicate[i] = 1;
+                } else if (solution.coefficients[j] > 0) {
+                    is_used_and_has_duplicate[j] = 1;
+                }
+            }
+        }
+    }
+
+    int count = 0;
+    for (int i = 0; i < nb_routes; i++) {
+        count += is_used_and_has_duplicate[i];
+    }
+    return count;
 }

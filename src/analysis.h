@@ -20,3 +20,7 @@ double time_spent_waiting(const IntegerSolution& solution, const std::vector<Rou
 // Count the number of interventions the vehicles used in the solution can perform
 // (without considering the time windows, only the skills)
 int count_coverable_interventions(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
+
+int count_routes_with_duplicates(const std::vector<Route>& routes);
+
+int count_used_routes_with_duplicates(const IntegerSolution& solution, const std::vector<Route>& routes);

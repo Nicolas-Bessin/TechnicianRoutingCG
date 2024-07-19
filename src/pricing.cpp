@@ -42,32 +42,32 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
 
     // Set the costs of the arcs
     for (int i = 0; i < n_interventions_v; i++) {
-        const Node* intervention_i = &(instance.nodes[vehicle.interventions[i]]);
+        const Node& intervention_i = (instance.nodes[vehicle.interventions[i]]);
         for (int j = 0; j < n_interventions_v; j++) {
             if (i == j) continue;
             // First step is adding an arc to the underlying network
             problem->setNetworkArc(i, j);
             // Get the intervention referenced by the index j
-            const Node* intervention_j = &(instance.nodes[vehicle.interventions[j]]);
+            const Node& intervention_j = instance.nodes[vehicle.interventions[j]];
             // Get the distance between the two interventions
             double distance = metric(intervention_i, intervention_j, instance.distance_matrix);
-            double arc_cost = instance.cost_per_km * distance;
+            double arc_cost = instance.cost_per_km * distance - instance.M * intervention_j.duration;
             objective->setArcCost(i, j, arc_cost);  
         }
     }
     // Also setup the arcs between the warehouse and the interventions
     for (int i = 0; i < n_interventions_v; i++) {
         // get the intervention referenced by the index i
-        const Node* intervention = &(instance.nodes[vehicle.interventions[i]]);
+        const Node& intervention = (instance.nodes[vehicle.interventions[i]]);
         // Outgoing arcs from the warehouse
         problem->setNetworkArc(origin, i);
-        double distance_out = metric(&(instance.nodes[vehicle.depot]), intervention, instance.distance_matrix);
+        double distance_out = metric((instance.nodes[vehicle.depot]), intervention, instance.distance_matrix);
         // Set the arc cost, also adding the fixed cost of leaving the depot
         objective->setArcCost(origin, i, instance.cost_per_km * distance_out + vehicle.cost );
         // Incoming arcs to the warehouse
         problem->setNetworkArc(i, destination);
         // Distance is probably the same as the outgoing distance but eh we never know
-        double distance_in = metric(intervention, &(instance.nodes[vehicle.depot]), instance.distance_matrix);
+        double distance_in = metric(intervention, (instance.nodes[vehicle.depot]), instance.distance_matrix);
         // Here we only consider the cost of travelng, the node costs have already been set
         double arc_cost = instance.cost_per_km * distance_in;
         objective->setArcCost(i, destination, arc_cost);
@@ -103,8 +103,8 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
         for (int j = 0; j < n_interventions_v; j++) {
             if (i == j) continue;
             // Get the two interventions referenced by the indices i and j
-            const Node* intervention_i = &(instance.nodes[vehicle.interventions[i]]);
-            const Node* intervention_j = &(instance.nodes[vehicle.interventions[j]]);
+            const Node& intervention_i = (instance.nodes[vehicle.interventions[i]]);
+            const Node& intervention_j = (instance.nodes[vehicle.interventions[j]]);
             // Get the time it takes to go from intervention i to intervention j
             double travel_time = metric(intervention_i, intervention_j, instance.time_matrix);
             // Set the time consumption on the arc
@@ -114,13 +114,13 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
     // And finally the time consumption on the arcs between the warehouse and the interventions
     for (int i = 0; i < n_interventions_v; i++) {
         // Get the intervention referenced by the index i
-        const Node* intervention = &(instance.nodes[vehicle.interventions[i]]);
+        const Node& intervention = (instance.nodes[vehicle.interventions[i]]);
         // Outgoing arcs from the warehouse
-        double travel_time_out = metric(&(instance.nodes[vehicle.depot]), intervention, instance.time_matrix);
+        double travel_time_out = metric((instance.nodes[vehicle.depot]), intervention, instance.time_matrix);
         time_window->setArcCost(origin, i, travel_time_out);
         // Incoming arcs to the warehouse
         // Time is probably the same as the outgoing time but eh we never know
-        double travel_time_in = metric(intervention, &(instance.nodes[vehicle.depot]), instance.time_matrix);
+        double travel_time_in = metric(intervention, (instance.nodes[vehicle.depot]), instance.time_matrix);
         time_window->setArcCost(i, destination, travel_time_in);
     }
     // Add the time window ressource to the vector of ressources
@@ -179,13 +179,12 @@ void update_pricing_instance(unique_ptr<Problem> & pricing_problem, const vector
     DefaultCost* objective = (DefaultCost*) pricing_problem->getObj();
     // Put in the node costs : alpha_i - M * duration_i
     for (int i = 0; i < n_interventions_v; i++) {
-        const Node* intervention = &(instance.nodes[vehicle.interventions[i]]);
-        double node_cost = alphas[i] - instance.M * intervention->duration;
+        int true_i = vehicle.interventions[i];
+        double node_cost = alphas[true_i];
         objective->setNodeCost(i, node_cost);
     }
-    // Finally, put the fixed part of the cost on the starting node
+    // Put in the constant part (only beta in the pricing problem, we will take the vehicle cost into account later)
     objective->setNodeCost(origin, beta + vehicle.cost);
-
     return;
 }
 
@@ -210,14 +209,15 @@ vector<Route> solve_pricing_problem(unique_ptr<Problem> & problem, int pool_size
     //cout << "Solver found " << solver->getNumberOfSolutions() << " solutions" << endl;
     // Convert each Path object to a Route object
     vector<Route> routes;
-    for (auto path : solutions) {
+    for (auto& path : solutions) {
         // Get the sequence as a vector of integers
+        double reduced_cost = - path.getObjective(); // (We got the max reduced cost by minimizing the opposite of the reduced cost)
         list<int> tour_list = path.getTour();
         vector<int> tour(tour_list.begin(), tour_list.end());
         // Check that we found an elementary path
-        if (!path.isElementary()) {
-            cout << "Vehicle " << vehicle.id << " : Path is not elementary" << endl;
-        }
+        // if (!path.isElementary()) {
+        //     cout << "Vehicle " << vehicle.id << " : Path is not elementary" << endl;
+        // }
         // Get all the info we need to build a Route object
         double total_cost = vehicle.cost;
         double total_duration = 0;
@@ -226,7 +226,7 @@ vector<Route> solve_pricing_problem(unique_ptr<Problem> & problem, int pool_size
         vector<int> id_sequence;
         vector<int> is_in_route(instance.nodes.size(), 0);
         vector<double> start_times(instance.nodes.size(), 0);
-        double reduced_cost = - path.getObjective(); // (We got the max reduced cost by minimizing the opposite of the reduced cost)
+        
         // Keep track of the time ellapsed
         double current_time = 0;
         for (int i = 0; i < tour.size() - 1; i++) {
@@ -239,8 +239,8 @@ vector<Route> solve_pricing_problem(unique_ptr<Problem> & problem, int pool_size
             start_times[true_i] = current_time;
             // Get the duration, and travel time and distance between the two interventions
             int duration = instance.nodes[true_i].duration;
-            double travel_time = metric(&(instance.nodes[true_i]), &(instance.nodes[true_j]), instance.time_matrix);
-            double travel_distance = metric(&(instance.nodes[true_i]), &(instance.nodes[true_j]), instance.distance_matrix);
+            double travel_time = metric((instance.nodes[true_i]), (instance.nodes[true_j]), instance.time_matrix);
+            double travel_distance = metric((instance.nodes[true_i]), (instance.nodes[true_j]), instance.distance_matrix);
             // Update the running total cost, duration of interventions and travel time
             total_cost += instance.cost_per_km * travel_distance;
             total_duration += duration;

@@ -16,16 +16,24 @@ namespace chrono = std::chrono;
 
 int main(int, char**){
 
+    // Parse the instance from a JSON file
+    auto start_parse = chrono::steady_clock::now();
     cout << "Technician Routing Problem using Column Generation" << endl;
     string default_filename = "../data/instance_1.json";
     Instance instance = parse_file(default_filename);
-    preprocess_interventions(instance);
 
+    preprocess_interventions(instance);
+    auto end_parse = chrono::steady_clock::now();
+    int diff_parse = chrono::duration_cast<chrono::milliseconds>(end_parse - start_parse).count();
+
+    auto start_sub_building = chrono::steady_clock::now();
     // Create the pricing sub problems for each vehicle
     vector<unique_ptr<Problem>> pricing_problems;
     for (auto vehicle : instance.vehicles){
         pricing_problems.push_back(create_pricing_instance(instance, vehicle));
     }
+    auto end_sub_building = chrono::steady_clock::now();
+    int diff_sub_building = chrono::duration_cast<chrono::milliseconds>(end_sub_building - start_sub_building).count();
 
 
     // Create a dummy route for the first vehicle
@@ -59,8 +67,8 @@ int main(int, char**){
         int n_added_routes = 0;
 
         for (int v = 0; v < instance.vehicles.size(); v++){
-            Vehicle vehicle = instance.vehicles.at(v);
-            update_pricing_instance(pricing_problems.at(v), solution.alphas, solution.betas.at(vehicle.id), instance, vehicle);
+            const Vehicle& vehicle = instance.vehicles.at(v);
+            update_pricing_instance(pricing_problems.at(v), solution.alphas, solution.betas[v], instance, vehicle);
             vector<Route> best_new_routes = solve_pricing_problem(pricing_problems.at(v), 5, instance, vehicle);
             if (best_new_routes.size() == 0){
                 time_limit_reached[vehicle.id]++;
@@ -68,13 +76,11 @@ int main(int, char**){
             //cout << "Vehicle " << vehicle.id << " : " << best_new_routes.size() << " routes found" << endl;
             // Go through the returned routes, and add them to the master problem if they have a positive reduced cost
             for (const auto &route : best_new_routes){
-                if (route.reduced_cost > 0){
-                    //cout << "Route added with reduced cost " << route.reduced_cost << endl;
-                    routes.push_back(route);
-                    n_added_routes++;
-                }
+                routes.push_back(route);
+                n_added_routes++;
             }
         }
+        
         auto end_pricing = chrono::steady_clock::now();
         int diff_pricing = chrono::duration_cast<chrono::milliseconds>(end_pricing - start_pricing).count();
         cout << "Pricing sub problems solved in " << diff_pricing << " ms - Added " << n_added_routes << " routes \n";
@@ -103,6 +109,8 @@ int main(int, char**){
     cout << "Integer solution found with objective value : " << integer_solution.objective_value << endl;
 
     cout << "-----------------------------------" << endl;
+    cout << "Total time spent parsing the instance : " << diff_parse << " ms" << endl;
+    cout << "Total time spent building the pricing sub problems : " << diff_sub_building << " ms" << endl;
     cout << "Total time spent solving the master problem : " << master_time << " ms" << endl;
     cout << "Total time spent solving the pricing sub problems : " << pricing_time << " ms - average time : " << pricing_time / iteration << " ms" << endl;
     cout << "Total time spent solving the integer problem : " << diff_integer << " ms" << endl;
@@ -139,6 +147,9 @@ int main(int, char**){
     if (all_feasible){
         cout << "All routes are feasible" << endl;
     }
+
+    cout << "Number of routes with duplicates : " << count_routes_with_duplicates(routes) << " / " << routes.size() << endl;
+    cout << "Number of used routes with duplicates : " << count_used_routes_with_duplicates(integer_solution, routes) << endl;
 
     cout << "Time spent travelling : " << time_spent_travelling(integer_solution, routes, instance) << " minutes" << endl;
     cout << "Time spent working : " << time_spent_working(integer_solution, routes, instance) << " minutes" << endl;
