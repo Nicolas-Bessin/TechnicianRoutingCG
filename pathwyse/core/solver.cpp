@@ -234,6 +234,9 @@ void Solver::setupAlgorithms() {
     if (problem) {
         setMainAlgorithm(main_algorithm_name);
         setEnsemble(ensemble_algorithms_names);
+        // If there are ensemble algorithms, print a message
+        if(Parameters::getVerbosity() >= 1 and ensemble_algorithms.size() > 0)
+            std::cout<<"Ensemble algorithms defined: "<< ensemble_algorithms_names.size() << std::endl;
     }
     else std::cout<<"Warning: no problem defined"<<std::endl;
 }

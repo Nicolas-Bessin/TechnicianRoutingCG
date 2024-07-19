@@ -62,15 +62,14 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
         // Outgoing arcs from the warehouse
         problem->setNetworkArc(origin, i);
         double distance_out = metric((instance.nodes[vehicle.depot]), intervention, instance.distance_matrix);
-        // Set the arc cost, also adding the fixed cost of leaving the depot
-        objective->setArcCost(origin, i, instance.cost_per_km * distance_out + vehicle.cost );
+        // Set the arc cost, also adding the fixed cost of the vehicle (but not beta)
+        objective->setArcCost(origin, i, instance.cost_per_km * distance_out);
         // Incoming arcs to the warehouse
         problem->setNetworkArc(i, destination);
         // Distance is probably the same as the outgoing distance but eh we never know
         double distance_in = metric(intervention, (instance.nodes[vehicle.depot]), instance.distance_matrix);
         // Here we only consider the cost of travelng, the node costs have already been set
-        double arc_cost = instance.cost_per_km * distance_in;
-        objective->setArcCost(i, destination, arc_cost);
+        objective->setArcCost(i, destination, instance.cost_per_km * distance_in + vehicle.cost);
     }
 
     // Set this resource as the objective function
@@ -89,9 +88,14 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
         const Node* intervention = &(instance.nodes[vehicle.interventions[i]]);
         // Get the time window of the intervention
         int start_window = intervention->start_window;
+        // Maximum time is the time that leaves enogh time to do the intervention
         int end_window_arrival = intervention->end_window - intervention->duration;
+        int time_to_depot = metric(*intervention, instance.nodes[vehicle.depot], instance.time_matrix);
+        // We also have to make sure, if this intervention is the last one, that we can go back to the depot
+        int max_departure_time = END_DAY - time_to_depot;
+        int end_window = std::min(end_window_arrival, max_departure_time);
         // Set the UB and LB of the time window
-        time_window->setNodeBound(n_interventions_v + 2, i, start_window, end_window_arrival);
+        time_window->setNodeBound(n_interventions_v + 2, i, start_window, end_window);
         // Set the node consumption of the time window
         time_window->setNodeCost(i, intervention->duration);
     }
@@ -134,7 +138,7 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
     // Set the UB and LB of the node limit ressource
     node_limit->setUB(n_interventions_v + 2);
     // add the node limit ressource to the vector of ressources
-    ressources.push_back(node_limit);
+    //ressources.push_back(node_limit);
 
 
     // We then want to add the capacity ressources to the problem
@@ -183,8 +187,8 @@ void update_pricing_instance(unique_ptr<Problem> & pricing_problem, const vector
         double node_cost = alphas[true_i];
         objective->setNodeCost(i, node_cost);
     }
-    // Put in the constant part (only beta in the pricing problem, we will take the vehicle cost into account later)
-    objective->setNodeCost(origin, beta + vehicle.cost);
+    // Put in the constant part (only beta in the pricing problem, the cost of the vehicle is already accounted for on the arcs)
+    objective->setNodeCost(origin, beta);
     return;
 }
 
@@ -215,9 +219,9 @@ vector<Route> solve_pricing_problem(unique_ptr<Problem> & problem, int pool_size
         list<int> tour_list = path.getTour();
         vector<int> tour(tour_list.begin(), tour_list.end());
         // Check that we found an elementary path
-        // if (!path.isElementary()) {
-        //     cout << "Vehicle " << vehicle.id << " : Path is not elementary" << endl;
-        // }
+        if (!path.isElementary()) {
+             cout << "Vehicle " << vehicle.id << " : Path is not elementary" << endl;
+        }
         // Get all the info we need to build a Route object
         double total_cost = vehicle.cost;
         double total_duration = 0;
@@ -253,7 +257,7 @@ vector<Route> solve_pricing_problem(unique_ptr<Problem> & problem, int pool_size
             current_time = std::max(current_time + duration + travel_time, start_time_next); 
         }
         // Add the checks related to the last intervention
-        int true_last = tour.back() == origin || tour.back() == destination ? vehicle.depot : vehicle.interventions[tour.back()];
+        int true_last = vehicle.depot;
         id_sequence.push_back(true_last);
         is_in_route[true_last] = 1;
         start_times[true_last] = current_time;
