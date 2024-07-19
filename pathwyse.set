@@ -7,10 +7,10 @@ problem/coordinates/distance/scaling = 9.6
 problem/coordinates/microdegrees = 1
 
 problem/scaling/override = 0
-problem/scaling = 100.0
-problem/scaling/target = objective
+problem/scaling = 1.0
+problem/scaling/target = all
 
-ensemble/algorithms = PWDefault
+ensemble/algorithms = PWDefaultRelaxQueue, PWDefaultRelaxDom
 ensemble/active = 1
 
 main_algorithm = PWDefault
@@ -23,7 +23,7 @@ algo/default/bidirectional/split = 0.75
 algo/default/reserve = 100000000
 
 algo/default/use_visited = 1
-algo/default/compare_unreachables = 0
+algo/default/compare_unreachables = 1
 algo/default/dssr = off
 algo/default/ng = off
 algo/default/ng/set_size = 8
