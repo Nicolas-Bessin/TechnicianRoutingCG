@@ -30,6 +30,8 @@ struct MasterSolution {
     }
 };
 
+bool operator==(const MasterSolution& lhs, const MasterSolution& rhs);
+
 // Solution to the integer version of the problem
 struct IntegerSolution {
     std::vector<int> coefficients;
@@ -92,3 +94,7 @@ struct Route {
 // - the same sequence vector
 // - the same start times
 bool operator==(const Route& lhs, const Route& rhs);
+
+
+// To be able to define a set of routes:
+bool operator<(const Route& lhs, const Route& rhs);
