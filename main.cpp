@@ -14,6 +14,10 @@
 #include <random>
 
 
+void takes_an_int(int a){
+    std::cout << "Input was : " << a << std::endl;
+}
+
 
 int main(int argc, char *argv[]){
 
@@ -38,7 +42,7 @@ int main(int argc, char *argv[]){
     vector<unique_ptr<Problem>> pricing_problems;
     for (auto vehicle : instance.vehicles){
         string filename = pricing_folder + "v_" + to_string(vehicle.id) + ".txt";
-        //write_pricing_instance(filename, instance, vehicle);
+        write_pricing_instance(filename, instance, vehicle);
         pricing_problems.push_back(create_pricing_instance(instance, vehicle));
     }
     auto end_sub_building = chrono::steady_clock::now();
@@ -82,11 +86,11 @@ int main(int argc, char *argv[]){
 
         for (int v = 0; v < instance.vehicles.size(); v++){
             const Vehicle& vehicle = instance.vehicles.at(v);
-            update_pricing_instance(pricing_problems.at(v), solution.alphas, solution.betas[v], instance, vehicle);
-            vector<Route> best_new_routes = solve_pricing_problem(pricing_problems.at(v), 5, instance, vehicle);
+            //update_pricing_instance(pricing_problems.at(v), solution.alphas, solution.betas[v], instance, vehicle);
+            //vector<Route> best_new_routes = solve_pricing_problem(pricing_problems.at(v), 5, instance, vehicle);
             // Use the file based version
-            //string filepath = pricing_folder + "v_" + to_string(vehicle.id) + ".txt";
-            //vector<Route> best_new_routes = solve_pricing_problem_file(filepath, solution.alphas, solution.betas[v], instance, vehicle);
+            string filepath = pricing_folder + "v_" + to_string(vehicle.id) + ".txt";
+            vector<Route> best_new_routes = solve_pricing_problem_file(filepath, solution.alphas, solution.betas[v], instance, vehicle);
             if (best_new_routes.size() == 0){
                 time_limit_reached[vehicle.id]++;
             }
@@ -115,10 +119,7 @@ int main(int argc, char *argv[]){
         cout << "Iteration " << iteration << " - Objective value : " << solution.objective_value << "\n";
         // If no route was added, we stop the algorithm
         if (n_added_routes == 0){
-            current_vehicle_index++;
-            if (current_vehicle_index == instance.vehicles.size()){
-                stop = true;
-            }
+            stop = true;
         }
         iteration++;
     }
@@ -184,6 +185,9 @@ int main(int argc, char *argv[]){
     cout << "Time spent travelling : " << time_spent_travelling(integer_solution, routes, instance) << " minutes" << endl;
     cout << "Time spent working : " << time_spent_working(integer_solution, routes, instance) << " minutes" << endl;
     cout << "Time spent waiting : " << time_spent_waiting(integer_solution, routes, instance) << " minutes" << endl;
+
+    double a = 0.5;
+    takes_an_int(a);
     
     return 0;
 }

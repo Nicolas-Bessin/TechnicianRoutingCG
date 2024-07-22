@@ -173,6 +173,7 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
 }
 
 
+
 void update_pricing_instance(unique_ptr<Problem> & pricing_problem, const vector<double>& alphas, double beta,
         const Instance& instance, const Vehicle& vehicle) {
     // Get the number of nodes in the problem : equal to the number of available interventions + 2
