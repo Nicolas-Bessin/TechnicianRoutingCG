@@ -88,3 +88,31 @@ bool operator<(const Route& lhs, const Route& rhs){
     // If we reach this point, the two routes are equal
     return false;
 }
+
+
+
+double compute_reduced_cost(const Route& route, const std::vector<double>& alphas, double beta, const Instance& instance) {
+    const Vehicle& vehicle = instance.vehicles[route.vehicle_id];
+    // Compute the reduced cost along the route by going through the nodes
+    double reduced_cost;
+    int tour_length = route.id_sequence.size();
+
+    // Initialize the reduced cost with the cost of the vehicle
+    reduced_cost = - beta - vehicle.cost;
+
+    // Go through the nodes in the route
+    for (int i = 0; i < tour_length - 1; i++) {
+        const Node& node = instance.nodes[route.id_sequence[i]];
+        const Node& next_node = instance.nodes[route.id_sequence[i + 1]];
+        // Add the cost associated with the node
+        reduced_cost += instance.M * node.duration - alphas.at(route.id_sequence[i]);
+        // Then add the cost associated with the arc
+        double distance = metric(node, next_node, instance.distance_matrix);
+        reduced_cost -= distance * instance.cost_per_km;
+    }
+    // Add the cost associated with the last node
+    const Node& last_node = instance.nodes[route.id_sequence[tour_length - 1]];
+    reduced_cost += instance.M * last_node.duration; // should add 0
+
+    return reduced_cost;
+}

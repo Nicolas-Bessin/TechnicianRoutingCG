@@ -93,7 +93,13 @@ int main(int argc, char *argv[]){
             // cout << "Vehicle " << vehicle.id << " : " << best_new_routes.size() << " routes found" << endl;
             // Go through the returned routes, and add them to the master problem if they have a positive reduced cost
             for (const auto &route : best_new_routes){
-                if (route.reduced_cost > -0.0001){
+                double computed_reduced_cost = compute_reduced_cost(route, solution.alphas, solution.betas[v], instance);
+                if (v == 0) {
+                    cout << "Computed reduced cost : " << computed_reduced_cost << " - returned reduced cost : " << route.reduced_cost;
+                    cout << " - vehicle cost : " << vehicle.cost << " beta : " << solution.betas[v] << endl;
+                }
+
+                if (computed_reduced_cost > 0){
                     routes.push_back(route);
                     n_added_routes++;
                     max_reduced_cost = std::max(max_reduced_cost, route.reduced_cost);

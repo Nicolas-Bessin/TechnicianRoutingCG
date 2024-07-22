@@ -64,7 +64,9 @@ MasterSolution cg_solver(const Instance& instance, const vector<Route>& routes, 
         // Get the coefficients of the variables
         vector<double> coefficients;
         for (int i = 0; i < variables.size(); i++){
-            coefficients.push_back(variables[i].get(GRB_DoubleAttr_X));
+            string var_name = "x_" + std::to_string(i);
+            GRBVar var = master.getVarByName(var_name);
+            coefficients.push_back(var.get(GRB_DoubleAttr_X));
         }
 
         // Get the duals of the constraints
