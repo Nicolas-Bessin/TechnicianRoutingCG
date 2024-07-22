@@ -29,7 +29,7 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
         destination,
         0,
         false,
-        false,
+        true,
         true
     );
     // Initialize the problem

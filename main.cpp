@@ -2,6 +2,7 @@
 #include "src/preprocessing.h"
 #include "src/master.h"
 #include "src/pricing.h"
+#include "src/pricing_file/pricing_file.h"
 #include "src/analysis.h"
 #include "pathwyse/core/solver.h"
 
@@ -9,12 +10,13 @@
 #include <iostream>
 #include <chrono>
 
-using std::cout, std::endl;
-using std::vector, std::string;
-using std::unique_ptr;
-namespace chrono = std::chrono;
+
 
 int main(int, char**){
+    using std::cout, std::endl;
+    using std::vector, std::string, std::to_string;
+    using std::unique_ptr;
+    namespace chrono = std::chrono;
 
     // Parse the instance from a JSON file
     auto start_parse = chrono::steady_clock::now();
@@ -28,8 +30,10 @@ int main(int, char**){
 
     auto start_sub_building = chrono::steady_clock::now();
     // Create the pricing sub problems for each vehicle
+    const string pricing_folder = "../pricing_instances/";
     vector<unique_ptr<Problem>> pricing_problems;
     for (auto vehicle : instance.vehicles){
+        write_pricing_instance(pricing_folder, instance, vehicle);
         pricing_problems.push_back(create_pricing_instance(instance, vehicle));
     }
         auto end_sub_building = chrono::steady_clock::now();
@@ -68,16 +72,21 @@ int main(int, char**){
 
         for (int v = 0; v < instance.vehicles.size(); v++){
             const Vehicle& vehicle = instance.vehicles.at(v);
-            update_pricing_instance(pricing_problems.at(v), solution.alphas, solution.betas[v], instance, vehicle);
-            vector<Route> best_new_routes = solve_pricing_problem(pricing_problems.at(v), 5, instance, vehicle);
+            //update_pricing_instance(pricing_problems.at(v), solution.alphas, solution.betas[v], instance, vehicle);
+            //vector<Route> best_new_routes = solve_pricing_problem(pricing_problems.at(v), 5, instance, vehicle);
+            // Use the file based version
+            string filepath = pricing_folder + "v_" + to_string(vehicle.id) + ".txt";
+            vector<Route> best_new_routes = solve_pricing_problem_file(filepath, solution.alphas, solution.betas[v], instance, vehicle);
             if (best_new_routes.size() == 0){
                 time_limit_reached[vehicle.id]++;
             }
             //cout << "Vehicle " << vehicle.id << " : " << best_new_routes.size() << " routes found" << endl;
             // Go through the returned routes, and add them to the master problem if they have a positive reduced cost
             for (const auto &route : best_new_routes){
-                routes.push_back(route);
-                n_added_routes++;
+                if (route.reduced_cost > 0){
+                    routes.push_back(route);
+                    n_added_routes++;
+                }
             }
         }
         

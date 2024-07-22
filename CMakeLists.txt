@@ -49,6 +49,8 @@ add_executable(technician_routing
     src/solution.cpp
     src/pricing.h
     src/pricing.cpp
+    src/pricing_file/pricing_file.h
+    src/pricing_file/pricing_file.cpp
     src/analysis.h
     src/analysis.cpp
 )

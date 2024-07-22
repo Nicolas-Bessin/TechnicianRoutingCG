@@ -56,7 +56,7 @@ struct Node {
     }
 };
 
-double metric(const Node& node1, const Node& node2, std::vector<std::vector<double>> metric_matrix);
+int metric(const Node& node1, const Node& node2, std::vector<std::vector<int>> metric_matrix);
 
 struct Technician {
     std::string id;
@@ -120,10 +120,10 @@ struct Instance {
     std::vector<std::string> capacities_labels;
     // time between the different nodes
     // Indexes are the node ids
-    std::vector<std::vector<double>> time_matrix;
+    std::vector<std::vector<int>> time_matrix;
     // distance between the different nodes
     // Indexes are the node ids
-    std::vector<std::vector<double>> distance_matrix;
+    std::vector<std::vector<int>> distance_matrix;
 
     // Constructor
     Instance(
@@ -137,8 +137,8 @@ struct Instance {
         std::vector<Node> nodes,
         std::vector<Vehicle> vehicles,
         std::vector<std::string> capacities_labels, 
-        std::vector<std::vector<double>> time_matrix,
-        std::vector<std::vector<double>> distance_matrix)
+        std::vector<std::vector<int>> time_matrix,
+        std::vector<std::vector<int>> distance_matrix)
     {
         this->number_interventions = number_interventions;
         this->number_warehouses = number_warehouses;

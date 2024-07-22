@@ -116,8 +116,8 @@ Instance parse_file(string filename){
 
     // Get the matrices of distance and time
     json loc_manager = data.at("loc_manager");
-    vector<vector<double>> distance_matrix = loc_manager.at("matrix").at("distance");
-    vector<vector<double>> time_matrix = loc_manager.at("matrix").at("time");
+    vector<vector<int>> distance_matrix = loc_manager.at("matrix").at("distance");
+    vector<vector<int>> time_matrix = loc_manager.at("matrix").at("time");
 
     // For the interventions and warehouse, we wil put them into a single vector
     // Also build a map from intervention / warehouse id to index in the vector
@@ -289,7 +289,8 @@ Instance parse_file(string filename){
     for (int i = 0; i < distance_matrix.size(); i++){
         for (int j = 0; j < distance_matrix[i].size(); j++){
             if (distance_matrix[i][j] > 0 && time_matrix[i][j] > 0){
-                max_speed = max(max_speed, distance_matrix[i][j] / time_matrix[i][j]);
+                double speed = double(distance_matrix[i][j]) / time_matrix[i][j];
+                max_speed = max(max_speed, speed);
             }
         }
     }
