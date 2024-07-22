@@ -7,7 +7,7 @@ problem/coordinates/distance/scaling = 9.6
 problem/coordinates/microdegrees = 1
 
 problem/scaling/override = 0
-problem/scaling = 1.0
+problem/scaling = 10
 problem/scaling/target = objective
 
 ensemble/algorithms = PWDefaultRelaxQueue

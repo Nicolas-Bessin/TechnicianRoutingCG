@@ -85,19 +85,19 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
     // For each node, add the UB and LB and node consumption
     for (int i = 0; i < n_interventions_v; i++) {
         // Get the intervention referenced by the index i
-        const Node* intervention = &(instance.nodes[vehicle.interventions[i]]);
+        const Node& intervention = (instance.nodes[vehicle.interventions[i]]);
         // Get the time window of the intervention
-        int start_window = intervention->start_window;
+        int start_window = intervention.start_window;
         // Maximum time is the time that leaves enogh time to do the intervention
-        int end_window_arrival = intervention->end_window - intervention->duration;
-        int time_to_depot = metric(*intervention, instance.nodes[vehicle.depot], instance.time_matrix);
+        int end_window_arrival = intervention.end_window - intervention.duration;
+        int time_to_depot = metric(intervention, instance.nodes[vehicle.depot], instance.time_matrix);
         // We also have to make sure, if this intervention is the last one, that we can go back to the depot
         int max_departure_time = END_DAY - time_to_depot;
         int end_window = std::min(end_window_arrival, max_departure_time);
         // Set the UB and LB of the time window
         time_window->setNodeBound(n_interventions_v + 2, i, start_window, end_window);
         // Set the node consumption of the time window
-        time_window->setNodeCost(i, intervention->duration);
+        time_window->setNodeCost(i, intervention.duration);
     }
     // The time windows on the warehouse :
     time_window->setNodeBound(n_interventions_v + 2, origin, 0, END_DAY);

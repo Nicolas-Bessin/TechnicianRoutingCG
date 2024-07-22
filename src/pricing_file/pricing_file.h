@@ -8,12 +8,10 @@
 
 // Defines the pricing problem for a given vehicle b wirting it to a file.
 // We write the pricing problem under the pathwyse default file format.
-//  @param folder : the folder where the pricing problem will be written
+//  @param filepath : the file path to write the pricing problem
 //  @param instance: the instance of the problem
 //  @param vehicle: the vehicle that will perform the routes
-void write_pricing_instance(const std::string &folder, const Instance &instance, const Vehicle &vehicle);
-
-
+void write_pricing_instance(const std::string &filepath, const Instance &instance, const Vehicle &vehicle);
 
 // Loads, updates using the alpha and beta values, and solves a pricing problem.
 // @param filepath : the path to the pricing problem file

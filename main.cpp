@@ -10,9 +10,13 @@
 #include <iostream>
 #include <chrono>
 
+#include <algorithm>
+#include <random>
 
 
-int main(int, char**){
+
+int main(int argc, char *argv[]){
+
     using std::cout, std::endl;
     using std::vector, std::string, std::to_string;
     using std::unique_ptr;
@@ -33,10 +37,11 @@ int main(int, char**){
     const string pricing_folder = "../pricing_instances/";
     vector<unique_ptr<Problem>> pricing_problems;
     for (auto vehicle : instance.vehicles){
-        write_pricing_instance(pricing_folder, instance, vehicle);
+        string filename = pricing_folder + "v_" + to_string(vehicle.id) + ".txt";
+        //write_pricing_instance(filename, instance, vehicle);
         pricing_problems.push_back(create_pricing_instance(instance, vehicle));
     }
-        auto end_sub_building = chrono::steady_clock::now();
+    auto end_sub_building = chrono::steady_clock::now();
     int diff_sub_building = chrono::duration_cast<chrono::milliseconds>(end_sub_building - start_sub_building).count();
 
 
@@ -58,6 +63,9 @@ int main(int, char**){
     int iteration = 0;
     bool stop = false;
     MasterSolution solution;
+    // Testing out the sequential pricing problem solving
+    int current_vehicle_index = 0;
+
     while (!stop && master_time + pricing_time < time_limit){
         // Solve the master problem
         auto start = chrono::steady_clock::now();
@@ -70,34 +78,41 @@ int main(int, char**){
         auto start_pricing = chrono::steady_clock::now();
         int n_added_routes = 0;
 
+        double max_reduced_cost = 0;
+
         for (int v = 0; v < instance.vehicles.size(); v++){
             const Vehicle& vehicle = instance.vehicles.at(v);
-            //update_pricing_instance(pricing_problems.at(v), solution.alphas, solution.betas[v], instance, vehicle);
-            //vector<Route> best_new_routes = solve_pricing_problem(pricing_problems.at(v), 5, instance, vehicle);
+            update_pricing_instance(pricing_problems.at(v), solution.alphas, solution.betas[v], instance, vehicle);
+            vector<Route> best_new_routes = solve_pricing_problem(pricing_problems.at(v), 5, instance, vehicle);
             // Use the file based version
-            string filepath = pricing_folder + "v_" + to_string(vehicle.id) + ".txt";
-            vector<Route> best_new_routes = solve_pricing_problem_file(filepath, solution.alphas, solution.betas[v], instance, vehicle);
+            //string filepath = pricing_folder + "v_" + to_string(vehicle.id) + ".txt";
+            //vector<Route> best_new_routes = solve_pricing_problem_file(filepath, solution.alphas, solution.betas[v], instance, vehicle);
             if (best_new_routes.size() == 0){
                 time_limit_reached[vehicle.id]++;
             }
-            //cout << "Vehicle " << vehicle.id << " : " << best_new_routes.size() << " routes found" << endl;
+            // cout << "Vehicle " << vehicle.id << " : " << best_new_routes.size() << " routes found" << endl;
             // Go through the returned routes, and add them to the master problem if they have a positive reduced cost
             for (const auto &route : best_new_routes){
-                if (route.reduced_cost > 0){
+                if (route.reduced_cost > -0.0001){
                     routes.push_back(route);
                     n_added_routes++;
+                    max_reduced_cost = std::max(max_reduced_cost, route.reduced_cost);
                 }
             }
         }
-        
+
         auto end_pricing = chrono::steady_clock::now();
         int diff_pricing = chrono::duration_cast<chrono::milliseconds>(end_pricing - start_pricing).count();
-        cout << "Pricing sub problems solved in " << diff_pricing << " ms - Added " << n_added_routes << " routes \n";
+        cout << "Pricing sub problems solved in " << diff_pricing << " ms - Added " << n_added_routes << " routes";
+        cout << " - Max reduced cost : " << max_reduced_cost << "\n";
         pricing_time += diff_pricing;
         cout << "Iteration " << iteration << " - Objective value : " << solution.objective_value << "\n";
         // If no route was added, we stop the algorithm
         if (n_added_routes == 0){
-            stop = true;
+            current_vehicle_index++;
+            if (current_vehicle_index == instance.vehicles.size()){
+                stop = true;
+            }
         }
         iteration++;
     }
@@ -142,7 +157,7 @@ int main(int, char**){
     cout << "Number of used vehicles : " << count_used_vehicles(integer_solution, routes, instance);
     cout << " / " << instance.vehicles.size() << endl;
 
-    cout << "Number of interventions that can be covered : " << count_coverable_interventions(integer_solution, routes, instance) << endl;
+    cout << "Number of interventions that could be covered : " << count_coverable_interventions(integer_solution, routes, instance) << endl;
 
     // Check that all routes are feasible
     bool all_feasible = true;
@@ -195,3 +210,31 @@ int main(int, char**){
 //     cout << " - Is ambiguous : " << intervention->is_ambiguous << " - Is long : " << intervention->is_long;
 //     cout << " - Number of vehicles : " << intervention->nb_vehicles << endl;
 // }
+
+
+        // // Solve the pricing problem for a random subset of 5 vehicles
+        // std::random_device rd;
+        // std::mt19937 g(rd());
+        // std::vector<int> indices(instance.vehicles.size());
+        // std::iota(indices.begin(), indices.end(), 0);
+        // std::shuffle(indices.begin(), indices.end(), g);
+        // for (int i = 0; i < 20; i++){
+        //     int v = indices.at(i);
+        //     const Vehicle& vehicle = instance.vehicles.at(v);
+        //     update_pricing_instance(pricing_problems.at(v), solution.alphas, solution.betas[v], instance, vehicle);
+        //     vector<Route> best_new_routes = solve_pricing_problem(pricing_problems.at(v), 5, instance, vehicle);
+        //     // Use the file based version
+        //     //string filepath = pricing_folder + "v_" + to_string(vehicle.id) + ".txt";
+        //     //vector<Route> best_new_routes = solve_pricing_problem_file(filepath, solution.alphas, solution.betas[v], instance, vehicle);
+        //     if (best_new_routes.size() == 0){
+        //         time_limit_reached[vehicle.id]++;
+        //     }
+        //     //cout << "Vehicle " << vehicle.id << " : " << best_new_routes.size() << " routes found" << endl;
+        //     // Go through the returned routes, and add them to the master problem if they have a positive reduced cost
+        //     for (const auto &route : best_new_routes){
+        //         if (route.reduced_cost > -0.0001){
+        //             routes.push_back(route);
+        //             n_added_routes++;
+        //         }
+        //     }
+        // }

@@ -111,7 +111,7 @@ bool is_route_feasible(const Route& route, const Instance& instance) {
             return false;
         }
         if (current_time + duration > intervention.end_window) {
-            cout << "Intervention " << i << " ends too late" << endl;
+            cout << "Intervention " << i << " ends too late : " << current_time + duration << " > " << intervention.end_window << endl;
             return false;
         }
         // Update the quantities consummed
@@ -139,7 +139,7 @@ bool is_route_feasible(const Route& route, const Instance& instance) {
         return false;
     }
     if (current_time + final_intervention.duration > final_intervention.end_window) {
-        cout << "Final intervention ends too late" << endl;
+        cout << "Final intervention ends too late : " << current_time + final_intervention.duration << " > " << final_intervention.end_window << endl;
         return false;
     }
     // Finally, check that the capacities are respected

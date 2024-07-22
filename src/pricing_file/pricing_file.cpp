@@ -5,14 +5,13 @@
 #include <fstream>
 
 
-void write_pricing_instance(const std::string &folder, const Instance &instance, const Vehicle &vehicle) {
+void write_pricing_instance(const std::string &filepath, const Instance &instance, const Vehicle &vehicle) {
     using std::string, std::to_string;
     using std::ofstream, std::endl;
 
-    string file_name = folder + "v_" + to_string(vehicle.id) + ".txt";
-    ofstream file(file_name);
+    ofstream file(filepath);
     if (!file.is_open()) {
-        throw std::runtime_error("Could not open file " + file_name);
+        throw std::runtime_error("Could not open file " + filepath);
     }
     // Define the keyword - value separator
     string separator = " : ";
@@ -21,16 +20,18 @@ void write_pricing_instance(const std::string &folder, const Instance &instance,
     file << "COMMENT" << separator << "Pricing problem for vehicle " << vehicle.id << endl;
     // Now we will determine the key values of the problem
     int n_interventions = vehicle.interventions.size();
-    int n_nodes = n_interventions + 1;
     int origin = n_interventions;
+    int destination = origin + 1;
+    int n_nodes = n_interventions + 1 + int(origin != destination);
+
     // Number of ressources is number of capacities + time window (+ node limit if we consider it)
     int n_capacities = instance.capacities_labels.size();
     int n_resources = n_capacities + 1;
     file << "SIZE" << separator << n_nodes << endl;
     file << "DIRECTED" << separator << 1 << endl;
-    file << "CYCLIC" << separator << 1 << endl;
+    file << "CYCLIC" << separator << 0 << endl;
     file << "ORIGIN" << separator << origin << endl;
-    //file << "DESTINATION" << separator << origin << endl;
+    file << "DESTINATION" << separator << destination << endl;
     file << "RESOURCES" << separator << n_resources << endl;
     file << "RES_NAMES" << separator;
     for (int i = 0; i < instance.capacities_labels.size(); i++) {
@@ -49,40 +50,41 @@ void write_pricing_instance(const std::string &folder, const Instance &instance,
 
     // Then, we add the global bound on the resources (if applicable)
     file << "RES_BOUND" << endl;
-    for (int i = 0; i < n_capacities; i++) {
-        file << i+1 << " " << 0 << " " << vehicle.capacities.at(instance.capacities_labels[i]) << endl;
+    for (int k = 0; k < n_capacities; k++) {
+        file << k+1 << " " << 0 << " " << vehicle.capacities.at(instance.capacities_labels[k]) << endl;
     }
-    // file << n_resources << " " << 0 << " " << n_nodes << endl;
+    // file << n_resources - 1 << " " << 0 << " " << n_nodes << endl;
     file << "END" << endl;
     // We now describe the bounds for the time window on each node
     file << "RES_NODE_BOUND" << endl;
     for (int i = 0; i < n_interventions; i++) {
         const Node &intervention = instance.nodes.at(vehicle.interventions.at(i));
-        int start_window = intervention.start_window;
-        int end_window_arr = intervention.end_window - intervention.duration;
+        double start_window = intervention.start_window;
+        double end_window_arr = intervention.end_window - intervention.duration;
         // Adjust the end window : the intervention must end and leave enough time to go back to the depot
-        int time_to_depot = metric(intervention, instance.nodes.at(vehicle.depot), instance.time_matrix);
-        int end_window = std::min(end_window_arr, END_DAY - time_to_depot);
+        double time_to_depot = metric(intervention, instance.nodes.at(vehicle.depot), instance.time_matrix);
+        double end_window = std::min(end_window_arr, END_DAY - time_to_depot);
         file << 0 << " " << i << " " << start_window << " " << end_window << endl;
     }
     // We add the time window for the depot
     file << 0 << " " << origin << " " << 0 << " " << END_DAY << endl;
+    file << 0 << " " << destination << " " << 0 << " " << END_DAY << endl;
     file << "END" << endl;
 
-    // EDGE_COST : for each edge (i,j), we will set its cost as the cost of going from i to j 
+    // EDGE_COST : for each edge (i,j), we will set its cost as the cost of going from i to j
     file << "EDGE_COST" << endl;
     for (int i = 0; i < n_interventions; i++) {
         const Node &intervention = instance.nodes.at(vehicle.interventions.at(i));
         for (int j = 0; j < n_interventions; j++) {
             const Node &intervention_next = instance.nodes.at(vehicle.interventions.at(j));
-            int distance = metric(intervention, intervention_next, instance.distance_matrix);
+            double distance = metric(intervention, intervention_next, instance.distance_matrix);
             double cost = distance * instance.cost_per_km;
             file << i << " " << j << " " << cost << endl;
         }
         // We add the cost of going from the intervention to the depot and vice versa
-        int distance_to_depot = metric(intervention, instance.nodes.at(vehicle.depot), instance.distance_matrix);
+        double distance_to_depot = metric(intervention, instance.nodes.at(vehicle.depot), instance.distance_matrix);
         double cost_to_depot = distance_to_depot * instance.cost_per_km;
-        file << i << " " << origin << " " << cost_to_depot << endl;
+        file << i << " " << destination << " " << cost_to_depot << endl;
         file << origin << " " << i << " " << cost_to_depot << endl;
     }
     file << "END" << endl;
@@ -93,34 +95,35 @@ void write_pricing_instance(const std::string &folder, const Instance &instance,
         const Node &intervention = instance.nodes.at(vehicle.interventions.at(i));
         for (int j = 0; j < n_interventions; j++) {
             const Node &intervention_next = instance.nodes.at(vehicle.interventions.at(j));
-            int time = metric(intervention, intervention_next, instance.time_matrix);
+            double time = metric(intervention, intervention_next, instance.time_matrix);
             file << 0 << " " << i << " " << j << " " << time << endl;
         }
         // We add the time of going from the intervention to the depot and vice versa
-        int time_to_depot = metric(intervention, instance.nodes.at(vehicle.depot), instance.time_matrix);
-        file << 0 << " " << i << " " << origin << " " << time_to_depot << endl;
+        double time_to_depot = metric(intervention, instance.nodes.at(vehicle.depot), instance.time_matrix);
+        file << 0 << " " << i << " " << destination << " " << time_to_depot << endl;
         file << 0 << " " << origin << " " << i << " " << time_to_depot << endl;
     }
     file << "END" << endl;
 
     // NODE_COST : the cost of a node is -M * duration (no consideration of alpha for now)
-    file << "NODE_COST" << endl;
-    for (int i = 0; i < n_interventions; i++) {
-        const Node &intervention = instance.nodes.at(vehicle.interventions.at(i));
-        int cost = - instance.M * intervention.duration;
-        file << i << " " << cost << endl;
-    }
-    // We add the cost of the depot
-    int cost_depot = vehicle.cost;
-    file << origin << " " << cost_depot << endl;
-    file << "END" << endl;
+    // file << "NODE_COST" << endl;
+    // for (int i = 0; i < n_interventions; i++) {
+    //     const Node &intervention = instance.nodes.at(vehicle.interventions.at(i));
+    //     int cost = - instance.M * intervention.duration;
+    //     file << i << " " << cost << endl;
+    // }
+    // // We add the cost of the depot
+    // int cost_depot = vehicle.cost;
+    // file << origin << " " << cost_depot << endl;
+    // file << "END" << endl;
 
     // NODE_CONSUMPTIONS : the consumption of each ressource for each node
     file << "NODE_CONSUMPTION" << endl;
     // Begin with the time window
     for (int i = 0; i < n_interventions; i++) {
         const Node &intervention = instance.nodes.at(vehicle.interventions.at(i));
-        file << 0 << " " << i << " " << intervention.duration << endl;
+        double duration = intervention.duration;
+        file << 0 << " " << i << " " << duration << endl;
     }
     // Then the capacities
     for (int k = 0; k < n_capacities; k++) {
@@ -137,7 +140,7 @@ void write_pricing_instance(const std::string &folder, const Instance &instance,
 
     file.close();
 }
-    
+  
 
 
 std::vector<Route> solve_pricing_problem_file(const std::string &filepath,
@@ -147,7 +150,7 @@ std::vector<Route> solve_pricing_problem_file(const std::string &filepath,
     using std::vector, std::list;
     using std::cout, std::endl;
     // Create a solver object
-    Solver solver = Solver("../pathwyse_2.set");
+    Solver solver = Solver("../pathwyse.set");
 
     // Read the problem from the file
     solver.readProblem(filepath);
@@ -155,19 +158,20 @@ std::vector<Route> solve_pricing_problem_file(const std::string &filepath,
     // Update the problem with the dual values
     Problem* problem = solver.getProblem();
     int n_nodes = problem->getNumNodes();
-    int n_interventions = n_nodes - 1;
+    int n_interventions = n_nodes - 2;
     int origin = problem->getOrigin();
     int destination = problem->getDestination();
 
     Resource* objective = problem->getObj();
     // Update the node costs
     for (int i = 0; i < n_interventions; i++) {
-        double cost = objective->getNodeCost(i) + alphas[vehicle.interventions.at(i)];
+        int intervention_index = vehicle.interventions.at(i);
+        double cost = alphas[intervention_index] - instance.M * instance.nodes.at(intervention_index).duration;
         objective->setNodeCost(i, cost);
     }
 
     // Update the constant term as a cost for the depot
-    double cost_depot = objective->getNodeCost(origin) + beta;
+    double cost_depot = vehicle.cost + beta;
     objective->setNodeCost(origin, cost_depot);
 
     // Solve the problem
