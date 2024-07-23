@@ -302,3 +302,43 @@ double compute_integer_objective(const IntegerSolution& solution, const vector<R
     }
     return value;
 }
+
+
+void print_route(const Route & route, const Instance & instance) {
+    // Print the vehicle id
+    std::cout << "Vehicle id: " << route.vehicle_id << std::endl;
+    // Print the tvehicle cost, travelling cost and total cost
+    double travel_distance = count_route_kilometres(route, instance);
+    std::cout << "Vehicle cost: " << instance.vehicles[route.vehicle_id].cost << " ";
+    std::cout << "Travelling cost: " << travel_distance * instance.cost_per_km << " ";
+    std::cout << "Total cost: " << route.total_cost << std::endl;
+    // Print the kilometres along the route
+    std::cout << "Total distance: " << travel_distance << std::endl;
+    // Print the total duration, travelling time and waiting time
+    std::cout << "Total duration: " << route.total_duration << " ";
+    std::cout << "Total travelling time: " << route.total_travelling_time << " ";
+    std::cout << "Total waiting time: " << route.total_waiting_time << std::endl;
+    // Print the sequence of nodes
+    std::cout << "Sequence: ";
+    for (int i = 0; i < route.id_sequence.size(); i++) {
+        std::cout << route.id_sequence[i] << " ";
+    }
+    std::cout << std::endl;
+    // Print the start times at the nodes
+    std::cout << "Start times: ";
+    for (int index : route.id_sequence) {
+        std::cout << route.start_times[index] << " ";
+    }
+    std::cout << std::endl;
+
+}
+
+
+void print_used_routes(const IntegerSolution& solution, const vector<Route>& routes, const Instance& instance) {
+    for (int i = 0; i < routes.size(); i++) {
+        if (solution.coefficients[i] > 0) {
+            print_route(routes[i], instance);
+            cout << "----------------" << endl;
+        }
+    }
+}

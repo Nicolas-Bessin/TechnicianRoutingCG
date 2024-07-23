@@ -108,7 +108,7 @@ int main(int argc, char *argv[]){
             // Go through the returned routes, and add them to the master problem if they have a positive reduced cost
             for (const auto &route : best_new_routes){
                 //double computed_reduced_cost = compute_reduced_cost(route, solution.alphas, solution.betas[v], instance);
-                if (route.reduced_cost > 10){
+                if (route.reduced_cost > 1){
                     routes.push_back(route);
                     n_added_routes++;
                     max_reduced_cost = std::max(max_reduced_cost, route.reduced_cost);
@@ -194,9 +194,9 @@ int main(int argc, char *argv[]){
     cout << "Time spent working : " << time_spent_working(integer_solution, routes, instance) << " minutes" << endl;
     cout << "Time spent waiting : " << time_spent_waiting(integer_solution, routes, instance) << " minutes" << endl;
 
-    double a = 0.5;
-    takes_an_int(a);
-    
+    cout << "-----------------------------------" << endl;
+    print_used_routes(integer_solution, routes, instance); 
+       
     return 0;
 }
 
