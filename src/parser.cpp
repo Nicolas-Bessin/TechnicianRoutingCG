@@ -165,16 +165,16 @@ Instance parse_file(string filename){
     // Initially, we have fixed teams
     vector<vector<string>> tech_id_per_team = data.at("tech_manager").at("teams").at("fixed_teams");
     // Also keep track of the technicians already in a team
-    set<string> tech_in_team = set<string>();
+    set<string> tech_with_team = set<string>();
     for (int i = 0; i < tech_id_per_team.size(); i++){
         for (int j = 0; j < tech_id_per_team[i].size(); j++){
-            tech_in_team.insert(tech_id_per_team[i][j]);
+            tech_with_team.insert(tech_id_per_team[i][j]);
         }
     }
     // We then add every technician not into a fixed team as a team of one
-    for (const auto &tech : technicians){
-        if (tech_in_team.find(tech.first) == tech_in_team.end()){
-            tech_id_per_team.push_back(vector<string>{tech.first});
+    for (const auto &[tech_id, tech] : technicians){
+        if (tech_with_team.contains(tech_id) == false){
+            tech_id_per_team.push_back(vector<string>{tech_id});
         }
     }
     

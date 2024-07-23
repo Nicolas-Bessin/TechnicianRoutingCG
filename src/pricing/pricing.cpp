@@ -12,7 +12,9 @@ using std::vector, std::list, std::string;
 using std::unique_ptr;
 
 
-unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehicle& vehicle) {
+unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehicle& vehicle, int scale_factor) {
+    // We scale every cost up by the scale factor
+    // in hopes of mitigating the issue of the costs & objctive values only being integers in pathwyse
     
     // Get the number of nodes in the problem : equal to the number of available interventions + 2
     // +1 for the "depature" warehouse and +1 for the "arrival" warehouse (even tough it is the same place)
@@ -52,7 +54,7 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
             // Get the distance between the two interventions
             double distance = metric(intervention_i, intervention_j, instance.distance_matrix);
             double arc_cost = instance.cost_per_km * distance;
-            objective->setArcCost(i, j, arc_cost);  
+            objective->setArcCost(i, j, arc_cost * scale_factor);
         }
     }
     // Also setup the arcs between the warehouse and the interventions
@@ -63,13 +65,13 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
         problem->setNetworkArc(origin, i);
         double distance_out = metric((instance.nodes[vehicle.depot]), intervention, instance.distance_matrix);
         // Set the arc cost, also adding the fixed cost of the vehicle (but not beta)
-        objective->setArcCost(origin, i, instance.cost_per_km * distance_out + vehicle.cost);
+        objective->setArcCost(origin, i, (instance.cost_per_km * distance_out + vehicle.cost) * scale_factor);
         // Incoming arcs to the warehouse
         problem->setNetworkArc(i, destination);
         // Distance is probably the same as the outgoing distance but eh we never know
         double distance_in = metric(intervention, (instance.nodes[vehicle.depot]), instance.distance_matrix);
         // Here we only consider the cost of travelng, the node costs have already been set
-        objective->setArcCost(i, destination, instance.cost_per_km * distance_in);
+        objective->setArcCost(i, destination, (instance.cost_per_km * distance_in) * scale_factor);
     }
 
     // Set this resource as the objective function
@@ -175,7 +177,7 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
 
 
 void update_pricing_instance(unique_ptr<Problem> & pricing_problem, const vector<double>& alphas, double beta,
-        const Instance& instance, const Vehicle& vehicle) {
+        const Instance& instance, const Vehicle& vehicle, int scale_factor) {
     // Get the number of nodes in the problem : equal to the number of available interventions + 2
     int n_interventions_v = vehicle.interventions.size();
     int origin = n_interventions_v;
@@ -186,10 +188,10 @@ void update_pricing_instance(unique_ptr<Problem> & pricing_problem, const vector
     for (int i = 0; i < n_interventions_v; i++) {
         int true_i = vehicle.interventions[i];
         double node_cost = alphas[true_i] - instance.M * instance.nodes[true_i].duration;
-        objective->setNodeCost(i, node_cost);
+        objective->setNodeCost(i, node_cost * scale_factor);
     }
     // Put in the constant part (only beta in the pricing problem, the cost of the vehicle is already accounted for on the arcs)
-    objective->setNodeCost(origin, beta);
+    objective->setNodeCost(origin, beta * scale_factor);
     // Re-set the objective function
     pricing_problem->setObjective(objective);
     return;
