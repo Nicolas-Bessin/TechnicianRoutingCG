@@ -1,6 +1,6 @@
 #include "pricing.h"
-#include "constants.h"
-#include "../pathwyse/core/solver.h"
+#include "../constants.h"
+#include "../../pathwyse/core/solver.h"
 
 #include <map>
 #include <iostream>
@@ -29,7 +29,7 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
         destination,
         0,
         false,
-        true,
+        false,
         true
     );
     // Initialize the problem
@@ -51,7 +51,7 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
             const Node& intervention_j = instance.nodes[vehicle.interventions[j]];
             // Get the distance between the two interventions
             double distance = metric(intervention_i, intervention_j, instance.distance_matrix);
-            double arc_cost = instance.cost_per_km * distance - instance.M * intervention_j.duration;
+            double arc_cost = instance.cost_per_km * distance;
             objective->setArcCost(i, j, arc_cost);  
         }
     }
@@ -63,13 +63,13 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
         problem->setNetworkArc(origin, i);
         double distance_out = metric((instance.nodes[vehicle.depot]), intervention, instance.distance_matrix);
         // Set the arc cost, also adding the fixed cost of the vehicle (but not beta)
-        objective->setArcCost(origin, i, instance.cost_per_km * distance_out);
+        objective->setArcCost(origin, i, instance.cost_per_km * distance_out + vehicle.cost);
         // Incoming arcs to the warehouse
         problem->setNetworkArc(i, destination);
         // Distance is probably the same as the outgoing distance but eh we never know
         double distance_in = metric(intervention, (instance.nodes[vehicle.depot]), instance.distance_matrix);
         // Here we only consider the cost of travelng, the node costs have already been set
-        objective->setArcCost(i, destination, instance.cost_per_km * distance_in + vehicle.cost);
+        objective->setArcCost(i, destination, instance.cost_per_km * distance_in);
     }
 
     // Set this resource as the objective function
@@ -185,11 +185,13 @@ void update_pricing_instance(unique_ptr<Problem> & pricing_problem, const vector
     // Put in the node costs : alpha_i - M * duration_i
     for (int i = 0; i < n_interventions_v; i++) {
         int true_i = vehicle.interventions[i];
-        double node_cost = alphas[true_i];
+        double node_cost = alphas[true_i] - instance.M * instance.nodes[true_i].duration;
         objective->setNodeCost(i, node_cost);
     }
     // Put in the constant part (only beta in the pricing problem, the cost of the vehicle is already accounted for on the arcs)
     objective->setNodeCost(origin, beta);
+    // Re-set the objective function
+    pricing_problem->setObjective(objective);
     return;
 }
 
@@ -270,51 +272,3 @@ vector<Route> solve_pricing_problem(unique_ptr<Problem> & problem, int pool_size
     return routes;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-// Deadcode : printing of a tour
-// for (int i = 0; i < tour.size() - 1; i++) {
-//             //cout << tour[i] << " -> " << tour[i + 1] << endl;
-//             int true_i = tour[i] == origin || tour[i] == destination ? vehicle.depot : vehicle.interventions[tour[i]];
-//             int true_j = tour[i + 1] == origin || tour[i + 1] == destination ? vehicle.depot : vehicle.interventions[tour[i + 1]];
-//             cout << "Current time : " << current_time << endl;
-//             // Print the current node
-//             cout << "Intervention : " << true_i << " - " << "id : " << instance.nodes[true_i].id << " - ";
-//             cout << "Time window : " << instance.nodes[true_i].start_window << " - " << instance.nodes[true_i].end_window;;
-//             // Print the duration of the intervention i
-//             cout << " - Duration : " << instance.nodes[true_i].duration << endl;
-//             // Print the resources consumptions of the intervention i
-//             cout << "Consumptions : ";
-//             for (string label : instance.capacities_labels) {
-//                 int quantity = instance.nodes[true_i].quantities.at(label);
-//                 cout << label << " : " << quantity << " - ";
-//             }
-//             cout << endl;
-//             // Print the step taken in the tour
-//             cout << "Tour step : " << true_i << " -> " << true_j << endl;
-//             // Print the time it takes to go from intervention i to intervention j
-//             double travel_time = metric(&(instance.nodes[true_i]), &(instance.nodes[true_j]), instance.time_matrix);
-//             double travel_distance = metric(&(instance.nodes[true_i]), &(instance.nodes[true_j]), instance.distance_matrix);
-//             cout << "Travel time : " << travel_time << " - Travel distance : " << travel_distance << endl;
-//             // Update the current time
-//             double start_time_next = instance.nodes[true_j].start_window;
-//             current_time = std::max(current_time + instance.nodes[true_i].duration + travel_time, start_time_next); 
-//         }
-//         // Dumpt the intervention info on the last intervention
-//         int true_last = tour[tour_length - 1] == origin || tour[tour_length - 1] == destination ? vehicle.depot : vehicle.interventions[tour[tour_length - 1]];
-//         cout << "Current time : " << current_time << endl;
-//         cout << "Intervention : " << true_last << " - ";
-//         cout << "Time window : " << instance.nodes[true_last].start_window << " - " << instance.nodes[true_last].end_window;
-//         cout << " - Duration : " << instance.nodes[true_last].duration << endl;
-//         cout << "----------------------------------------" << endl;
-//         cout << "Final time : " << current_time + instance.nodes[true_last].duration << endl;

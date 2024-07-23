@@ -47,10 +47,12 @@ add_executable(technician_routing
     src/preprocessing.cpp
     src/solution.h
     src/solution.cpp
-    src/pricing.h
-    src/pricing.cpp
-    src/pricing_file/pricing_file.h
-    src/pricing_file/pricing_file.cpp
+    src/pricing/pricing.h
+    src/pricing/pricing.cpp
+    src/pricing/pricing_file.h
+    src/pricing/pricing_file.cpp
+    src/pricing/pricing_allinone.h
+    src/pricing/pricing_allinone.cpp
     src/analysis.h
     src/analysis.cpp
 )

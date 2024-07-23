@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../pathwyse/core/data/problem.h"
-#include "solution.h"
+#include "../../pathwyse/core/data/problem.h"
+#include "../solution.h"
 #include <vector>
 #include <memory>
 
@@ -26,4 +26,5 @@ void update_pricing_instance(std::unique_ptr<Problem> & pricing_problem, const s
     @param vehicle: the vehicle that will perform the routes
 */
 std::vector<Route> solve_pricing_problem(std::unique_ptr<Problem> & pricing_problem, int pool_size, const Instance &instance, const Vehicle &vehicle);
+
 

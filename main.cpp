@@ -1,8 +1,9 @@
 #include "src/parser.h"
 #include "src/preprocessing.h"
 #include "src/master.h"
-#include "src/pricing.h"
-#include "src/pricing_file/pricing_file.h"
+#include "src/pricing/pricing_allinone.h"
+#include "src/pricing/pricing.h"
+#include "src/pricing/pricing_file.h"
 #include "src/analysis.h"
 #include "pathwyse/core/solver.h"
 
@@ -42,7 +43,7 @@ int main(int argc, char *argv[]){
     vector<unique_ptr<Problem>> pricing_problems;
     for (auto vehicle : instance.vehicles){
         string filename = pricing_folder + "v_" + to_string(vehicle.id) + ".txt";
-        write_pricing_instance(filename, instance, vehicle);
+        //write_pricing_instance(filename, instance, vehicle);
         pricing_problems.push_back(create_pricing_instance(instance, vehicle));
     }
     auto end_sub_building = chrono::steady_clock::now();
@@ -66,31 +67,41 @@ int main(int argc, char *argv[]){
     // Main loop of the column generation algorithm
     int iteration = 0;
     bool stop = false;
-    MasterSolution solution;
+    double best_objective = 0;
     // Testing out the sequential pricing problem solving
     int current_vehicle_index = 0;
 
     while (!stop && master_time + pricing_time < time_limit){
         // Solve the master problem
         auto start = chrono::steady_clock::now();
-        solution = cg_solver(instance, routes, 60);
+        MasterSolution solution = cg_solver(instance, routes, 60);
         auto end = chrono::steady_clock::now();
         int diff = chrono::duration_cast<chrono::milliseconds>(end - start).count();
         cout << "Master problem solved in " << diff << " ms \n";
         master_time += diff;
+        // print the min and max alphas
+        double min_alpha = *std::min_element(solution.alphas.begin(), solution.alphas.end());
+        double max_alpha = *std::max_element(solution.alphas.begin(), solution.alphas.end());
+        cout << "Min alpha : " << min_alpha << " - Max alpha : " << max_alpha << endl;
+        best_objective = solution.objective_value;
         // Solve each pricing sub problem
         auto start_pricing = chrono::steady_clock::now();
         int n_added_routes = 0;
 
         double max_reduced_cost = 0;
 
+
         for (int v = 0; v < instance.vehicles.size(); v++){
             const Vehicle& vehicle = instance.vehicles.at(v);
+            //unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, vehicle);
             //update_pricing_instance(pricing_problems.at(v), solution.alphas, solution.betas[v], instance, vehicle);
             //vector<Route> best_new_routes = solve_pricing_problem(pricing_problems.at(v), 5, instance, vehicle);
             // Use the file based version
-            string filepath = pricing_folder + "v_" + to_string(vehicle.id) + ".txt";
-            vector<Route> best_new_routes = solve_pricing_problem_file(filepath, solution.alphas, solution.betas[v], instance, vehicle);
+            //string filepath = pricing_folder + "v_" + to_string(vehicle.id) + ".txt";
+            //vector<Route> best_new_routes = solve_pricing_problem_file(filepath, solution.alphas, solution.betas[v], instance, vehicle);
+            //Use the allinone version
+            vector<double> zeros(instance.number_interventions, 0);
+            vector<Route> best_new_routes = create_solve_pricing_instance(zeros, 0, instance, vehicle, 5);
             if (best_new_routes.size() == 0){
                 time_limit_reached[vehicle.id]++;
             }
@@ -129,7 +140,7 @@ int main(int argc, char *argv[]){
         cout << "Found no new route to add" << endl;
     }
     cout << "End of the column generation after " << iteration << " iterations" << endl;
-    cout << "Objective value : " << solution.objective_value << endl;
+    cout << "Objective value : " << best_objective << endl;
 
     // Solve the integer version of the problem
     auto start_integer = chrono::steady_clock::now();
@@ -191,7 +202,6 @@ int main(int argc, char *argv[]){
     
     return 0;
 }
-
 
 
 
