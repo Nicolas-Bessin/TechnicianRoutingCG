@@ -59,7 +59,7 @@ int main(int argc, char *argv[]){
     int pricing_time = 0;
 
     // Global time limit for the column generation algorithm of 60 seconds
-    const int time_limit = 15 * 1000;
+    const int time_limit = 60 * 1000;
 
     // Count the number of time each vehicle's sub problem reached the time limit
     vector<int> time_limit_reached(instance.vehicles.size(), 0);
@@ -108,7 +108,7 @@ int main(int argc, char *argv[]){
             // cout << "Vehicle " << vehicle.id << " : " << best_new_routes.size() << " routes found" << endl;
             // Go through the returned routes, and add them to the master problem if they have a positive reduced cost
             for (const auto &route : best_new_routes){
-                if (route.reduced_cost > 1){
+                if (route.reduced_cost > 10){
                     routes.push_back(route);
                     n_added_routes++;
                     max_reduced_cost = std::max(max_reduced_cost, route.reduced_cost);
