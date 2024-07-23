@@ -100,8 +100,17 @@ double compute_reduced_cost(const Route& route, const std::vector<double>& alpha
     // Initialize the reduced cost with the cost of the vehicle
     reduced_cost = - beta - vehicle.cost;
 
-    // Go through the nodes in the route
-    for (int i = 0; i < tour_length - 1; i++) {
+    if (tour_length <= 1) {
+        return reduced_cost;
+    }
+    // Add the cost of the edge from the warehouse to the first node
+    const Node& depot = instance.nodes[route.id_sequence[0]];
+    const Node& first_inervention = instance.nodes[route.id_sequence[1]];
+    double distance = metric(depot, first_inervention, instance.distance_matrix);
+    reduced_cost -= distance * instance.cost_per_km;
+
+    // Go through the consecutive interventions in the route
+    for (int i = 1; i < tour_length - 1; i++) {
         const Node& node = instance.nodes[route.id_sequence[i]];
         const Node& next_node = instance.nodes[route.id_sequence[i + 1]];
         // Add the cost associated with the node

@@ -24,7 +24,7 @@ MasterSolution cg_solver(const Instance& instance, const vector<Route>& routes, 
         }
         // Create the intervention constraints (each intervention is visited at most once)
         vector<GRBConstr> intervention_constraints;
-        for (int i = 0; i < instance.nodes.size(); i++){
+        for (int i = 0; i < instance.number_interventions; i++){
             string constraint_name = "i_" + std::to_string(i);
             GRBLinExpr expr = 0;
             for (int r = 0; r < routes.size(); r++){
@@ -130,7 +130,7 @@ IntegerSolution solve_integer_problem(const Instance& instance, const vector<Rou
         }
         // Create the intervention constraints (each intervention is visited at most once)
         vector<GRBConstr> intervention_constraints;
-        for (int i = 0; i < instance.nodes.size(); i++){
+        for (int i = 0; i < instance.number_interventions; i++){
             GRBLinExpr expr = 0;
             for (int r = 0; r < routes.size(); r++){
                 expr += routes[r].is_in_route[i] * variables[r];

@@ -82,7 +82,7 @@ int main(int argc, char *argv[]){
         // print the min and max alphas
         double min_alpha = *std::min_element(solution.alphas.begin(), solution.alphas.end());
         double max_alpha = *std::max_element(solution.alphas.begin(), solution.alphas.end());
-        cout << "Min alpha : " << min_alpha << " - Max alpha : " << max_alpha << endl;
+        //cout << "Size of alpha : " << solution.alphas.size() << " - Number of interventions : " << instance.number_interventions << endl;
         best_objective = solution.objective_value;
         // Solve each pricing sub problem
         auto start_pricing = chrono::steady_clock::now();
@@ -94,27 +94,21 @@ int main(int argc, char *argv[]){
         for (int v = 0; v < instance.vehicles.size(); v++){
             const Vehicle& vehicle = instance.vehicles.at(v);
             //unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, vehicle);
-            //update_pricing_instance(pricing_problems.at(v), solution.alphas, solution.betas[v], instance, vehicle);
-            //vector<Route> best_new_routes = solve_pricing_problem(pricing_problems.at(v), 5, instance, vehicle);
+            update_pricing_instance(pricing_problems.at(v), solution.alphas, solution.betas[v], instance, vehicle);
+            vector<Route> best_new_routes = solve_pricing_problem(pricing_problems.at(v), 5, instance, vehicle);
             // Use the file based version
             //string filepath = pricing_folder + "v_" + to_string(vehicle.id) + ".txt";
             //vector<Route> best_new_routes = solve_pricing_problem_file(filepath, solution.alphas, solution.betas[v], instance, vehicle);
             //Use the allinone version
-            vector<double> zeros(instance.number_interventions, 0);
-            vector<Route> best_new_routes = create_solve_pricing_instance(zeros, 0, instance, vehicle, 5);
+            //vector<double> zeros(instance.number_interventions, 0);
+            //vector<Route> best_new_routes = create_solve_pricing_instance(solution.alphas, solution.betas[v], instance, vehicle, 5);
             if (best_new_routes.size() == 0){
                 time_limit_reached[vehicle.id]++;
             }
             // cout << "Vehicle " << vehicle.id << " : " << best_new_routes.size() << " routes found" << endl;
             // Go through the returned routes, and add them to the master problem if they have a positive reduced cost
             for (const auto &route : best_new_routes){
-                double computed_reduced_cost = compute_reduced_cost(route, solution.alphas, solution.betas[v], instance);
-                if (v == 0) {
-                    cout << "Computed reduced cost : " << computed_reduced_cost << " - returned reduced cost : " << route.reduced_cost;
-                    cout << " - vehicle cost : " << vehicle.cost << " beta : " << solution.betas[v] << endl;
-                }
-
-                if (computed_reduced_cost > 0){
+                if (route.reduced_cost > 1){
                     routes.push_back(route);
                     n_added_routes++;
                     max_reduced_cost = std::max(max_reduced_cost, route.reduced_cost);
@@ -149,6 +143,7 @@ int main(int argc, char *argv[]){
     int diff_integer = chrono::duration_cast<chrono::milliseconds>(end_integer - start_integer).count();
 
     cout << "Integer solution found with objective value : " << integer_solution.objective_value << endl;
+    cout << "Manual computing of the value : " << compute_integer_objective(integer_solution, routes, instance) << endl;
 
     cout << "-----------------------------------" << endl;
     cout << "Total time spent parsing the instance : " << diff_parse << " ms" << endl;
@@ -192,6 +187,8 @@ int main(int argc, char *argv[]){
 
     cout << "Number of routes with duplicates : " << count_routes_with_duplicates(routes) << " / " << routes.size() << endl;
     cout << "Number of used routes with duplicates : " << count_used_routes_with_duplicates(integer_solution, routes) << endl;
+
+    cout << "Number of route kilometres : " << count_kilometres_travelled(integer_solution, routes, instance) << " km" << endl;
 
     cout << "Time spent travelling : " << time_spent_travelling(integer_solution, routes, instance) << " minutes" << endl;
     cout << "Time spent working : " << time_spent_working(integer_solution, routes, instance) << " minutes" << endl;

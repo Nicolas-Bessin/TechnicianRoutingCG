@@ -227,30 +227,30 @@ Instance parse_file(string filename){
     // We now build a cross reference matrix between interventions and vehicles : has_skill[i][j] is true if vehicle j has the skills to do intervention i
     vector<vector<bool>> has_skill = vector<vector<bool>>(nb_interventions, vector<bool>(nb_vehicles, false));
     for (int i = 0; i < nb_interventions; i++){
-        for (int j = 0; j < nb_vehicles; j++){
+        for (int v = 0; v < nb_vehicles; v++){
             // We must ensure that the vehicle has enough technicians with each skill to do the intervention
             bool can_do_intervention = true;
             for (const auto & [skill, quantity] : nodes[i].required_skills){
                 // If the skill needed for the intervention is not in the vehicle, the vehicle cannot do the intervention
-                if (vehicles[j].skills.find(skill) == vehicles[j].skills.end()){
+                if (vehicles[v].skills.find(skill) == vehicles[v].skills.end()){
                     can_do_intervention = false;
                     break;
                 }
                 // If the vehicle does not have enough technicians with the skill, the vehicle cannot do the intervention
-                if (vehicles[j].skills[skill] < quantity){
+                if (vehicles[v].skills[skill] < quantity){
                     can_do_intervention = false;
                     break;
                 }
             }
-            has_skill[i][j] = can_do_intervention;
+            has_skill[i][v] = can_do_intervention;
         }
     }
 
     // We can now count the number of vehicles that can do each intervention
     for (int i = 0; i < nb_interventions; i++){
         int nb_vehicles_for_intervention = 0;
-        for (int j = 0; j < nb_vehicles; j++){
-            if (has_skill[i][j]){
+        for (int v = 0; v < nb_vehicles; v++){
+            if (has_skill[i][v]){
                 nb_vehicles_for_intervention++;
             }
         }

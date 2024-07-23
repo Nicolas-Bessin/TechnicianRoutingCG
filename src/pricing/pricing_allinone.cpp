@@ -201,8 +201,8 @@ std::vector<Route> create_solve_pricing_instance(const std::vector<double> &alph
         // Keep track of the time ellapsed
         double current_time = 0;
         for (int i = 0; i < tour.size() - 1; i++) {
-            int true_i = tour[i] == origin || tour[i] == destination ? vehicle.depot : vehicle.interventions[tour[i]];
-            int true_j = tour[i + 1] == origin || tour[i + 1] == destination ? vehicle.depot : vehicle.interventions[tour[i + 1]];
+            int true_i = i == 0 ? vehicle.depot : vehicle.interventions[tour[i]];
+            int true_j = i+1 == tour.size()-1 ? vehicle.depot : vehicle.interventions[tour[i + 1]];
             // Update the sequence of interventions
             id_sequence.push_back(true_i);
             // Update the is_in_route and start_times vectors

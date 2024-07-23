@@ -3,6 +3,7 @@
 #include <string>
 #include <set>
 #include <algorithm>
+#include <assert.h>
 
 using std::vector, std::map, std::string, std::set;
 using std::find;
@@ -264,4 +265,40 @@ int count_used_routes_with_duplicates(const IntegerSolution& solution, const vec
         count += is_used_and_has_duplicate[i];
     }
     return count;
+}
+
+
+double count_route_kilometres(const Route& route, const Instance& instance) {
+    double total_distance = 0;
+    for (int i = 0; i < route.id_sequence.size() - 1; i++) {
+        const Node& node1 = instance.nodes[route.id_sequence[i]];
+        const Node& node2 = instance.nodes[route.id_sequence[i + 1]];
+        total_distance += metric(node1, node2, instance.distance_matrix);
+    }
+    return total_distance;
+}
+
+double count_kilometres_travelled(const IntegerSolution& solution, const vector<Route>& routes, const Instance& instance) {
+    double total_distance = 0;
+    for (int i = 0; i < routes.size(); i++) {
+        if (solution.coefficients[i] > 0) {
+            total_distance += count_route_kilometres(routes[i], instance);
+        }
+    }
+    return total_distance;
+}
+
+
+double compute_integer_objective(const IntegerSolution& solution, const vector<Route>& routes, const Instance& instance) {
+    double value = 0;
+    assert (solution.coefficients.size() == routes.size());
+    for (int r = 0; r < routes.size(); r++) {
+        if (solution.coefficients[r] > 0) {
+            double coef = instance.M * routes[r].total_duration;
+            coef -= instance.cost_per_km * count_route_kilometres(routes[r], instance);
+            coef -= instance.vehicles[routes[r].vehicle_id].cost;
+            value += coef;
+        }
+    }
+    return value;
 }
