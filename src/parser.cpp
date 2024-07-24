@@ -184,6 +184,8 @@ Instance parse_file(string filename){
     // We now construct one vehicle per team
     vector<Vehicle> vehicles = vector<Vehicle>();
     for (int i = 0; i < tech_id_per_team.size(); i++){
+        // Collect the technicians in the team
+        vector<string> tech_ids = tech_id_per_team[i];
         // Build the map of available skills for the vehicle
         map<string, int> skills = map<string, int>();
         for (int j = 0; j < tech_id_per_team[i].size(); j++){
@@ -217,7 +219,7 @@ Instance parse_file(string filename){
         }
         // Vehicle cost is the sum of the cost of each technician in the team
         double vehicle_cost = tech_cost * tech_id_per_team[i].size();
-        vehicles.push_back(Vehicle(i, skills, interventions, depot, capacities, START_MORNING, END_AFTERNOON, END_DAY, vehicle_cost));
+        vehicles.push_back(Vehicle(i, tech_ids, skills, interventions, depot, capacities, vehicle_cost));
     }
 
     // Print the number of vehicles
@@ -289,12 +291,13 @@ Instance parse_file(string filename){
     for (int i = 0; i < distance_matrix.size(); i++){
         for (int j = 0; j < distance_matrix[i].size(); j++){
             if (distance_matrix[i][j] > 0 && time_matrix[i][j] > 0){
-                double speed = double(distance_matrix[i][j]) / time_matrix[i][j];
+                double speed = (double)distance_matrix[i][j] / (double)time_matrix[i][j];
                 max_speed = max(max_speed, speed);
             }
         }
     }
-    double M = (END_DAY - min_duration) * max_speed * cost_per_km / gcd_durations;
+    //double M = 74.8;
+    double M = (double)((END_DAY - min_duration) * max_speed * cost_per_km) / (double)gcd_durations;
 
     // Print the value of M
     cout << "Big M: " << M << endl;
