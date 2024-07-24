@@ -136,14 +136,14 @@ protected:
 
     //For each node, store an ordered list of labels (pointer)
     //Open labels
-    std::vector<std::list<std::pair<int, int>>> forward_candidates, backward_candidates;            //Open labels
+    std::vector<std::list<std::pair<double, int>>> forward_candidates, backward_candidates;            //Open labels
     LabelAdv *best_fw, *best_bw;                                                                    //Best overall labels
     std::vector<LabelAdv*> forward_best, backward_best;                                             //Best overall LabelAdv for each node
     std::multiset<std::pair<int, int>> forward_top_candidates, backward_top_candidates;             //Best available candidates, ordered
 
     //Closed labels
-    std::vector<std::vector<std::pair<int, int>>> forward_closed, backward_closed;                      //Closed labels
-    std::vector<std::vector<std::pair<int, int>>> forward_closed_backup, backward_closed_backup;        //Backup of closed labels
+    std::vector<std::vector<std::pair<double, int>>> forward_closed, backward_closed;                      //Closed labels
+    std::vector<std::vector<std::pair<double, int>>> forward_closed_backup, backward_closed_backup;        //Backup of closed labels
 
     std::multiset<std::tuple<int, LabelAdv*, LabelAdv*>> joinable_labels;                 //Joinable label pairs
 

@@ -14,7 +14,7 @@
 #include <algorithm>
 #include <random>
 
-#define SCALE_FACTOR 1
+#define SCALE_FACTOR 5
 #define TIME_LIMIT 15
 
 

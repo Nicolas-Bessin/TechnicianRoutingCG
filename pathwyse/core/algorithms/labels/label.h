@@ -20,8 +20,8 @@ public:
     void updateLabel(int node, Label* predecessor);
 
     //Resources management
-    int getObjective(){return objective;}
-    void setObjective(int objective){this->objective = objective;}
+    double getObjective(){return objective;}
+    void setObjective(double objective){this->objective = objective;}
 
     int getSnapshot(int resID) {return snapshot[resID];}
     std::vector<int> & getSnapshot() {return snapshot;}
@@ -50,7 +50,7 @@ protected:
     Label* predecessor;
 
     //Resources
-    int objective;
+    double objective;
     std::vector<int> snapshot;
 };
 
