@@ -19,14 +19,15 @@ int count_covered_interventions(const IntegerSolution& solution, const vector<Ro
     // Go through all interventions
     for (int i = 0; i < nb_interventions; i++) {
         // Go through all routes
-        for (int j = 0; j < nb_routes; j++) {
+        for (int r = 0; r < nb_routes; r++) {
             // If the intervention is covered more than once, there is a problem
-            if (solution.coefficients[j] > 1 && routes[j].is_in_route[i] == 1) {
+            const Route& route = routes[r];
+            if (solution.coefficients[r] > 0 && is_covered[i] > 0 && route.is_in_route[i] > 0) {
                 cout << "Intervention " << i << " is covered more than once" << endl;
                 return -1;
             }
-            // If the intervention is covered by the route, mark it as covered
-            if (routes[j].is_in_route[i] == 1) {
+            // If the intervention is covered, mark it as covered
+            if (solution.coefficients[r] > 0 && route.is_in_route[i] > 0) {
                 is_covered[i] = 1;
             }
         }
