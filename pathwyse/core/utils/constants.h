@@ -33,6 +33,7 @@
 #define RANK_OBJECTIVE ("Objective")
 
 //Solution values
+#define UNKNOWN_OBJ std::numeric_limits<double>::max()
 #define UNKNOWN std::numeric_limits<int>::max()
 #define INFPLUS std::numeric_limits<int>::max()
 #define INFMINUS std::numeric_limits<int>::min()
