@@ -284,7 +284,7 @@ void PWDefault::managePaths(){
     }
     auto solution_data = label_manager->getSolutionLabels();
 
-    int objective = std::get<0>(solution_data);
+    double objective = std::get<0>(solution_data);
     auto *fw = std::get<1>(solution_data);
     auto *bw = std::get<2>(solution_data);
     buildPath(objective, fw, bw);

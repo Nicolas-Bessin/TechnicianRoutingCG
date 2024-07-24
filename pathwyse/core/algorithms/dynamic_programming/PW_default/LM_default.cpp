@@ -38,10 +38,10 @@ void LMDefault::initLM(){
     ndominated_fw = ndominated_bw = nclosed_fw = nclosed_bw = 0;
 
     //Data structures initialization
-    forward_candidates.resize(n_nodes, std::list<std::pair<int, int>>());
-    backward_candidates.resize(n_nodes, std::list<std::pair<int, int>>());
-    forward_closed.resize(n_nodes, std::vector<std::pair<int, int>>());
-    backward_closed.resize(n_nodes, std::vector<std::pair<int, int>>());
+    forward_candidates.resize(n_nodes, std::list<std::pair<double, int>>());
+    backward_candidates.resize(n_nodes, std::list<std::pair<double, int>>());
+    forward_closed.resize(n_nodes, std::vector<std::pair<double, int>>());
+    backward_closed.resize(n_nodes, std::vector<std::pair<double, int>>());
     forward_best.resize(n_nodes, nullptr);
     backward_best.resize(n_nodes, nullptr);
 
@@ -181,7 +181,7 @@ LabelAdv* LMDefault::getCandidateRR(bool forward, bool backward){
     LabelAdv* candidate = nullptr;
     int index, position;
     bool direction;
-    int score = UNKNOWN;
+    double score = UNKNOWN;
     bool foundLabel = false;
 
     int turn;
@@ -233,7 +233,7 @@ LabelAdv* LMDefault::getCandidateNode(bool forward, bool backward) {
     LabelAdv* candidate = nullptr;
     int index, position;
     bool direction;
-    int score = UNKNOWN;
+    double score = UNKNOWN;
     bool foundLabel = false;
 
     int turn = forward? turn_forward : turn_backward;
@@ -343,7 +343,7 @@ void LMDefault::extendLabel(LabelAdv *current_label, LabelAdv *new_label, int ne
     int j = direction ? next_node : current_label->getNode();
 
     //Update Objective
-    int current_value, new_value;
+    double current_value, new_value;
     current_value = current_label->getObjective();
     new_value = objective->extend(current_value, i, j, direction);
     new_label->setObjective(new_value);
@@ -385,7 +385,7 @@ LabelAdv* LMDefault::insert(LabelAdv* new_label) {
     if((direction and node == origin) or (not direction and node == destination))
         return nullptr;
 
-    const int objective = new_label->getObjective();
+    const double objective = new_label->getObjective();
 
     auto & labels = direction ? forward_labels : backward_labels;
     auto & candidates = direction ? forward_candidates : backward_candidates;
@@ -545,7 +545,7 @@ void LMDefault::restoreClosedLabels(){
 
 void LMDefault::naiveJoin(){
     auto objective = problem->getObj();
-    int cost;
+    double cost;
     LabelAdv *label_forward, *label_backward;
     joinComparisons = 0;
 
@@ -572,7 +572,7 @@ void LMDefault::naiveJoin(){
 
 void LMDefault::classicJoin() {
     auto objective = problem->getObj();
-    int cost;
+    double cost;
     LabelAdv *label_forward , *best_label_forward;
     LabelAdv *label_backward, *best_label_backward;
     joinComparisons = 0;
@@ -608,7 +608,7 @@ void LMDefault::classicJoin() {
 void LMDefault::orderedJoin(){
     auto objective = problem->getObj();
     std::multiset<std::tuple<int, int, int>> orderedPairs;
-    int cost;
+    double cost;
     int i, j;
 
     //Sort closed
@@ -686,8 +686,8 @@ bool LMDefault::isJoinFeasible(LabelAdv* label_forward, LabelAdv* label_backward
 
 /** Solution management +*/
 //Return a solution
-std::tuple<int, LabelAdv*, LabelAdv*> LMDefault::getSolutionLabels() {
-    std::tuple<int, LabelAdv*, LabelAdv*> solution_data = {0, nullptr, nullptr};
+std::tuple<double, LabelAdv*, LabelAdv*> LMDefault::getSolutionLabels() {
+    std::tuple<double, LabelAdv*, LabelAdv*> solution_data = {0, nullptr, nullptr};
 
     if(bidirectional and joinFound())
         solution_data = getBestJoin();
@@ -703,7 +703,7 @@ std::tuple<int, LabelAdv*, LabelAdv*> LMDefault::getSolutionLabels() {
 }
 
 void LMDefault::setODLabel() {
-    int bound = UNKNOWN;
+    double bound = UNKNOWN;
     int index = - 1;
     bool direction = true;
 
@@ -763,7 +763,7 @@ void LMDefault::findLabels(std::list<LabelAdv> *tourLabels) {
     bool direction;
     bool found;
     LabelAdv* l_stored;
-    std::vector<std::vector<std::pair<int, int>>> * stored_data;
+    std::vector<std::vector<std::pair<double, int>>> * stored_data;
 
     for(auto & l_current: *tourLabels) {
         position = l_current.getNode();

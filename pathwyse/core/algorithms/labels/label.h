@@ -10,7 +10,7 @@ public:
 
     /** Label management **/
     //Constructors and destructors
-    Label() {objective = UNKNOWN;}
+    Label() {objective = UNKNOWN_OBJ;}
     Label(const Label &obj);
 
     virtual ~Label() = default;
@@ -20,8 +20,8 @@ public:
     void updateLabel(int node, Label* predecessor);
 
     //Resources management
-    int getObjective(){return objective;}
-    void setObjective(int objective){this->objective = objective;}
+    double getObjective(){return objective;}
+    void setObjective(double objective){this->objective = objective;}
 
     int getSnapshot(int resID) {return snapshot[resID];}
     std::vector<int> & getSnapshot() {return snapshot;}
@@ -32,7 +32,7 @@ public:
     int getNode(){return node;}
     bool getDirection(){return direction;}
     Label* getPredecessor(){return predecessor;}
-    bool isValid(){return objective != UNKNOWN;}
+    bool isValid(){return objective != UNKNOWN_OBJ;}
 
     /** Operators **/
     void operator= (const Label& obj);
@@ -50,7 +50,7 @@ protected:
     Label* predecessor;
 
     //Resources
-    int objective;
+    double objective;
     std::vector<int> snapshot;
 };
 

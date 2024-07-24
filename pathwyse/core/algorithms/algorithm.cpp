@@ -46,7 +46,7 @@ bool Algorithm::updateLowerBound(double value) {
 }
 
 //Builds a path. NB: Algorithm cannot compute resource consumptions.
-void Algorithm::buildPath(int objective, Label* forward_label, Label* backward_label){
+void Algorithm::buildPath(double objective, Label* forward_label, Label* backward_label){
 
     if(forward_label == nullptr and backward_label == nullptr)
         return;
@@ -73,8 +73,8 @@ void Algorithm::buildPath(int objective, Label* forward_label, Label* backward_l
 
     //Updates total cost of arcs and nodes
     if(s.isElementary()){
-        int arcCost = 0;
-        int nodeCost = 0;
+        double arcCost = 0;
+        double nodeCost = 0;
 
         auto obj = problem->getObj();
 

@@ -1,6 +1,7 @@
 #include "parser.h"
 #include "constants.h"
 #include "../nlohmann/json.hpp"
+
 #include <iostream>
 #include <bits/stdc++.h>
 // For the gcd function
@@ -287,17 +288,26 @@ Instance parse_file(string filename){
         gcd_durations = __gcd(gcd_durations, durations[i]);
     }
     // We finally compute the maximum speed using the ditance and time matrices
+    // Only among the pairs of node that we parsed previously
     double max_speed = 0;
-    for (int i = 0; i < distance_matrix.size(); i++){
-        for (int j = 0; j < distance_matrix[i].size(); j++){
-            if (distance_matrix[i][j] > 0 && time_matrix[i][j] > 0){
-                double speed = (double)distance_matrix[i][j] / (double)time_matrix[i][j];
-                max_speed = max(max_speed, speed);
+    std::pair<int, int> max_speed_pair = std::make_pair(0, 0);
+    for (const Node & node1 : nodes){
+        for (const Node & node2 : nodes){
+            double dist = distance_matrix[node1.node_id][node2.node_id];
+            double time = time_matrix[node1.node_id][node2.node_id];
+            if (time > 0){
+                double speed = dist / time;
+                if (speed > max_speed){
+                    max_speed = speed;
+                    max_speed_pair = std::make_pair(node1.node_id, node2.node_id);
+                }
             }
         }
     }
-    //double M = 74.8;
-    double M = (double)((END_DAY - min_duration) * max_speed * cost_per_km) / (double)gcd_durations;
+    cout << "GCD is " << gcd_durations << endl;
+    cout << "Max speed is " << max_speed << endl;
+    cout << "Max speed is between " << max_speed_pair.first << " and " << max_speed_pair.second << endl;
+    double M = (END_DAY - min_duration) * max_speed * cost_per_km / gcd_durations;
 
     // Print the value of M
     cout << "Big M: " << M << endl;

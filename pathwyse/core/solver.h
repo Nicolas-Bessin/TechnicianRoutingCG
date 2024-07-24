@@ -72,9 +72,9 @@ public:
     void rankSolutions(std::string criteria = "objective");
     Path* getSolution(int id);
     int getSolutionStatus(int id);
-    int getSolutionObjective(int id);
-    int getSolutionArcCost(int id);
-    int getSolutionNodeCost(int id);
+    double getSolutionObjective(int id);
+    double getSolutionArcCost(int id);
+    double getSolutionNodeCost(int id);
     std::vector<int> getSolutionTour(int id);
     std::string getSolutionTourAsString(int id);
     std::vector<Path> getAllSolutions(){return solutions;}
