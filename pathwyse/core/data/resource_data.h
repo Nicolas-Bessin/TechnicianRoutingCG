@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 
+template <typename T>
 struct ResourceData {
 
     /** Resource data management **/
@@ -14,14 +15,14 @@ struct ResourceData {
     virtual void reset() {node_costs.clear();};
 
     /** Node Data **/
-    void setNodeCosts(std::vector<int> node_costs){this->node_costs = node_costs;}
-    void setNodeCost(int id, int cost){
+    void setNodeCosts(std::vector<T> node_costs){this->node_costs = node_costs;}
+    void setNodeCost(int id, T cost){
         if(node_costs.empty())
             node_costs.resize(n_nodes, 0);
         node_costs[id] = cost;
     }
 
-    void increaseNodeCost(int id, int delta) {
+    void increaseNodeCost(int id, T delta) {
         if(not node_costs.empty())
             node_costs[id] += delta;
     }
@@ -31,24 +32,25 @@ struct ResourceData {
             node_costs[id] *= factor;
     }
 
-    int getNodeCost(int id){return node_costs.empty() ? 0: node_costs[id];}
-    std::vector<int> & getNodeCost() {return node_costs;}
+    T getNodeCost(int id){return node_costs.empty() ? 0: node_costs[id];}
+    std::vector<T> & getNodeCost() {return node_costs;}
 
     /** Arc Data **/
-    virtual void setArcCost(int i, int j, int cost) = 0;
-    virtual void increaseArcCost(int i, int j, int delta) = 0;
+    virtual void setArcCost(int i, int j, T cost) = 0;
+    virtual void increaseArcCost(int i, int j, T delta) = 0;
     virtual void multiplyArcCost(int i, int j, float factor) = 0;
-    virtual int getArcCost(int i, int j) = 0;
+    virtual T getArcCost(int i, int j) = 0;
 
     /** Scaling **/
     virtual void scaleData(float scaling) = 0;
 
 protected:
     int n_nodes;
-    std::vector<int> node_costs;
+    std::vector<T> node_costs;
 };
 
-struct ResourceDataMap: ResourceData {
+template <typename T>
+struct ResourceDataMap: ResourceData<T> {
 
     /** Resource data management **/
     //Constructors and Destructors
@@ -60,14 +62,14 @@ struct ResourceDataMap: ResourceData {
     void reset() override {ResourceData::reset(); arc_costs.clear();}
 
     /** Arc Data **/
-    void setArcCost(int i, int j, int cost) override {
+    void setArcCost(int i, int j, T cost) override {
         auto position = arc_costs[i].find(j);
         if(position == arc_costs[i].end())
             arc_costs[i].insert(std::make_pair(j, cost));
         else
             position->second = cost;
     }
-    void increaseArcCost(int i, int j, int delta) override {
+    void increaseArcCost(int i, int j, T delta) override {
         auto position = arc_costs[i].find(j);
         if(position != arc_costs[i].end())
             position->second += delta;
@@ -79,7 +81,7 @@ struct ResourceDataMap: ResourceData {
             position->second *= factor;
     }
 
-    int getArcCost(int i, int j) override {
+    T getArcCost(int i, int j) override {
         auto position = arc_costs[i].find(j);
         return position != arc_costs[i].end()? position->second : 0;
     }
@@ -94,11 +96,12 @@ struct ResourceDataMap: ResourceData {
     }
 
 private:
-    std::vector<std::map<int, int>> arc_costs;
+    std::vector<std::map<int, T>> arc_costs;
 
 };
 
-struct ResourceDataMatrix: ResourceData {
+template <typename T>
+struct ResourceDataMatrix: ResourceData<T> {
 
     /** Resource data management **/
     //Constructors and Destructors
@@ -110,9 +113,9 @@ struct ResourceDataMatrix: ResourceData {
     void reset() override {ResourceData::reset(); arc_costs.clear();}
 
     /** Arc Data **/
-    void setArcCost(int i, int j, int cost) override {arc_costs[i][j] = cost;}
-    int getArcCost(int i, int j) override {return arc_costs[i][j];}
-    void increaseArcCost(int i, int j, int delta) override {arc_costs[i][j] += delta;}
+    void setArcCost(int i, int j, T cost) override {arc_costs[i][j] = cost;}
+    T getArcCost(int i, int j) override {return arc_costs[i][j];}
+    void increaseArcCost(int i, int j, T delta) override {arc_costs[i][j] += delta;}
     void multiplyArcCost(int i, int j, float factor) override {arc_costs[i][j] *= factor;}
 
     /** Scaling **/
@@ -125,7 +128,7 @@ struct ResourceDataMatrix: ResourceData {
     }
 
 private:
-    std::vector<std::vector<int>> arc_costs;
+    std::vector<std::vector<T>> arc_costs;
 };
 
 #endif

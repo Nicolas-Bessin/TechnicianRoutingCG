@@ -3,7 +3,7 @@
 
 #include "resource.h"
 
-class Capacity: public Resource {
+class Capacity: public Resource<int> {
 
 public:
     Capacity();

@@ -3,7 +3,7 @@
 
 #include "resource.h"
 
-class NodeLim: public Resource {
+class NodeLim: public Resource<int> {
 
 public:
     NodeLim();

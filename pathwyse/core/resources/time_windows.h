@@ -3,7 +3,7 @@
 
 #include "resource.h"
 
-class TimeWindow: public Resource {
+class TimeWindow: public Resource<int> {
 
 public:
     TimeWindow();
