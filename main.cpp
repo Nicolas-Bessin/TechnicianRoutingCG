@@ -195,7 +195,7 @@ int main(int argc, char *argv[]){
     cout << "Time spent waiting : " << time_spent_waiting(integer_solution, routes, instance) << " minutes" << endl;
 
     cout << "-----------------------------------" << endl;
-    print_used_routes(integer_solution, routes, instance); 
+    //print_used_routes(integer_solution, routes, instance); 
 
     return 0;
 }

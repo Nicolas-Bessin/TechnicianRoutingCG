@@ -5,6 +5,7 @@
 #include <set>
 #include <algorithm>
 #include <assert.h>
+#include <iomanip>
 
 using std::vector, std::map, std::string, std::set;
 using std::find;
@@ -317,6 +318,8 @@ double compute_integer_objective(const IntegerSolution& solution, const vector<R
 
 void print_route(const Route & route, const Instance & instance) {
     using std::cout, std::endl;
+    using std::setprecision, std::fixed;
+
     // Print the vehicle id
     cout << "Vehicle id: " << route.vehicle_id << " - Tour length: " << route.id_sequence.size() << std::endl;
     cout << "Technicians in the vehicle: ";
@@ -342,17 +345,34 @@ void print_route(const Route & route, const Instance & instance) {
         cout << route.id_sequence[i] << ", ";
     }
     cout << std::endl;
-    cout << "Sequence (node_id): ";
+    // cout << "Sequence (node_id): ";
+    // for (int i = 0; i < route.id_sequence.size(); i++) {
+    //     cout << instance.nodes[route.id_sequence[i]].node_id << ", ";
+    // }
+    cout << std::endl;
+    // Print the start of time window, real start time, Duration, end of time window
+    cout << "Window start: ";
     for (int i = 0; i < route.id_sequence.size(); i++) {
-        cout << instance.nodes[route.id_sequence[i]].node_id << ", ";
+        cout << setprecision(1) << instance.nodes[route.id_sequence[i]].start_window << ", ";
     }
     cout << std::endl;
-    // Print the start times at the nodes
-    // cout << "Start times: ";
-    // for (int index : route.id_sequence) {
-    //     cout << route.start_times[index] << " ";
-    // }
-    // cout << std::endl;
+    cout << "Start time:   ";
+    for (int i = 0; i < route.id_sequence.size(); i++) {
+        cout << setprecision(0) << route.start_times[route.id_sequence[i]] << ", ";
+    }
+    cout << std::endl;
+    cout << "Duration:     ";
+    for (int i = 0; i < route.id_sequence.size(); i++) {
+        cout << setprecision(1) << instance.nodes[route.id_sequence[i]].duration << ", ";
+    }
+    cout << std::endl;
+    cout << "Window end:   ";
+    for (int i = 0; i < route.id_sequence.size(); i++) {
+        cout << setprecision(1) << instance.nodes[route.id_sequence[i]].end_window << ", ";
+    }
+    cout << std::endl;
+
+
 
 }
 
