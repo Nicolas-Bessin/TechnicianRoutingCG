@@ -76,6 +76,8 @@ struct Technician {
 
 struct Vehicle {
     int id;
+    // Vector containing the ids of the technicians in the vehicle
+    std::vector<std::string> technicians;
     // Counts the number of technicians that have each skill in the vehicle
     std::map<std::string, int> skills; 
     // List of indexes of interventions that the vehicle can perform
@@ -84,20 +86,22 @@ struct Vehicle {
     // Index of the depot in the nodes std::vector
     int depot;
     std::map<std::string, int> capacities;
-    int start_window;
-    int lunch_window;
-    int end_window;
     double cost;
     // Constructor
-    Vehicle(int id, std::map<std::string, int> skills, std::vector<int> interventions, int depot, std::map<std::string, int> capacities, int start_window, int lunch_window, int end_window, double cost){
+    Vehicle(int id, 
+        std::vector<std::string> technicians, 
+        std::map<std::string, int> skills, 
+        std::vector<int> interventions, 
+        int depot, 
+        std::map<std::string, int> capacities, 
+        double cost)
+        {
         this->id = id;
+        this->technicians = technicians;
         this->skills = skills;
         this->interventions = interventions;
         this->depot = depot;
         this->capacities = capacities;
-        this->start_window = start_window;
-        this->lunch_window = lunch_window;
-        this->end_window = end_window;
         this->cost = cost;
     }
 };

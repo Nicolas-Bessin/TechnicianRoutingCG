@@ -1,5 +1,6 @@
 #include "pricing.h"
 #include "constants.h"
+#include "lunch.h"
 #include "../pathwyse/core/solver.h"
 
 #include <map>
@@ -21,7 +22,7 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
     int n_interventions_v = vehicle.interventions.size();
     int origin = n_interventions_v;
     int destination = origin + 1;
-    // Get the number of ressources in the problem
+    // Get the number of resources in the problem
 
     // Create a new instance of the Problem class
     Problem* problem = new Problem(
@@ -77,8 +78,8 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
     // Set this resource as the objective function
     problem->setObjective(objective);
 
-    // Create a vector of ressources for the problem
-    vector<Resource<int>*> ressources;
+    // Create a vector of resources for the problem
+    vector<Resource<int>*> resources;
 
     // Add the time window ressource to the problem as the critical ressource
     TimeWindow* time_window = new TimeWindow();
@@ -129,21 +130,44 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
         double travel_time_in = metric(intervention, (instance.nodes[vehicle.depot]), instance.time_matrix);
         time_window->setArcCost(i, destination, travel_time_in);
     }
-    // Add the time window ressource to the vector of ressources
+    // Add the time window ressource to the vector of resources
     time_window->init(origin, destination);
-    ressources.push_back(time_window);
+    resources.push_back(time_window);
 
-    // Create a node limit ressource set to the number of nodes in the problem
-    NodeLim* node_limit = new NodeLim();
-    node_limit->initData(false, n_interventions_v + 2);
-    node_limit->setName("Node Limit");
-    // Set the UB and LB of the node limit ressource
-    node_limit->setUB(n_interventions_v + 2);
-    // add the node limit ressource to the vector of ressources
-    //ressources.push_back(node_limit);
+    // In a similar manner, we add the lunch break ressource to the problem
+    LunchBreak* lunch_break = new LunchBreak(n_interventions_v + 2);
+    lunch_break->setName("Lunch Break");
+    lunch_break->initData(false, n_interventions_v + 2);
+    // Go through all the interventions and set the lunch break constraints
+    for (int i = 0; i < n_interventions_v; i++) {
+        // Get the intervention referenced by the index i
+        const Node& intervention = (instance.nodes[vehicle.interventions[i]]);
+        // Set the lunch break constraints
+        lunch_break->setConstrainedIntervention(i, intervention.is_ambiguous);
+        // Set the node consumption of the lunch break ressource
+        lunch_break->setNodeCost(i, intervention.duration);
+        // Set all the arcs to their time consumption
+        for (int j = 0; j < n_interventions_v; j++) {
+            if (i == j) continue;
+            // Get the two interventions referenced by the indices i and j
+            const Node& intervention_next = (instance.nodes[vehicle.interventions[j]]);
+            // Get the time it takes to go from intervention i to intervention j
+            double travel_time = metric(intervention, intervention_next, instance.time_matrix);
+            // Set the time consumption on the arc
+            lunch_break->setArcCost(i, j, travel_time);
+        }
+        // Also set the time consumption on the arcs between the warehouse and the interventions
+        // Outgoing arcs from the warehouse
+        double travel_time = metric((instance.nodes[vehicle.depot]), intervention, instance.time_matrix);
+        lunch_break->setArcCost(origin, i, travel_time);
+        lunch_break->setArcCost(i, destination, travel_time);
+    }
+
+    // Add the lunch break ressource to the vector of resources
+    resources.push_back(lunch_break);
 
 
-    // We then want to add the capacity ressources to the problem
+    // We then want to add the capacity resources to the problem
     int nb_capacities = instance.capacities_labels.size();
     // For every label of capacity, we create a new capacity ressource
     for (const string & label : instance.capacities_labels) {
@@ -163,12 +187,12 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
             // Set the capacity consumption of the intervention
             capacity->setNodeCost(i, consumption);
         }
-        // Add it to the vector of ressources
-        ressources.push_back(capacity);
+        // Add it to the vector of resources
+        resources.push_back(capacity);
     }
 
-    // Set the ressources of the problem
-    problem->setResources(ressources);
+    // Set the resources of the problem
+    problem->setResources(resources);
     //problem->printProblem();
 
     return unique_ptr<Problem>(problem);
