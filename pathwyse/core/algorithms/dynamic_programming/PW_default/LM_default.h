@@ -122,7 +122,7 @@ protected:
     int reserve_size;
     int turn_forward, turn_backward;
     double split_ratio;
-    int incumbent;
+    double incumbent;
     bool use_visited, compare_unreachables;
 
     int ndominated_fw, ndominated_bw;

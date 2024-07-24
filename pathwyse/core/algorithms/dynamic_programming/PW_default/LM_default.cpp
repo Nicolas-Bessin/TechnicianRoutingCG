@@ -25,7 +25,7 @@ LMDefault::LMDefault(Problem* problem) {
 void LMDefault::initLM(){
     //Get data from problem
     auto objective = problem->getObj();
-    std::vector<Resource*>& resources = problem->getResources();
+    std::vector<Resource<int>*>& resources = problem->getResources();
 
     int origin = problem->getOrigin();
     int destination = problem->getDestination();
@@ -296,7 +296,7 @@ bool LMDefault::isExtensionFeasible(LabelAdv *label, int next_node) {
     bool direction = label->getDirection();
     double bounding = 1;
 
-    std::vector<Resource*>& resources = problem->getResources();
+    std::vector<Resource<int>*>& resources = problem->getResources();
 
     int i = direction ? label->getNode() : next_node;
     int j = direction ? next_node : label->getNode();
@@ -316,7 +316,7 @@ bool LMDefault::isCriticalExtensionFeasible(LabelAdv *label, int next_node) {
     bool direction = label->getDirection();
     double bounding = direction ? split_ratio : 1 - split_ratio;
 
-    std::vector<Resource*>& resources = problem->getResources();
+    std::vector<Resource<int>*>& resources = problem->getResources();
 
     int i = direction ? label->getNode() : next_node;
     int j = direction ? next_node : label->getNode();
@@ -334,7 +334,7 @@ bool LMDefault::isCriticalExtensionFeasible(LabelAdv *label, int next_node) {
 
 void LMDefault::extendLabel(LabelAdv *current_label, LabelAdv *new_label, int next_node) {
     auto objective = problem->getObj();
-    std::vector<Resource*>& resources = problem->getResources();
+    std::vector<Resource<int>*>& resources = problem->getResources();
     *new_label = *current_label;
     new_label->updateLabel(next_node, current_label);
     bool direction = current_label->getDirection();
@@ -668,7 +668,7 @@ bool LMDefault::isJoinFeasible(LabelAdv* label_forward, LabelAdv* label_backward
 
     int current_value;
     int snapshot_forward, snapshot_backward;
-    std::vector<Resource*>& resources = problem->getResources();
+    std::vector<Resource<int>*>& resources = problem->getResources();
 
     for(int resID = 0; resID < problem->getNumRes(); resID++) {
         snapshot_forward = label_forward->getSnapshot(resID);
@@ -741,7 +741,7 @@ std::list<LabelAdv> LMDefault::buildTour(std::list<int> tour, bool direction) {
     current_label->initLabel(node, nullptr, direction, problem->getNumRes());
     current_label->setObjective(problem->getObj()->getInitValue() + problem->getObj()->getNodeCost(node));
 
-    std::vector<Resource*>& resources = problem->getResources();
+    std::vector<Resource<int>*>& resources = problem->getResources();
     for(int id = 0; id < problem->getNumRes(); id++)
         current_label->setSnapshot(id, resources[id]->getInitValue() + resources[id]->getNodeCost(node));
 

@@ -72,7 +72,7 @@ std::vector<Route> create_solve_pricing_instance(const std::vector<double> &alph
     problem->setObjective(objective);
 
     // Create a vector of ressources for the problem
-    vector<Resource*> ressources;
+    vector<Resource<int>*> ressources;
 
     // Add the time window ressource to the problem as the critical ressource
     TimeWindow* time_window = new TimeWindow();

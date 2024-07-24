@@ -37,13 +37,13 @@ public:
 
     /** Solution management **/
     //Solution process
-    bool updateIncumbent(int value);
-    void setIncumbent(int value){incumbent = value;}
+    bool updateIncumbent(double value);
+    void setIncumbent(double value){incumbent = value;}
     int getIncumbent(){return incumbent;}
 
-    bool updateLowerBound(int value);
-    void setLowerBound(int value){lower_bound = value;}
-    int getLowerBound(){return lower_bound;}
+    bool updateLowerBound(double value);
+    void setLowerBound(double value){lower_bound = value;}
+    double getLowerBound(){return lower_bound;}
 
     double getGlobalTime(){return collector.getGlobalTime();}
 
@@ -79,8 +79,8 @@ protected:
     int executionID;
     int iterations;
     int algo_status;
-    int incumbent;
-    int lower_bound;
+    double incumbent;
+    double lower_bound;
 
     //Solution
     int best_solution_id;

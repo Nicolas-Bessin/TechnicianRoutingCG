@@ -59,8 +59,8 @@ private:
 
     //Problem Data
     Problem* problem;
-    Resource* obj;
-    Resource* res;
+    Resource<double>* obj;
+    Resource<int>* res;
 
     //Buckets
     std::vector<std::list<Label*>> bucket_f, bucket_b;

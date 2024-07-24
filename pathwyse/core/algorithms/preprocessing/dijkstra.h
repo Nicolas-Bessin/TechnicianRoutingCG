@@ -53,8 +53,8 @@ private:
     int found_optimal;
 
     //Resource and completion labels pointers
-    Resource* obj;
-    Resource* res;
+    Resource<double>* obj;
+    Resource<int>* res;
     BoundLabels* bound_labels;
 
     //Solution information

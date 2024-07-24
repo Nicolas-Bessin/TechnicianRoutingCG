@@ -162,7 +162,7 @@ std::vector<Route> solve_pricing_problem_file(const std::string &filepath,
     int origin = problem->getOrigin();
     int destination = problem->getDestination();
 
-    Resource* objective = problem->getObj();
+    DefaultCost* objective = (DefaultCost*) problem->getObj();
     // Update the node costs
     for (int i = 0; i < n_interventions; i++) {
         int intervention_index = vehicle.interventions.at(i);

@@ -33,9 +33,9 @@ public:
     void setCustomProblem(Problem& problem);                                                //Set a custom problem
     Problem* getProblem() {return problem;}                                                 //Get problem pointer
     int getNumberOfNodes();
-    void setInitCost(int cost);
-    void setNodeCost(int id, int cost);
-    void setNodeCost(std::vector<int> costs);
+    void setInitCost(double cost);
+    void setNodeCost(int id, double cost);
+    void setNodeCost(std::vector<double> costs);
     void scaleData();
     void revertScaleData();
 

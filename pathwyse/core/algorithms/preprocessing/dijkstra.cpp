@@ -290,7 +290,7 @@ std::list<Label> Dijkstra::buildTour(std::list<int> tour, bool direction) {
     current_label->initLabel(node, nullptr, direction, problem->getNumRes());
     current_label->setObjective(problem->getObj()->getInitValue() + problem->getObj()->getNodeCost(node));
 
-    std::vector<Resource*>& resources = problem->getResources();
+    std::vector<Resource<int>*>& resources = problem->getResources();
     for(int id = 0; id < problem->getNumRes(); id++)
         current_label->setSnapshot(id, resources[id]->getInitValue() + resources[id]->getNodeCost(node));
 

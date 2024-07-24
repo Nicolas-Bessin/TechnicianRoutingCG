@@ -1,6 +1,6 @@
 #include "pricing.h"
-#include "../constants.h"
-#include "../../pathwyse/core/solver.h"
+#include "constants.h"
+#include "../pathwyse/core/solver.h"
 
 #include <map>
 #include <iostream>
@@ -78,7 +78,7 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
     problem->setObjective(objective);
 
     // Create a vector of ressources for the problem
-    vector<Resource*> ressources;
+    vector<Resource<int>*> ressources;
 
     // Add the time window ressource to the problem as the critical ressource
     TimeWindow* time_window = new TimeWindow();

@@ -29,7 +29,7 @@ void Algorithm::addSolution(Path & path) {
         best_solution_id = solutions.size() - 1;
 }
 
-bool Algorithm::updateIncumbent(int value) {
+bool Algorithm::updateIncumbent(double value) {
     if(incumbent > value) {
         incumbent = value;
         return true;
@@ -37,7 +37,7 @@ bool Algorithm::updateIncumbent(int value) {
     return false;
 }
 
-bool Algorithm::updateLowerBound(int value) {
+bool Algorithm::updateLowerBound(double value) {
     if(lower_bound < value) {
         lower_bound = value;
         return true;

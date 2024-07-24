@@ -78,17 +78,17 @@ public:
 
     /** Objective and Resource management **/
     //Objective initialization
-    void initObjective(Resource* objective = nullptr);
+    void initObjective(Resource<double>* objective = nullptr);
 
     // Custom : objective setter
-    void setObjective(Resource* objective) {this->objective = objective;}
+    void setObjective(Resource<double>* objective) {this->objective = objective;}
 
     //Resource management
     int addResource(int type);
     void createResources(std::vector<int> & resources_type);
-    void setRes(Resource* res){resources.push_back(res); n_res++;}
-    void setRes(int position, Resource* res){resources[position] = res;}
-    void setResources(std::vector<Resource*> resources){this->resources = resources; n_res = resources.size();}
+    void setRes(Resource<int>* res){resources.push_back(res); n_res++;}
+    void setRes(int position, Resource<int>* res){resources[position] = res;}
+    void setResources(std::vector<Resource<int>*> resources){this->resources = resources; n_res = resources.size();}
 
     //Insert sets of consumptions f
     void setArcConsumption(int i, int j,  std::vector<int> consumption);
@@ -96,9 +96,9 @@ public:
 
     //Resource/Objective data queries
     int getNumRes(){return resources.size();}
-    Resource* getObj() {return objective;}
-    Resource* getRes(int position){return resources[position];}
-    std::vector<Resource*> & getResources(){return resources;}
+    Resource<double>* getObj() {return objective;}
+    Resource<int>* getRes(int position){return resources[position];}
+    std::vector<Resource<int>*> & getResources(){return resources;}
 
     /** Completion Labels management  **/
     //Completion Labels data queries
@@ -146,8 +146,8 @@ protected:
 
     //Objective and Resources
     int n_res;
-    Resource* objective;
-    std::vector<Resource*> resources;
+    Resource<double>* objective;
+    std::vector<Resource<int>*> resources;
 
     //Completion Labels
     BoundLabels* bound_labels;

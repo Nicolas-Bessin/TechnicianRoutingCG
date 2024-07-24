@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../../pathwyse/core/data/problem.h"
-#include "../solution.h"
+#include "../pathwyse/core/data/problem.h"
+#include "solution.h"
 #include <vector>
 #include <memory>
 

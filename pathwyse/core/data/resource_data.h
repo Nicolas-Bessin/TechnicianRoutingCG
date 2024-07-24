@@ -54,12 +54,12 @@ struct ResourceDataMap: ResourceData<T> {
 
     /** Resource data management **/
     //Constructors and Destructors
-    explicit ResourceDataMap(int n_nodes): ResourceData(n_nodes) {
-        arc_costs.resize(n_nodes, std::map<int, int>());
+    explicit ResourceDataMap(int n_nodes): ResourceData<T>(n_nodes) {
+        arc_costs.resize(n_nodes, std::map<int, T>());
     }
     ~ResourceDataMap() = default;
 
-    void reset() override {ResourceData::reset(); arc_costs.clear();}
+    void reset() override {ResourceData<T>::reset(); arc_costs.clear();}
 
     /** Arc Data **/
     void setArcCost(int i, int j, T cost) override {
@@ -88,8 +88,9 @@ struct ResourceDataMap: ResourceData<T> {
 
     /** Scaling **/
     void scaleData(float scaling) override{
+        int n_nodes = ResourceData<T>::n_nodes;
         for(int i = 0; i < n_nodes; i++) {
-            multiplyNodeCost(i, scaling);
+            ResourceData<T>::multiplyNodeCost(i, scaling);
             for(auto & it : arc_costs[i])
                 it.second *= scaling;
         }
@@ -105,12 +106,12 @@ struct ResourceDataMatrix: ResourceData<T> {
 
     /** Resource data management **/
     //Constructors and Destructors
-    explicit ResourceDataMatrix(int n_nodes): ResourceData(n_nodes) {
-        arc_costs.resize(n_nodes, std::vector<int>(n_nodes, 0));
+    explicit ResourceDataMatrix(int n_nodes): ResourceData<T>(n_nodes) {
+        arc_costs.resize(n_nodes, std::vector<T>(n_nodes, 0));
     }
     ~ResourceDataMatrix() = default;
 
-    void reset() override {ResourceData::reset(); arc_costs.clear();}
+    void reset() override {ResourceData<T>::reset(); arc_costs.clear();}
 
     /** Arc Data **/
     void setArcCost(int i, int j, T cost) override {arc_costs[i][j] = cost;}
@@ -120,8 +121,9 @@ struct ResourceDataMatrix: ResourceData<T> {
 
     /** Scaling **/
     void scaleData(float scaling) override{
+        int n_nodes = ResourceData<T>::n_nodes;
         for(int i = 0; i < n_nodes; i++){
-            multiplyNodeCost(i, scaling);
+            ResourceData<T>::multiplyNodeCost(i, scaling);
             for(int j = 0; j < n_nodes; j++)
                 multiplyArcCost(i, j, scaling);
         }

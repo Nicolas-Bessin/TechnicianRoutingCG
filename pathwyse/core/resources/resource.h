@@ -91,9 +91,9 @@ public:
     }
     
     /** Resource data structure management **/
-    void initData(bool compress_data = false, int n_nodes = 1) {compress_data ? data = new ResourceDataMap(n_nodes): data = new ResourceDataMatrix(n_nodes);}
-    void setData(ResourceData* data) {this->data = data;}
-    ResourceData* getData() {return data;}
+    void initData(bool compress_data = false, int n_nodes = 1) {compress_data ? data = new ResourceDataMap<T>(n_nodes): data = new ResourceDataMatrix<T>(n_nodes);}
+    void setData(ResourceData<T>* data) {this->data = data;}
+    ResourceData<T>* getData() {return data;}
 
     T getArcCost(int i, int j) {return data->getArcCost(i,j);}
     void setArcCost(int i, int j, T cost) {data->setArcCost(i,j, cost);}
@@ -123,7 +123,7 @@ protected:
     T lower_bound, upper_bound;
     std::vector<T> node_lower_bound, node_upper_bound;
 
-    ResourceData* data;
+    ResourceData<T>* data;
 };
 
 #endif

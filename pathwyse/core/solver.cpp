@@ -156,7 +156,7 @@ int Solver::getNumberOfNodes() {
  * 
  * @param cost - Cost value.
  */
-void Solver::setInitCost(int cost){
+void Solver::setInitCost(double cost){
     if(problem)
         problem->getObj()->setInitValue(cost);
 }
@@ -167,7 +167,7 @@ void Solver::setInitCost(int cost){
  * @param id - Id of the node.
  * @param cost - Node cost.
  */
-void Solver::setNodeCost(int id, int cost){
+void Solver::setNodeCost(int id, double cost){
     if(problem)
         problem->getObj()->setNodeCost(id, cost);
 }
@@ -177,7 +177,7 @@ void Solver::setNodeCost(int id, int cost){
  * 
  * @param costs - Vector of costs to assing to problem nodes.
  */
-void Solver::setNodeCost(std::vector<int> costs) {
+void Solver::setNodeCost(std::vector<double> costs) {
     if(problem)
         problem->getObj()->setNodeCosts(costs);
 }

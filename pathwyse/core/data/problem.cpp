@@ -89,7 +89,7 @@ void Problem::setNetworkArc(int i, int j) {
 }
 /** Objective and Resource management **/
 //Initialize Objective data structures
-void Problem::initObjective(Resource *objective) {
+void Problem::initObjective(Resource<double> *objective) {
     //If a custom objective is not defined, use default objective
     if(not objective)
         objective = new DefaultCost();
@@ -101,7 +101,7 @@ void Problem::initObjective(Resource *objective) {
 
 //Initialize a resource Data Object
 int Problem::addResource(int type) {
-    Resource* res;
+    Resource<int>* res;
     int index;
 
     switch(type){
