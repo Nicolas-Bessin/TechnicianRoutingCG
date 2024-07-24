@@ -15,7 +15,7 @@
 #include <random>
 
 #define SCALE_FACTOR 1
-#define TIME_LIMIT 15
+#define TIME_LIMIT 30
 
 
 void takes_an_int(int a){
@@ -108,7 +108,7 @@ int main(int argc, char *argv[]){
             // Go through the returned routes, and add them to the master problem if they have a positive reduced cost
             for (const auto &route : best_new_routes){
                 //double computed_reduced_cost = compute_reduced_cost(route, solution.alphas, solution.betas[v], instance);
-                if (route.reduced_cost > 1){
+                if (route.reduced_cost > 0){
                     routes.push_back(route);
                     n_added_routes++;
                     max_reduced_cost = std::max(max_reduced_cost, route.reduced_cost);
@@ -172,11 +172,11 @@ int main(int argc, char *argv[]){
 
     cout << "Number of interventions that could be covered : " << count_coverable_interventions(integer_solution, routes, instance) << endl;
 
-    // Check that all routes are feasible
+    // Check that all used routes are feasible
     bool all_feasible = true;
     for (int i = 0; i < routes.size(); i++){
         const Route& route = routes.at(i);
-        if (!is_route_feasible(route, instance)){
+        if (integer_solution.coefficients[i] > 0 && !is_route_feasible(route, instance)){
             cout << "Route " << i << " is not feasible" << endl;
             all_feasible = false;
         }
@@ -195,7 +195,7 @@ int main(int argc, char *argv[]){
     cout << "Time spent waiting : " << time_spent_waiting(integer_solution, routes, instance) << " minutes" << endl;
 
     cout << "-----------------------------------" << endl;
-    //print_used_routes(integer_solution, routes, instance); 
+    print_used_routes(integer_solution, routes, instance); 
 
     return 0;
 }

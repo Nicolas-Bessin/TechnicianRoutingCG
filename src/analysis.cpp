@@ -1,4 +1,5 @@
 #include "analysis.h"
+#include "constants.h"
 #include <map>
 #include <string>
 #include <set>
@@ -7,9 +8,10 @@
 
 using std::vector, std::map, std::string, std::set;
 using std::find;
-using std::cout, std::endl;
 
 int count_covered_interventions(const IntegerSolution& solution, const vector<Route>& routes, const Instance& instance) {
+    using std::cout, std::endl;
+    
     int nb_routes = routes.size();
     int nb_interventions = instance.number_interventions;
     vector<int> is_covered(nb_interventions, 0);
@@ -17,14 +19,15 @@ int count_covered_interventions(const IntegerSolution& solution, const vector<Ro
     // Go through all interventions
     for (int i = 0; i < nb_interventions; i++) {
         // Go through all routes
-        for (int j = 0; j < nb_routes; j++) {
+        for (int r = 0; r < nb_routes; r++) {
             // If the intervention is covered more than once, there is a problem
-            if (solution.coefficients[j] > 1 && routes[j].is_in_route[i] == 1) {
+            const Route& route = routes[r];
+            if (solution.coefficients[r] > 0 && is_covered[i] > 0 && route.is_in_route[i] > 0) {
                 cout << "Intervention " << i << " is covered more than once" << endl;
                 return -1;
             }
-            // If the intervention is covered by the route, mark it as covered
-            if (routes[j].is_in_route[i] == 1) {
+            // If the intervention is covered, mark it as covered
+            if (solution.coefficients[r] > 0 && route.is_in_route[i] > 0) {
                 is_covered[i] = 1;
             }
         }
@@ -40,6 +43,8 @@ int count_covered_interventions(const IntegerSolution& solution, const vector<Ro
 }
 
 int count_used_vehicles(const IntegerSolution& solution, const vector<Route>& routes, const Instance& instance) {
+    using std::cout, std::endl;
+
     int nb_routes = routes.size();
     int nb_vehicles = instance.vehicles.size();
     vector<int> is_used(nb_vehicles, 0);
@@ -72,6 +77,7 @@ int count_used_vehicles(const IntegerSolution& solution, const vector<Route>& ro
 // - The route respects the time windows of the interventions
 // - The route respects the capacities of the vehicles
 bool is_route_feasible(const Route& route, const Instance& instance) {
+    using std::cout, std::endl;
     int vehicle_id = route.vehicle_id;
     const Vehicle& vehicle = instance.vehicles.at(vehicle_id);
     int depot_id = vehicle.depot;
@@ -113,6 +119,11 @@ bool is_route_feasible(const Route& route, const Instance& instance) {
         }
         if (current_time + duration > intervention.end_window) {
             cout << "Intervention " << i << " ends too late : " << current_time + duration << " > " << intervention.end_window << endl;
+            return false;
+        }
+        // Check wether the lunch break is respected
+        if (intervention.is_ambiguous && current_time < MID_DAY && current_time + duration > MID_DAY) {
+            cout << "Intervention " << intervention_id << " ends after the lunch break : start = " << current_time << " end = " << current_time + duration << endl;
             return false;
         }
         // Update the quantities consummed
@@ -305,36 +316,49 @@ double compute_integer_objective(const IntegerSolution& solution, const vector<R
 
 
 void print_route(const Route & route, const Instance & instance) {
+    using std::cout, std::endl;
     // Print the vehicle id
-    std::cout << "Vehicle id: " << route.vehicle_id << std::endl;
+    cout << "Vehicle id: " << route.vehicle_id << " - Tour length: " << route.id_sequence.size() << std::endl;
+    cout << "Technicians in the vehicle: ";
+    for (string tech_id : instance.vehicles[route.vehicle_id].technicians) {
+        cout << tech_id << ", ";
+    }
+    cout << std::endl;
+    
     // Print the tvehicle cost, travelling cost and total cost
     double travel_distance = count_route_kilometres(route, instance);
-    std::cout << "Vehicle cost: " << instance.vehicles[route.vehicle_id].cost << " ";
-    std::cout << "Travelling cost: " << travel_distance * instance.cost_per_km << " ";
-    std::cout << "Total cost: " << route.total_cost << std::endl;
+    //cout << "Vehicle cost: " << instance.vehicles[route.vehicle_id].cost << " ";
+    //cout << "Travelling cost: " << travel_distance * instance.cost_per_km << " ";
+    //cout << "Total cost: " << route.total_cost << std::endl;
     // Print the kilometres along the route
-    std::cout << "Total distance: " << travel_distance << std::endl;
+    //cout << "Total distance: " << travel_distance << std::endl;
     // Print the total duration, travelling time and waiting time
-    std::cout << "Total duration: " << route.total_duration << " ";
-    std::cout << "Total travelling time: " << route.total_travelling_time << " ";
-    std::cout << "Total waiting time: " << route.total_waiting_time << std::endl;
+    //cout << "Total duration: " << route.total_duration << " ";
+    //cout << "Total travelling time: " << route.total_travelling_time << " ";
+    //cout << "Total waiting time: " << route.total_waiting_time << std::endl;
     // Print the sequence of nodes
-    std::cout << "Sequence: ";
+    cout << "Sequence: ";
     for (int i = 0; i < route.id_sequence.size(); i++) {
-        std::cout << route.id_sequence[i] << " ";
+        cout << route.id_sequence[i] << ", ";
     }
-    std::cout << std::endl;
+    cout << std::endl;
+    cout << "Sequence (node_id): ";
+    for (int i = 0; i < route.id_sequence.size(); i++) {
+        cout << instance.nodes[route.id_sequence[i]].node_id << ", ";
+    }
+    cout << std::endl;
     // Print the start times at the nodes
-    std::cout << "Start times: ";
-    for (int index : route.id_sequence) {
-        std::cout << route.start_times[index] << " ";
-    }
-    std::cout << std::endl;
+    // cout << "Start times: ";
+    // for (int index : route.id_sequence) {
+    //     cout << route.start_times[index] << " ";
+    // }
+    // cout << std::endl;
 
 }
 
 
 void print_used_routes(const IntegerSolution& solution, const vector<Route>& routes, const Instance& instance) {
+    using std::cout, std::endl;
     for (int i = 0; i < routes.size(); i++) {
         if (solution.coefficients[i] > 0) {
             print_route(routes[i], instance);

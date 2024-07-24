@@ -185,6 +185,8 @@ Instance parse_file(string filename){
     // We now construct one vehicle per team
     vector<Vehicle> vehicles = vector<Vehicle>();
     for (int i = 0; i < tech_id_per_team.size(); i++){
+        // Collect the technicians in the team
+        vector<string> tech_ids = tech_id_per_team[i];
         // Build the map of available skills for the vehicle
         map<string, int> skills = map<string, int>();
         for (int j = 0; j < tech_id_per_team[i].size(); j++){
@@ -218,7 +220,7 @@ Instance parse_file(string filename){
         }
         // Vehicle cost is the sum of the cost of each technician in the team
         double vehicle_cost = tech_cost * tech_id_per_team[i].size();
-        vehicles.push_back(Vehicle(i, skills, interventions, depot, capacities, START_MORNING, END_AFTERNOON, END_DAY, vehicle_cost));
+        vehicles.push_back(Vehicle(i, tech_ids, skills, interventions, depot, capacities, vehicle_cost));
     }
 
     // Print the number of vehicles
