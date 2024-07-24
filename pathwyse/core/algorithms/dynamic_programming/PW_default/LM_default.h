@@ -74,11 +74,11 @@ public:
     bool isJoinFeasible(LabelAdv* forward, LabelAdv* backward);                 //Checks if two labels can be joined
     bool joinFound() {return not joinable_labels.empty();}                      //Checks if a join was found
 
-    std::tuple<int, LabelAdv*, LabelAdv*> getBestJoin() {return *joinable_labels.begin();}       //returns best join
-    std::multiset<std::tuple<int, LabelAdv*, LabelAdv*>> getAllJoin() {return joinable_labels;}
+    std::tuple<double, LabelAdv*, LabelAdv*> getBestJoin() {return *joinable_labels.begin();}       //returns best join
+    std::multiset<std::tuple<double, LabelAdv*, LabelAdv*>> getAllJoin() {return joinable_labels;}
 
     /** Solution management **/
-    std::tuple<int, LabelAdv*, LabelAdv*> getSolutionLabels();
+    std::tuple<double, LabelAdv*, LabelAdv*> getSolutionLabels();
     void setODLabel();
     LabelAdv* getODLabel(){return (od_label.second >= 0) ? getLabel(od_label.first, od_label.second) : nullptr;}
 
@@ -139,13 +139,13 @@ protected:
     std::vector<std::list<std::pair<double, int>>> forward_candidates, backward_candidates;            //Open labels
     LabelAdv *best_fw, *best_bw;                                                                    //Best overall labels
     std::vector<LabelAdv*> forward_best, backward_best;                                             //Best overall LabelAdv for each node
-    std::multiset<std::pair<int, int>> forward_top_candidates, backward_top_candidates;             //Best available candidates, ordered
+    std::multiset<std::pair<double, int>> forward_top_candidates, backward_top_candidates;             //Best available candidates, ordered
 
     //Closed labels
     std::vector<std::vector<std::pair<double, int>>> forward_closed, backward_closed;                      //Closed labels
     std::vector<std::vector<std::pair<double, int>>> forward_closed_backup, backward_closed_backup;        //Backup of closed labels
 
-    std::multiset<std::tuple<int, LabelAdv*, LabelAdv*>> joinable_labels;                 //Joinable label pairs
+    std::multiset<std::tuple<double, LabelAdv*, LabelAdv*>> joinable_labels;                 //Joinable label pairs
 
     //Data collection
     int executionID;

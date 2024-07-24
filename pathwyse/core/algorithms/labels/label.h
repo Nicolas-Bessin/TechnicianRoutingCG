@@ -10,7 +10,7 @@ public:
 
     /** Label management **/
     //Constructors and destructors
-    Label() {objective = UNKNOWN;}
+    Label() {objective = UNKNOWN_OBJ;}
     Label(const Label &obj);
 
     virtual ~Label() = default;
@@ -32,7 +32,7 @@ public:
     int getNode(){return node;}
     bool getDirection(){return direction;}
     Label* getPredecessor(){return predecessor;}
-    bool isValid(){return objective != UNKNOWN;}
+    bool isValid(){return objective != UNKNOWN_OBJ;}
 
     /** Operators **/
     void operator= (const Label& obj);

@@ -686,8 +686,8 @@ bool LMDefault::isJoinFeasible(LabelAdv* label_forward, LabelAdv* label_backward
 
 /** Solution management +*/
 //Return a solution
-std::tuple<int, LabelAdv*, LabelAdv*> LMDefault::getSolutionLabels() {
-    std::tuple<int, LabelAdv*, LabelAdv*> solution_data = {0, nullptr, nullptr};
+std::tuple<double, LabelAdv*, LabelAdv*> LMDefault::getSolutionLabels() {
+    std::tuple<double, LabelAdv*, LabelAdv*> solution_data = {0, nullptr, nullptr};
 
     if(bidirectional and joinFound())
         solution_data = getBestJoin();
