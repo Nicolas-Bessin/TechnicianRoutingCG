@@ -52,7 +52,7 @@ public:
     void updateBestSolution(int id){best_solution_id = id;}
     std::vector<Path> & getSolutions() {return solutions;}
     void addSolution(Path & path);
-    void buildPath(int objective, Label* forward_label, Label* backward_label = nullptr);
+    void buildPath(double objective, Label* forward_label, Label* backward_label = nullptr);
 
     /** Output management **/
     void printStatus();
