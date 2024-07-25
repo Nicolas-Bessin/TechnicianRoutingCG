@@ -10,7 +10,9 @@
 using std::vector, std::map, std::string, std::set;
 using std::find;
 
-int count_covered_interventions(const IntegerSolution& solution, const vector<Route>& routes, const Instance& instance) {
+
+// Returns a vector of size n_interventions, with a 1 at the index of each intervention that is covered by the solution
+std::vector<int> covered_interventions(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance) {
     using std::cout, std::endl;
     
     int nb_routes = routes.size();
@@ -25,7 +27,7 @@ int count_covered_interventions(const IntegerSolution& solution, const vector<Ro
             const Route& route = routes[r];
             if (solution.coefficients[r] > 0 && is_covered[i] > 0 && route.is_in_route[i] > 0) {
                 cout << "Intervention " << i << " is covered more than once" << endl;
-                return -1;
+                is_covered[i] += 1;
             }
             // If the intervention is covered, mark it as covered
             if (solution.coefficients[r] > 0 && route.is_in_route[i] > 0) {
@@ -34,16 +36,26 @@ int count_covered_interventions(const IntegerSolution& solution, const vector<Ro
         }
     }
 
+    return is_covered;
+}
+
+
+int count_covered_interventions(const IntegerSolution& solution, const vector<Route>& routes, const Instance& instance) {
+    using std::cout, std::endl;
+    
+    int nb_routes = routes.size();
+    int nb_interventions = instance.number_interventions;
+    vector<int> is_covered = covered_interventions(solution, routes, instance);
+
     // Count the number of covered interventions
     int count = 0;
     for (int i = 0; i < nb_interventions; i++) {
         count += is_covered[i];
     }
-
     return count;
 }
 
-int count_used_vehicles(const IntegerSolution& solution, const vector<Route>& routes, const Instance& instance) {
+vector<int> used_vehicles(const IntegerSolution& solution, const vector<Route>& routes, const Instance& instance) {
     using std::cout, std::endl;
 
     int nb_routes = routes.size();
@@ -52,16 +64,21 @@ int count_used_vehicles(const IntegerSolution& solution, const vector<Route>& ro
 
     // Go through all routes
     for (int r = 0; r < nb_routes; r++) {
-        // Check that each vehicle is used at most once
-        if (solution.coefficients[r] > 0 && is_used[routes[r].vehicle_id] > 0) {
-            cout << "Vehicle " << routes[r].vehicle_id << " is used more than once" << endl;
-            return -1;
-        }
         // If the route is used, mark the vehicle as used
         if (solution.coefficients[r] > 0) {
             is_used[routes[r].vehicle_id] = 1;
         }
     }
+
+    return is_used;
+}
+
+int count_used_vehicles(const IntegerSolution& solution, const vector<Route>& routes, const Instance& instance) {
+    using std::cout, std::endl;
+
+    int nb_routes = routes.size();
+    int nb_vehicles = instance.vehicles.size();
+    vector<int> is_used = used_vehicles(solution, routes, instance);
 
     // Count the number of used vehicles
     int count = 0;
@@ -72,104 +89,21 @@ int count_used_vehicles(const IntegerSolution& solution, const vector<Route>& ro
     return count;
 }
 
-
-// Check that a route is feasible :
-// - The route starts and ends at the depot
-// - The route respects the time windows of the interventions
-// - The route respects the capacities of the vehicles
-bool is_route_feasible(const Route& route, const Instance& instance) {
+void print_used_vehicles(const IntegerSolution& solution, const vector<Route>& routes, const Instance& instance) {
     using std::cout, std::endl;
-    int vehicle_id = route.vehicle_id;
-    const Vehicle& vehicle = instance.vehicles.at(vehicle_id);
-    int depot_id = vehicle.depot;
-    // If the route is empty, it is feasible
-    if (route.id_sequence.size() == 0) {
-        return true;
-    }
-    // Check that the route starts and ends at the depot
-    if (route.id_sequence.front() != depot_id) {
-        cout << "Route does not start at the depot" << endl;
-        return false;
-    }
-    if (route.id_sequence.back() != depot_id) {
-        cout << "Route does not end at the depot" << endl;
-        return false;
-    }
 
-    // We now go through the route step by step to check the time windows and the capacities
-    int route_length = route.id_sequence.size();
-    double current_time = 0;
-    map<string, int> consummed_capacities;
-    // Go through every consecutive intervention in the route
-    for (int i = 0; i < route_length - 1; i++) {
-        // Check that the time window is respected
-        int intervention_id = route.id_sequence.at(i);
-        const Node& intervention = instance.nodes.at(route.id_sequence.at(i));
-        double duration = intervention.duration;
-        // Check that the start time is the current time 
-        // (for the first node which is the depot, the start time will hold the arrival time at the end of the day)
-        if (i > 0 && route.start_times[intervention_id] != current_time) {
-            cout << "Start time of intervention " << i << " is not the time of arrival" << endl;
-            cout << "Start time: " << route.start_times[intervention_id] << " Current time: " << current_time << endl;
-            return false;
-        }
-        // Check that the time window is respected (with the way we built the solution, we can't arrive too early)
-        if (current_time < intervention.start_window) {
-            cout << "Intervention " << i << " starts too early" << endl;
-            return false;
-        }
-        if (current_time + duration > intervention.end_window) {
-            cout << "Intervention " << i << " ends too late : " << current_time + duration << " > " << intervention.end_window << endl;
-            return false;
-        }
-        // Check wether the lunch break is respected
-        if (intervention.is_ambiguous && current_time < MID_DAY && current_time + duration > MID_DAY) {
-            cout << "Intervention " << intervention_id << " ends after the lunch break : start = " << current_time << " end = " << current_time + duration << endl;
-            return false;
-        }
-        // Update the quantities consummed
-        for (auto& [key, value] : intervention.quantities) {
-            consummed_capacities[key] += value;
-        }
-        // Update the current time
-        const Node& next_intervention = instance.nodes[route.id_sequence[i + 1]];
-        double travel_time = metric(intervention, next_intervention, instance.time_matrix);
-        current_time += duration + travel_time;
-        // If we arrive too early, we will wait
-        if (current_time < next_intervention.start_window) {
-            current_time = next_intervention.start_window;
-        }
-    }
-    // Check the final intervention
-    const Node& final_intervention = instance.nodes[route.id_sequence.back()];
-    int final_intervention_id = route.id_sequence.back();
-    if (route.start_times[final_intervention_id] != current_time) {
-        cout << "Start time of the final intervention is not the time of arrival" << endl;
-        return false;
-    }
-    if (current_time < final_intervention.start_window) {
-        cout << "Final intervention starts too early" << endl;
-        return false;
-    }
-    if (current_time + final_intervention.duration > final_intervention.end_window) {
-        cout << "Final intervention ends too late : " << current_time + final_intervention.duration << " > " << final_intervention.end_window << endl;
-        return false;
-    }
-    // Finally, check that the capacities are respected
-    for (auto& [key, value] : consummed_capacities) {
-        // If the key is not in the capacities, we don't care
-        if (vehicle.capacities.find(key) == vehicle.capacities.end()) {
-            continue;
-        }
-        if (value > vehicle.capacities.at(key)) {
-            cout << "Capacity " << key << " is exceeded" << endl;
-            return false;
-        }
-    }
+    vector<int> is_used = used_vehicles(solution, routes, instance);
+    int nb_vehicles = instance.vehicles.size();
 
-    return true;
+    // Print the vehicles that are used
+    cout << "Used vehicles: ";
+    for (int i = 0; i < nb_vehicles; i++) {
+        if (is_used[i] > 0) {
+            cout << i << ", ";
+        }
+    }
+    cout << endl;
 }
-
 
 void check_feasibility(const IntegerSolution& solution, const vector<Route>& routes, const Instance& instance) {
     using std::cout, std::endl;
@@ -408,21 +342,12 @@ void print_used_routes(const IntegerSolution& solution, const vector<Route>& rou
 }
 
 
-void print_non_realised_interventions(const IntegerSolution& solution, const vector<Route>& routes, const Instance& instance) {
+
+
+void print_non_covered_interventions(const IntegerSolution& solution, const vector<Route>& routes, const Instance& instance) {
     using std::cout, std::endl;
     int nb_interventions = instance.number_interventions;
-    vector<int> is_covered(nb_interventions, 0);
-
-    // Go through all interventions
-    for (int i = 0; i < nb_interventions; i++) {
-        // Go through all routes
-        for (int r = 0; r < routes.size(); r++) {
-            // If the intervention is covered, mark it as covered
-            if (solution.coefficients[r] > 0 && routes[r].is_in_route[i] > 0) {
-                is_covered[i] = 1;
-            }
-        }
-    }
+    vector<int> is_covered = covered_interventions(solution, routes, instance);
 
     // Print the interventions that are not covered
     cout << "Non-realised interventions: ";
@@ -432,4 +357,39 @@ void print_non_realised_interventions(const IntegerSolution& solution, const vec
         }
     }
     cout << endl;
+}
+
+void print_vehicles_non_covered(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance) {
+    using std::cout, std::endl;
+    
+    int nb_interventions = instance.number_interventions;
+    int nb_vehicles = instance.vehicles.size();
+
+    vector<int> is_covered = covered_interventions(solution, routes, instance);
+    // Can a vehicle cover the non covered interventions ?
+    vector<int> can_cover(nb_vehicles, 0);
+    vector<int> is_used = used_vehicles(solution, routes, instance);
+
+    // For each vehicle, check if it can cover at least N of the non covered interventions
+    for (int v = 0; v < nb_vehicles; v++) {
+        const Vehicle& vehicle = instance.vehicles[v];
+        for (int i = 0; i < nb_interventions; i++) {
+            if (is_covered[i] == 1) continue;
+            const Node& intervention = instance.nodes[i];
+            // Check if the vehicle can cover the intervention
+            if (find(vehicle.interventions.begin(), vehicle.interventions.end(), i) != vehicle.interventions.end()) {
+                can_cover[v]++;
+            }
+
+        }
+    }
+
+    // Print the number of non-covered interventions that can be covered by each vehicle
+    cout << "Number of non covered interventions that can be covered by non used each vehicle: " << endl;
+    for (int v = 0; v < nb_vehicles; v++) {
+        if (is_used[v] == 0) {
+            cout << "v" << v << " : " << can_cover[v] <<" - ";
+        }
+    }
+
 }

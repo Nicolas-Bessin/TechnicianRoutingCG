@@ -5,11 +5,17 @@
 
 #include <vector>
 
+// Returns a vector of size n_interventions, with a 1 at the index of each intervention that is covered by the solution
+std::vector<int> covered_interventions(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
+
 int count_covered_interventions(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
+
+// Returns a vector of size n_vehicle, with a 1 at the index of each vehicle that is used in the solution
+std::vector<int> used_vehicles(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
 
 int count_used_vehicles(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
 
-bool is_route_feasible(const Route& route, const Instance& instance);
+void print_used_vehicles(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
 
 double time_spent_travelling(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
 
@@ -38,4 +44,8 @@ void print_route(const Route& route, const Instance& instance);
 void print_used_routes(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
 
 // Print the interventions not covered by the solution
-void print_non_realised_interventions(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
+void print_non_covered_interventions(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
+
+// Print the vehicles that can cover all the interventions not covered by the solution
+void print_vehicles_non_covered(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
+

@@ -67,7 +67,7 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
         problem->setNetworkArc(origin, i);
         double distance_out = metric((instance.nodes[vehicle.depot]), intervention, instance.distance_matrix);
         // Set the arc cost, also adding the fixed cost of the vehicle (but not beta)
-        objective->setArcCost(origin, i, (instance.cost_per_km * distance_out + vehicle.cost) * scale_factor);
+        objective->setArcCost(origin, i, (instance.cost_per_km * distance_out) * scale_factor);
         // Incoming arcs to the warehouse
         problem->setNetworkArc(i, destination);
         // Distance is probably the same as the outgoing distance but eh we never know

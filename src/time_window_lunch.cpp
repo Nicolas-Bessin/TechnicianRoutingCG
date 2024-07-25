@@ -57,7 +57,7 @@ bool CustomTimeWindow::isFeasible(int current_value, int current_node, double bo
 
     if(current_node >= 0) {
         int feasible_value = direction ? node_upper_bound[current_node] : upper_bound - (node_lower_bound[current_node] + data->getNodeCost(current_node));
-        if(current_value > feasible_value) return false;
+        if(current_value >= feasible_value) return false;
     }
     // We we reached this point, we know know the time window is respected
     // Let's check if the lunch constraint is respected

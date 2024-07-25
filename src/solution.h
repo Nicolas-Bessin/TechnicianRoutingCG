@@ -103,3 +103,6 @@ bool operator<(const Route& lhs, const Route& rhs);
 
 // Computes the reduced cost of a route given the dual values of the constraints
 double compute_reduced_cost(const Route& route, const std::vector<double>& alphas, double beta, const Instance& instance);
+
+// Checks if a route is feasible
+bool is_route_feasible(const Route& route, const Instance& instance);

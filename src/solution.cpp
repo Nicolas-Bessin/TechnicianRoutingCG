@@ -1,4 +1,5 @@
 #include "solution.h"
+#include "constants.h"
 #include <math.h>
 #include <algorithm>
 
@@ -124,6 +125,107 @@ double compute_reduced_cost(const Route& route, const std::vector<double>& alpha
     reduced_cost += instance.M * last_node.duration; // should add 0
 
     return reduced_cost;
+}
+
+
+
+// Check that a route is feasible :
+// - The route starts and ends at the depot
+// - The route respects the time windows of the interventions
+// - The route respects the capacities of the vehicles
+bool is_route_feasible(const Route& route, const Instance& instance) {
+    using std::cout, std::endl;
+    using std::map, std::string;
+
+    int vehicle_id = route.vehicle_id;
+    const Vehicle& vehicle = instance.vehicles.at(vehicle_id);
+    int depot_id = vehicle.depot;
+    // If the route is empty, it is feasible
+    if (route.id_sequence.size() == 0) {
+        return true;
+    }
+    // Check that the route starts and ends at the depot
+    if (route.id_sequence.front() != depot_id) {
+        cout << "Route does not start at the depot" << endl;
+        return false;
+    }
+    if (route.id_sequence.back() != depot_id) {
+        cout << "Route does not end at the depot" << endl;
+        return false;
+    }
+
+    // We now go through the route step by step to check the time windows and the capacities
+    int route_length = route.id_sequence.size();
+    double current_time = 0;
+    map<string, int> consummed_capacities;
+    // Go through every consecutive intervention in the route
+    for (int i = 0; i < route_length - 1; i++) {
+        // Check that the time window is respected
+        int intervention_id = route.id_sequence.at(i);
+        const Node& intervention = instance.nodes.at(route.id_sequence.at(i));
+        double duration = intervention.duration;
+        // Check that the start time is the current time 
+        // (for the first node which is the depot, the start time will hold the arrival time at the end of the day)
+        if (i > 0 && route.start_times[intervention_id] != current_time) {
+            cout << "Start time of intervention " << i << " is not the time of arrival" << endl;
+            cout << "Start time: " << route.start_times[intervention_id] << " Current time: " << current_time << endl;
+            return false;
+        }
+        // Check that the time window is respected (with the way we built the solution, we can't arrive too early)
+        if (current_time < intervention.start_window) {
+            cout << "Intervention " << i << " starts too early" << endl;
+            return false;
+        }
+        if (current_time + duration > intervention.end_window) {
+            cout << "Intervention " << i << " ends too late : " << current_time + duration << " > " << intervention.end_window << endl;
+            return false;
+        }
+        // Check wether the lunch break is respected
+        if (intervention.is_ambiguous && current_time < MID_DAY && current_time + duration > MID_DAY) {
+            cout << "Intervention " << intervention_id << " ends after the lunch break : start = " << current_time << " end = " << current_time + duration << endl;
+            return false;
+        }
+        // Update the quantities consummed
+        for (auto& [key, value] : intervention.quantities) {
+            consummed_capacities[key] += value;
+        }
+        // Update the current time
+        const Node& next_intervention = instance.nodes[route.id_sequence[i + 1]];
+        double travel_time = metric(intervention, next_intervention, instance.time_matrix);
+        current_time += duration + travel_time;
+        // If we arrive too early, we will wait
+        if (current_time < next_intervention.start_window) {
+            current_time = next_intervention.start_window;
+        }
+    }
+    // Check the final intervention
+    const Node& final_intervention = instance.nodes[route.id_sequence.back()];
+    int final_intervention_id = route.id_sequence.back();
+    if (route.start_times[final_intervention_id] != current_time) {
+        cout << "Start time of the final intervention is not the time of arrival" << endl;
+        return false;
+    }
+    if (current_time < final_intervention.start_window) {
+        cout << "Final intervention starts too early" << endl;
+        return false;
+    }
+    if (current_time + final_intervention.duration > final_intervention.end_window) {
+        cout << "Final intervention ends too late : " << current_time + final_intervention.duration << " > " << final_intervention.end_window << endl;
+        return false;
+    }
+    // Finally, check that the capacities are respected
+    for (auto& [key, value] : consummed_capacities) {
+        // If the key is not in the capacities, we don't care
+        if (vehicle.capacities.find(key) == vehicle.capacities.end()) {
+            continue;
+        }
+        if (value > vehicle.capacities.at(key)) {
+            cout << "Capacity " << key << " is exceeded" << endl;
+            return false;
+        }
+    }
+
+    return true;
 }
 
 

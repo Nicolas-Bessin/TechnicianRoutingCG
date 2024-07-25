@@ -198,7 +198,10 @@ int main(int argc, char *argv[]){
 
     cout << "-----------------------------------" << endl;
     //print_used_routes(integer_solution, routes, instance); 
-    print_non_realised_interventions(integer_solution, routes, instance);
+    print_non_covered_interventions(integer_solution, routes, instance);
+    cout << "-----------------------------------" << endl;
+    print_used_vehicles(integer_solution, routes, instance);
+    print_vehicles_non_covered(integer_solution, routes, instance);
 
     return 0;
 }
