@@ -16,53 +16,55 @@ void CustomTimeWindow::setLunchConstraint(int node, bool has_constraint) {
 }
 
 
+//Computes the upperbound.
+//Represents the overall resource availability, i.e. the maximum feasible arrival time at destination.
+void CustomTimeWindow::init(int origin, int destination) {
+    upper_bound = 0;
+
+    for(int i = 0; i < node_upper_bound.size(); i++)
+        if(i != destination)
+            upper_bound = std::max(upper_bound, node_upper_bound[i] + data->getNodeCost(i) + data->getArcCost(i, destination));
+
+    // The upper bound also has to respect the time window of the destination node
+    upper_bound = std::min(upper_bound, node_upper_bound[destination]);
+}
+
 int CustomTimeWindow::extend(int current_value, int i, int j, bool direction) {
-    // Extend the time window, either forward from i to j or backward from j to i
-    int current_time = current_value;
-    // If forward, add the cost of node i.
+    int current_time = current_value + data->getArcCost(i, j);
+
     if(direction) {
-        current_time += data->getNodeCost(i) + data->getArcCost(i, j);
-        // If we arrive early at j, we wait until the time window opens
-        current_time = std::max(current_time, node_lower_bound[j]);
-    } else {
-        // If backward, add the cost of node j
-        current_time += data->getNodeCost(j) + data->getArcCost(i, j);
-        // If we might have had to wait at i, we wait until the time window opens
-        current_time = std::min(current_time, node_upper_bound[i]);
+        current_time += data->getNodeCost(i);
+        current_time = std::max(current_time, node_lower_bound[j]); //fw: arrival time at j
+    }
+    else {
+        current_time += data->getNodeCost(j);
+        current_time = std::max(current_time, upper_bound - (node_upper_bound[i] + data->getNodeCost(i)));    //bw: time between departure from j to arrival at destination
     }
 
     return current_time;
 }
 
-
-int CustomTimeWindow::join(int current_value_forward, int current_value_backward, int i, int j) {
-    // Join the forward and backward time windows
+int CustomTimeWindow::join(int current_value_forward, int current_value_backward, int i, int j){
     return current_value_forward + data->getNodeCost(i) + data->getArcCost(i, j) + data->getNodeCost(j) + current_value_backward;
 }
 
-int CustomTimeWindow::join(int current_value_forward, int current_value_backward, int node) {
-    // Join the forward and backward time windows
+int CustomTimeWindow::join(int current_value_forward, int current_value_backward, int node){
     return current_value_forward + current_value_backward - data->getNodeCost(node);
 }
 
 bool CustomTimeWindow::isFeasible(int current_value, int current_node, double bounding, bool direction) {
-    // First step is checking wether the time window is respected
-    int duration = data->getNodeCost(current_node);
-    bool is_tw = current_value >= node_lower_bound[current_node] && current_value <= node_upper_bound[current_node];
-    // If the time window is not respected, we return false
-    if (!is_tw) {
-        return false;
+    if(current_value > upper_bound*bounding) return false;
+
+    if(current_node >= 0) {
+        int feasible_value = direction ? node_upper_bound[current_node] : upper_bound - (node_lower_bound[current_node] + data->getNodeCost(current_node));
+        if(current_value > feasible_value) return false;
     }
-    // If the time window is respected, we check wether the lunch break is respected
-    bool need_to_respect_lunch_break = has_lunch_constraint[current_node];
-    if (!need_to_respect_lunch_break) {
-        return true;
-    }
-    // If the lunch break needs to be respected, we check wether the intervention respects the lunch break
-    // Check wether the intervention respects the lunch break
-    bool is_respected = current_value + duration <= MID_DAY || current_value >= MID_DAY;
+    // We we reached this point, we know know the time window is respected
+    // Let's check if the lunch constraint is respected
+    if(!has_lunch_constraint[current_node]) return true;
+
+    bool is_respected = current_value + data->getNodeCost(current_node) <= MID_DAY || current_value >= MID_DAY;
 
     return is_respected;
 }
-
 

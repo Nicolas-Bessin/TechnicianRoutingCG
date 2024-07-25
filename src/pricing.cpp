@@ -119,7 +119,7 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
     time_window->setNodeBound(n_interventions_v + 2, destination, 0, END_DAY);
    
     // Add the time window ressource to the vector of resources
-    //time_window->init(origin, destination);
+    time_window->init(origin, destination);
     resources.push_back(time_window);
 
     // We then want to add the capacity resources to the problem

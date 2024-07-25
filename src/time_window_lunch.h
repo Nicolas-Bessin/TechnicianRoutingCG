@@ -17,6 +17,8 @@ public:
     // Destructor
     ~CustomTimeWindow() = default;
 
+
+    void init(int origin, int destination) override;
     int extend(int current_value, int i, int j, bool direction) override;
     int join(int current_value_forward, int current_value_backward, int i, int j) override;
     int join(int current_value_forward, int current_value_backward, int node) override;
