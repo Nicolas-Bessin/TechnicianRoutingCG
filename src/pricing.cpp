@@ -170,7 +170,7 @@ void update_pricing_instance(unique_ptr<Problem> & pricing_problem, const vector
         objective->setNodeCost(i, node_cost * scale_factor);
     }
     // Put in the constant part (only beta in the pricing problem, the cost of the vehicle is already accounted for on the arcs)
-    objective->setNodeCost(origin, beta * scale_factor);
+    objective->setNodeCost(origin, (beta + vehicle.cost) * scale_factor);
     // Re-set the objective function
     pricing_problem->setObjective(objective);
     return;

@@ -63,7 +63,7 @@ bool CustomTimeWindow::isFeasible(int current_value, int current_node, double bo
     // Let's check if the lunch constraint is respected
     if(!has_lunch_constraint[current_node]) return true;
 
-    bool is_respected = current_value + data->getNodeCost(current_node) <= MID_DAY || current_value >= MID_DAY;
+    bool is_respected = current_value + data->getNodeCost(current_node) <= MID_DAY || current_value > MID_DAY;
 
     return is_respected;
 }
