@@ -216,7 +216,7 @@ vector<Route> solve_pricing_problem(unique_ptr<Problem> & problem, int pool_size
         vector<double> start_times(instance.nodes.size(), 0);
         
         // Keep track of the time ellapsed
-        double current_time = 0;
+        int current_time = 0;
         for (int i = 0; i < tour.size() - 1; i++) {
             int true_i = i == 0 ? vehicle.depot : vehicle.interventions[tour[i]];
             int true_j = i+1 == tour.size()-1 ? vehicle.depot : vehicle.interventions[tour[i + 1]];
@@ -227,16 +227,16 @@ vector<Route> solve_pricing_problem(unique_ptr<Problem> & problem, int pool_size
             start_times[true_i] = current_time;
             // Get the duration, and travel time and distance between the two interventions
             int duration = instance.nodes[true_i].duration;
-            double travel_time = metric((instance.nodes[true_i]), (instance.nodes[true_j]), instance.time_matrix);
-            double travel_distance = metric((instance.nodes[true_i]), (instance.nodes[true_j]), instance.distance_matrix);
+            int travel_time = metric((instance.nodes[true_i]), (instance.nodes[true_j]), instance.time_matrix);
+            int travel_distance = metric((instance.nodes[true_i]), (instance.nodes[true_j]), instance.distance_matrix);
             // Update the running total cost, duration of interventions and travel time
             total_cost += instance.cost_per_km * travel_distance;
             total_duration += duration;
             total_travelling_time += travel_time;
             
             // Update the current time
-            double start_time_next = instance.nodes[true_j].start_window;
-            double waiting_time = std::max(0.0, start_time_next - (current_time + duration + travel_time));
+            int start_time_next = instance.nodes[true_j].start_window;
+            int waiting_time = std::max(0, start_time_next - (current_time + duration + travel_time));
             total_waiting_time += waiting_time;
             current_time = std::max(current_time + duration + travel_time, start_time_next); 
         }
