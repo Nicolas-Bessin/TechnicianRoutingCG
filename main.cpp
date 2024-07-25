@@ -36,7 +36,7 @@ int main(int argc, char *argv[]){
     // Parse the instance from a JSON file
     auto start_parse = chrono::steady_clock::now();
     cout << "Technician Routing Problem using Column Generation" << endl;
-    string default_filename = "../data/instance_1.json";
+    string default_filename = "../data/instance_1_all_feasible.json";
     Instance instance = parse_file(default_filename);
 
     preprocess_interventions(instance);

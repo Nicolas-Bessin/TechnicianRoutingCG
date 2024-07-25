@@ -121,6 +121,12 @@ IntegerSolution solve_integer_problem(const Instance& instance, const vector<Rou
             }
             vehicle_constraints.push_back(master.addConstr(expr -1 <= 0));
         }
+        // Test: impose using less than 10 routes
+        GRBLinExpr total_routes = 0;
+        for (int r = 0; r < routes.size(); r++){
+            total_routes += variables[r];
+        }
+        master.addConstr(total_routes <= 20);
 
         // Finally, we set the objective function
         GRBLinExpr obj = 0;
