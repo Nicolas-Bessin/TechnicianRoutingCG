@@ -18,8 +18,8 @@ void Path::initPath() {
     tour.clear();
 
     elementary = false;
-    objective = UNKNOWN;
-    arc_cost = UNKNOWN;
+    objective = UNKNOWN_OBJ;
+    arc_cost = UNKNOWN_OBJ;
     node_cost = UNKNOWN;
     consumption.clear();
     labels.clear();

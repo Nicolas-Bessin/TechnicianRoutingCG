@@ -321,56 +321,61 @@ void print_route(const Route & route, const Instance & instance) {
     using std::setprecision, std::fixed;
 
     // Print the vehicle id
-    cout << "Vehicle id: " << route.vehicle_id << " - Tour length: " << route.id_sequence.size() << std::endl;
+    cout << "Vehicle id: " << route.vehicle_id << " - Tour length: " << route.id_sequence.size() << endl;
     cout << "Technicians in the vehicle: ";
     for (string tech_id : instance.vehicles[route.vehicle_id].technicians) {
         cout << tech_id << ", ";
     }
-    cout << std::endl;
+    cout << endl;
     
     // Print the tvehicle cost, travelling cost and total cost
     double travel_distance = count_route_kilometres(route, instance);
     //cout << "Vehicle cost: " << instance.vehicles[route.vehicle_id].cost << " ";
     //cout << "Travelling cost: " << travel_distance * instance.cost_per_km << " ";
-    //cout << "Total cost: " << route.total_cost << std::endl;
+    //cout << "Total cost: " << route.total_cost << endl;
     // Print the kilometres along the route
-    //cout << "Total distance: " << travel_distance << std::endl;
+    //cout << "Total distance: " << travel_distance << endl;
     // Print the total duration, travelling time and waiting time
     //cout << "Total duration: " << route.total_duration << " ";
     //cout << "Total travelling time: " << route.total_travelling_time << " ";
-    //cout << "Total waiting time: " << route.total_waiting_time << std::endl;
+    //cout << "Total waiting time: " << route.total_waiting_time << endl;
     // Print the sequence of nodes
     cout << "Sequence: ";
     for (int i = 0; i < route.id_sequence.size(); i++) {
         cout << route.id_sequence[i] << ", ";
     }
-    cout << std::endl;
+    cout << endl;
     // cout << "Sequence (node_id): ";
     // for (int i = 0; i < route.id_sequence.size(); i++) {
     //     cout << instance.nodes[route.id_sequence[i]].node_id << ", ";
     // }
-    cout << std::endl;
-    // Print the start of time window, real start time, Duration, end of time window
+    cout << endl;
+    // Print the start of time window, real start time, Duration, travel to next and end of time window
     cout << "Window start: ";
     for (int i = 0; i < route.id_sequence.size(); i++) {
         cout << setprecision(1) << instance.nodes[route.id_sequence[i]].start_window << ", ";
     }
-    cout << std::endl;
+    cout << endl;
     cout << "Start time:   ";
     for (int i = 0; i < route.id_sequence.size(); i++) {
         cout << setprecision(0) << route.start_times[route.id_sequence[i]] << ", ";
     }
-    cout << std::endl;
+    cout << endl;
     cout << "Duration:     ";
     for (int i = 0; i < route.id_sequence.size(); i++) {
         cout << setprecision(1) << instance.nodes[route.id_sequence[i]].duration << ", ";
     }
-    cout << std::endl;
+    cout << endl;
+    cout << "Travel time:  ";
+    for (int i = 0; i < route.id_sequence.size() - 1; i++) {
+        cout << setprecision(1) << metric(instance.nodes[route.id_sequence[i]], instance.nodes[route.id_sequence[i + 1]], instance.time_matrix) << ", ";
+    }
+    cout << " -, " << endl;
     cout << "Window end:   ";
     for (int i = 0; i < route.id_sequence.size(); i++) {
         cout << setprecision(1) << instance.nodes[route.id_sequence[i]].end_window << ", ";
     }
-    cout << std::endl;
+    cout << endl;
 
 
 

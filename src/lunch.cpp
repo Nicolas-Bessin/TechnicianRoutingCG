@@ -11,16 +11,26 @@ LunchBreak::LunchBreak(int n_nodes) {
 }
 
 void LunchBreak::setConstrainedIntervention(int node, bool is_constrained) {
-    constrained_lunch_break[node] = is_constrained;
+    constrained_lunch_break.at(node) = is_constrained;
 }
 
 int LunchBreak::extend(int current_value, int i, int j, bool direction) {
-    int dest_node = direction ? j : i;
-    return current_value + data->getArcCost(i, j) + data->getNodeCost(dest_node);
+    int current_time = current_value + data->getArcCost(i, j);
+
+    if(direction) {
+        current_time += data->getNodeCost(i);
+        current_time = std::max(current_time, node_lower_bound[j]); //fw: arrival time at j
+    }
+    else {
+        current_time += data->getNodeCost(j);
+        current_time = std::max(current_time, upper_bound - (node_upper_bound[i] + data->getNodeCost(i)));    //bw: time between departure from j to arrival at destination
+    }
+
+    return current_time;
 }
 
 int LunchBreak::join(int current_value_forward, int current_value_backward, int i, int j){
-    return current_value_forward + current_value_backward + data->getArcCost(i, j);
+    return current_value_forward + data->getNodeCost(i) + data->getArcCost(i, j) + data->getNodeCost(j) + current_value_backward;
 }
 
 int LunchBreak::join(int current_value_forward, int current_value_backward, int node){
@@ -34,6 +44,6 @@ bool LunchBreak::isFeasible(int current_value, int current_node, double bounding
     }
     int duration = data->getNodeCost(current_node);
     // Check wether the intervention respects the lunch break
-    bool is_respected = current_value <= MID_DAY || current_value - duration >= MID_DAY;
+    bool is_respected = current_value + duration <= MID_DAY || current_value >= MID_DAY;
     return is_respected;
 }

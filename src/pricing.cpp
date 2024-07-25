@@ -1,6 +1,7 @@
 #include "pricing.h"
 #include "constants.h"
 #include "lunch.h"
+#include "time_window_lunch.h"
 #include "../pathwyse/core/solver.h"
 
 #include <map>
@@ -82,90 +83,44 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
     vector<Resource<int>*> resources;
 
     // Add the time window ressource to the problem as the critical ressource
-    TimeWindow* time_window = new TimeWindow();
+    CustomTimeWindow* time_window = new CustomTimeWindow(n_interventions_v + 2);
     time_window->initData(false, n_interventions_v + 2);
-    time_window->setName("Time Window");
+    time_window->setName("Time Window + Lunch");
     // For each node, add the UB and LB and node consumption
     for (int i = 0; i < n_interventions_v; i++) {
-        // Get the intervention referenced by the index i
         const Node& intervention = (instance.nodes[vehicle.interventions[i]]);
         // Get the time window of the intervention
         int start_window = intervention.start_window;
-        // Maximum time is the time that leaves enogh time to do the intervention
-        int end_window_arrival = intervention.end_window - intervention.duration;
-        int time_to_depot = metric(intervention, instance.nodes[vehicle.depot], instance.time_matrix);
-        // We also have to make sure, if this intervention is the last one, that we can go back to the depot
-        int max_departure_time = END_DAY - time_to_depot;
-        int end_window = std::min(end_window_arrival, max_departure_time);
-        // Set the UB and LB of the time window
+        int end_window = intervention.end_window - intervention.duration;
+        // Set the time window of the intervention
         time_window->setNodeBound(n_interventions_v + 2, i, start_window, end_window);
         // Set the node consumption of the time window
         time_window->setNodeCost(i, intervention.duration);
+        // Sets the lunch break constraint
+        time_window->setLunchConstraint(i, intervention.is_ambiguous);
+        // Also set the time consumption on the arcs between the interventions
+        for (int j = 0; j < n_interventions_v; j++) {
+            if (i == j) continue;
+            // Get the two interventions referenced by the indices i and j
+            const Node& intervention_j = (instance.nodes[vehicle.interventions[j]]);
+            // Get the time it takes to go from intervention i to intervention j
+            double travel_time = metric(intervention, intervention_j, instance.time_matrix);
+            // Set the time consumption on the arc
+            time_window->setArcCost(i, j, travel_time);
+        }
+
+        // Outgoing arcs from the warehouse
+        double travel_time = metric((instance.nodes[vehicle.depot]), intervention, instance.time_matrix);
+        time_window->setArcCost(origin, i, travel_time);
+        time_window->setArcCost(i, destination, travel_time);
     }
     // The time windows on the warehouse :
     time_window->setNodeBound(n_interventions_v + 2, origin, 0, END_DAY);
     time_window->setNodeBound(n_interventions_v + 2, destination, 0, END_DAY);
-    // Also set the time consumption on the arcs between the interventions
-    for (int i = 0; i < n_interventions_v; i++) {
-        for (int j = 0; j < n_interventions_v; j++) {
-            if (i == j) continue;
-            // Get the two interventions referenced by the indices i and j
-            const Node& intervention_i = (instance.nodes[vehicle.interventions[i]]);
-            const Node& intervention_j = (instance.nodes[vehicle.interventions[j]]);
-            // Get the time it takes to go from intervention i to intervention j
-            double travel_time = metric(intervention_i, intervention_j, instance.time_matrix);
-            // Set the time consumption on the arc
-            time_window->setArcCost(i, j, travel_time);
-        }
-    }
-    // And finally the time consumption on the arcs between the warehouse and the interventions
-    for (int i = 0; i < n_interventions_v; i++) {
-        // Get the intervention referenced by the index i
-        const Node& intervention = (instance.nodes[vehicle.interventions[i]]);
-        // Outgoing arcs from the warehouse
-        double travel_time_out = metric((instance.nodes[vehicle.depot]), intervention, instance.time_matrix);
-        time_window->setArcCost(origin, i, travel_time_out);
-        // Incoming arcs to the warehouse
-        // Time is probably the same as the outgoing time but eh we never know
-        double travel_time_in = metric(intervention, (instance.nodes[vehicle.depot]), instance.time_matrix);
-        time_window->setArcCost(i, destination, travel_time_in);
-    }
+   
     // Add the time window ressource to the vector of resources
-    time_window->init(origin, destination);
+    //time_window->init(origin, destination);
     resources.push_back(time_window);
-
-    // In a similar manner, we add the lunch break ressource to the problem
-    LunchBreak* lunch_break = new LunchBreak(n_interventions_v + 2);
-    lunch_break->setName("Lunch Break");
-    lunch_break->initData(false, n_interventions_v + 2);
-    // Go through all the interventions and set the lunch break constraints
-    for (int i = 0; i < n_interventions_v; i++) {
-        // Get the intervention referenced by the index i
-        const Node& intervention = (instance.nodes[vehicle.interventions[i]]);
-        // Set the lunch break constraints
-        lunch_break->setConstrainedIntervention(i, intervention.is_ambiguous);
-        // Set the node consumption of the lunch break ressource
-        lunch_break->setNodeCost(i, intervention.duration);
-        // Set all the arcs to their time consumption
-        for (int j = 0; j < n_interventions_v; j++) {
-            if (i == j) continue;
-            // Get the two interventions referenced by the indices i and j
-            const Node& intervention_next = (instance.nodes[vehicle.interventions[j]]);
-            // Get the time it takes to go from intervention i to intervention j
-            double travel_time = metric(intervention, intervention_next, instance.time_matrix);
-            // Set the time consumption on the arc
-            lunch_break->setArcCost(i, j, travel_time);
-        }
-        // Also set the time consumption on the arcs between the warehouse and the interventions
-        // Outgoing arcs from the warehouse
-        double travel_time = metric((instance.nodes[vehicle.depot]), intervention, instance.time_matrix);
-        lunch_break->setArcCost(origin, i, travel_time);
-        lunch_break->setArcCost(i, destination, travel_time);
-    }
-
-    // Add the lunch break ressource to the vector of resources
-    resources.push_back(lunch_break);
-
 
     // We then want to add the capacity resources to the problem
     int nb_capacities = instance.capacities_labels.size();
@@ -177,7 +132,7 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
         // Set the name of the ressource
         capacity->setName(label);
         // Set its upper bound
-        capacity->setUB(vehicle.capacities.at(label));
+        capacity->setUB(vehicle.capacities.at(label) + 1);
         // Set the node consumptions for the ressource
         for (int i = 0; i < n_interventions_v; i++) {
             // Get the intervention referenced by the index i

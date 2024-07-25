@@ -446,30 +446,30 @@ int Solver::getSolutionStatus(int id) {
  * Gets solution objective.
  * 
  * @param id - Id of the solution from which retrieve the objective.
- * @return int - Solution objective.
+ * @return double - Solution objective.
  */
-int Solver::getSolutionObjective(int id){
-    return id < solutions.size() ? solutions[id].getObjective() : UNKNOWN;
+double Solver::getSolutionObjective(int id){
+    return id < solutions.size() ? solutions[id].getObjective() : UNKNOWN_OBJ;
 }
 
 /**
  * Gets solution arc cost
  * 
  * @param id - Id of the solution from which retrieve Arc Cost.
- * @return int - Solution arc cost.
+ * @return double - Solution arc cost.
  */
-int Solver::getSolutionArcCost(int id) {
-    return id < solutions.size() ? solutions[id].getArcCost() : UNKNOWN;
+double Solver::getSolutionArcCost(int id) {
+    return id < solutions.size() ? solutions[id].getArcCost() : UNKNOWN_OBJ;
 }
 
 /**
  * Gets solution node cost.
  * 
  * @param id - Id of the solution from which retrieve node cost.
- * @return int - Solution node cost.
+ * @return double - Solution node cost.
  */
-int Solver::getSolutionNodeCost(int id) {
-    return id < solutions.size() ? solutions[id].getNodeCost() : UNKNOWN;
+double Solver::getSolutionNodeCost(int id) {
+    return id < solutions.size() ? solutions[id].getNodeCost() : UNKNOWN_OBJ;
 }
 
 /**
