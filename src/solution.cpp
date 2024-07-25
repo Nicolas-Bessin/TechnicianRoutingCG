@@ -181,9 +181,11 @@ bool is_route_feasible(const Route& route, const Instance& instance) {
             return false;
         }
         // Check wether the lunch break is respected
+        // If  we arrive at a time where we can't begin the intervention before the lunch break, we wait out the lunch break
         if (intervention.is_ambiguous && current_time < MID_DAY && current_time + duration > MID_DAY) {
-            cout << "Intervention " << intervention_id << " ends after the lunch break : start = " << current_time << " end = " << current_time + duration << endl;
-            return false;
+            current_time = MID_DAY;
+            // cout << "Intervention " << intervention_id << " ends after the lunch break : start = " << current_time << " end = " << current_time + duration << endl;
+            // return false;
         }
         // Update the quantities consummed
         for (auto& [key, value] : intervention.quantities) {
@@ -196,6 +198,10 @@ bool is_route_feasible(const Route& route, const Instance& instance) {
         // If we arrive too early, we will wait
         if (current_time < next_intervention.start_window) {
             current_time = next_intervention.start_window;
+        }
+        // If we can't fit the next intervention before lunch, we wait until the lunch break is over
+        if (next_intervention.is_ambiguous && current_time < MID_DAY && current_time + next_intervention.duration > MID_DAY) {
+            current_time = MID_DAY;
         }
     }
     // Check the final intervention

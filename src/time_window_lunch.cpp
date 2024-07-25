@@ -30,14 +30,21 @@ void CustomTimeWindow::init(int origin, int destination) {
 }
 
 int CustomTimeWindow::extend(int current_value, int i, int j, bool direction) {
-    int current_time = current_value + data->getArcCost(i, j);
+    int current_time = current_value;
 
     if(direction) {
-        current_time += data->getNodeCost(i);
+        current_time += data->getNodeCost(i) + data->getArcCost(i, j);
+        // If we arrive too early, we wait until the time window opens
         current_time = std::max(current_time, node_lower_bound[j]); //fw: arrival time at j
+        // If we the time of arrival leaves us no possibility of completing the intervention before lunch
+        // And we could complete it after : we wait until the lunch break is over
+        bool is_lunch_break = current_time + data->getNodeCost(j) > MID_DAY && current_time < MID_DAY;
+        if(has_lunch_constraint[j] && is_lunch_break) {
+            current_time = MID_DAY;
+        }
     }
     else {
-        current_time += data->getNodeCost(j);
+        current_time += data->getNodeCost(j) + data->getArcCost(i, j);
         current_time = std::max(current_time, upper_bound - (node_upper_bound[i] + data->getNodeCost(i)));    //bw: time between departure from j to arrival at destination
     }
 
