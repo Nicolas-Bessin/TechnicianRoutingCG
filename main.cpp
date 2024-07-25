@@ -17,6 +17,7 @@
 
 #define SCALE_FACTOR 1
 #define TIME_LIMIT 30
+#define THRESHOLD 1e-6
 
 
 void takes_an_int(int a){
@@ -35,7 +36,7 @@ int main(int argc, char *argv[]){
     // Parse the instance from a JSON file
     auto start_parse = chrono::steady_clock::now();
     cout << "Technician Routing Problem using Column Generation" << endl;
-    string default_filename = "../data/instance_1_all_feasible.json";
+    string default_filename = "../data/instance_1.json";
     Instance instance = parse_file(default_filename);
 
     preprocess_interventions(instance);
@@ -105,7 +106,7 @@ int main(int argc, char *argv[]){
             for (const auto &route : best_new_routes){
                 max_reduced_cost = std::max(max_reduced_cost, route.reduced_cost);
                 //double computed_reduced_cost = compute_reduced_cost(route, solution.alphas, solution.betas[v], instance);
-                if (route.reduced_cost > 0){
+                if (route.reduced_cost > THRESHOLD){
                     routes.push_back(route);
                     n_added_routes++;
                 }

@@ -28,7 +28,7 @@ MasterSolution cg_solver(const Instance& instance, const vector<Route>& routes, 
             for (int r = 0; r < routes.size(); r++){
                 expr += routes[r].is_in_route[i] * variables[r];
             }
-            intervention_constraints.push_back(master.addConstr(expr <= 1));
+            intervention_constraints.push_back(master.addConstr(expr - 1 <= 0));
         }
         // And the vehicle constraints (each vehicle is used at most once)
         vector<GRBConstr> vehicle_constraints;
@@ -39,7 +39,7 @@ MasterSolution cg_solver(const Instance& instance, const vector<Route>& routes, 
                     expr += variables[r];
                 }
             }
-            vehicle_constraints.push_back(master.addConstr(expr <= 1));
+            vehicle_constraints.push_back(master.addConstr(expr -1 <= 0));
         }
 
         // Finally, we set the objective function
@@ -99,7 +99,7 @@ IntegerSolution solve_integer_problem(const Instance& instance, const vector<Rou
         // Create the variables
         vector<GRBVar> variables;
         for(int r = 0; r < routes.size(); r++){
-            variables.push_back(master.addVar(0.0, 1.0, 0.0, GRB_BINARY));
+            variables.push_back(master.addVar(0, 1, 0, GRB_BINARY));
         }
         // Create the intervention constraints (each intervention is visited at most once)
         vector<GRBConstr> intervention_constraints;
@@ -108,8 +108,7 @@ IntegerSolution solve_integer_problem(const Instance& instance, const vector<Rou
             for (int r = 0; r < routes.size(); r++){
                 expr += routes[r].is_in_route[i] * variables[r];
             }
-            GRBConstr constraint = master.addConstr(expr <= 1);
-            intervention_constraints.push_back(constraint);
+            intervention_constraints.push_back(master.addConstr(expr - 1 <= 0));
         }
         // And the vehicle constraints (each vehicle is used at most once)
         vector<GRBConstr> vehicle_constraints;
@@ -120,8 +119,7 @@ IntegerSolution solve_integer_problem(const Instance& instance, const vector<Rou
                     expr += variables[r];
                 }
             }
-            GRBConstr constraint = master.addConstr(expr <= 1);
-            vehicle_constraints.push_back(constraint);
+            vehicle_constraints.push_back(master.addConstr(expr -1 <= 0));
         }
 
         // Finally, we set the objective function

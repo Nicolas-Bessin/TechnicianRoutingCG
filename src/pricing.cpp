@@ -92,6 +92,9 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
         // Get the time window of the intervention
         int start_window = intervention.start_window;
         int end_window = intervention.end_window - intervention.duration;
+        int time_to_depot = metric(intervention, (instance.nodes[vehicle.depot]), instance.time_matrix);
+        int max_end_time = END_DAY - time_to_depot;
+        end_window = std::min(end_window, max_end_time);
         // Set the time window of the intervention
         time_window->setNodeBound(n_interventions_v + 2, i, start_window, end_window);
         // Set the node consumption of the time window
