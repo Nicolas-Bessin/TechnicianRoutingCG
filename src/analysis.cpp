@@ -171,6 +171,21 @@ bool is_route_feasible(const Route& route, const Instance& instance) {
 }
 
 
+void check_feasibility(const IntegerSolution& solution, const vector<Route>& routes, const Instance& instance) {
+    using std::cout, std::endl;
+    bool all_feasible = true;
+    for (int i = 0; i < routes.size(); i++){
+        const Route& route = routes.at(i);
+        if (solution.coefficients[i] > 0 && !is_route_feasible(route, instance)){
+            cout << "Route " << i << " is not feasible" << endl;
+            all_feasible = false;
+        }
+    }
+    if (all_feasible){
+        cout << "All routes are feasible" << endl;
+    }
+}
+
 double time_spent_travelling(const IntegerSolution& solution, const vector<Route>& routes, const Instance& instance) {
     double total_time = 0;
     for (int i = 0; i < routes.size(); i++) {
@@ -390,4 +405,31 @@ void print_used_routes(const IntegerSolution& solution, const vector<Route>& rou
             cout << "----------------" << endl;
         }
     }
+}
+
+
+void print_non_realised_interventions(const IntegerSolution& solution, const vector<Route>& routes, const Instance& instance) {
+    using std::cout, std::endl;
+    int nb_interventions = instance.number_interventions;
+    vector<int> is_covered(nb_interventions, 0);
+
+    // Go through all interventions
+    for (int i = 0; i < nb_interventions; i++) {
+        // Go through all routes
+        for (int r = 0; r < routes.size(); r++) {
+            // If the intervention is covered, mark it as covered
+            if (solution.coefficients[r] > 0 && routes[r].is_in_route[i] > 0) {
+                is_covered[i] = 1;
+            }
+        }
+    }
+
+    // Print the interventions that are not covered
+    cout << "Non-realised interventions: ";
+    for (int i = 0; i < nb_interventions; i++) {
+        if (is_covered[i] == 0) {
+            cout << i << ", ";
+        }
+    }
+    cout << endl;
 }
