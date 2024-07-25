@@ -35,7 +35,7 @@ int main(int argc, char *argv[]){
     // Parse the instance from a JSON file
     auto start_parse = chrono::steady_clock::now();
     cout << "Technician Routing Problem using Column Generation" << endl;
-    string default_filename = "../data/instance_1.json";
+    string default_filename = "../data/instance_1_all_feasible.json";
     Instance instance = parse_file(default_filename);
 
     preprocess_interventions(instance);
@@ -83,6 +83,8 @@ int main(int argc, char *argv[]){
         auto end = chrono::steady_clock::now();
         int diff = chrono::duration_cast<chrono::milliseconds>(end - start).count();
         cout << "Master problem solved in " << diff << " ms \n";
+        cout << "Number of interventions covered : " << setprecision(2) << count_covered_interventions(solution, routes, instance);
+        cout << " - Number of zeros in alphas : " << count_zeros(solution.alphas) << " / " << solution.alphas.size() << endl;
         master_time += diff;
 
         // Solve each pricing sub problem
@@ -94,19 +96,11 @@ int main(int argc, char *argv[]){
 
         for (int v = 0; v < instance.vehicles.size(); v++){
             const Vehicle& vehicle = instance.vehicles.at(v);
-            //unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, vehicle);
             update_pricing_instance(pricing_problems.at(v), solution.alphas, solution.betas[v], instance, vehicle, SCALE_FACTOR);
             vector<Route> best_new_routes = solve_pricing_problem(pricing_problems.at(v), 5, instance, vehicle);
-            // Use the file based version
-            //string filepath = pricing_folder + "v_" + to_string(vehicle.id) + ".txt";
-            //vector<Route> best_new_routes = solve_pricing_problem_file(filepath, solution.alphas, solution.betas[v], instance, vehicle);
-            //Use the allinone version
-            //vector<double> zeros(instance.number_interventions, 0);
-            //vector<Route> best_new_routes = create_solve_pricing_instance(solution.alphas, solution.betas[v], instance, vehicle, 5);
             if (best_new_routes.size() == 0){
                 time_limit_reached[vehicle.id]++;
             }
-            // cout << "Vehicle " << vehicle.id << " : " << best_new_routes.size() << " routes found" << endl;
             // Go through the returned routes, and add them to the master problem if they have a positive reduced cost
             for (const auto &route : best_new_routes){
                 max_reduced_cost = std::max(max_reduced_cost, route.reduced_cost);
@@ -140,7 +134,7 @@ int main(int argc, char *argv[]){
 
     // Solve the integer version of the problem
     auto start_integer = chrono::steady_clock::now();
-    IntegerSolution integer_solution = solve_integer_problem(instance, routes, 60);
+    IntegerSolution integer_solution = solve_integer_problem(instance, routes);
     auto end_integer = chrono::steady_clock::now();
     int diff_integer = chrono::duration_cast<chrono::milliseconds>(end_integer - start_integer).count();
 
@@ -198,7 +192,7 @@ int main(int argc, char *argv[]){
 
     cout << "-----------------------------------" << endl;
     //print_used_routes(integer_solution, routes, instance); 
-    print_non_covered_interventions(integer_solution, routes, instance);
+    print_non_covered_interventions(integer_solution, routes, instance, false);
     cout << "-----------------------------------" << endl;
     print_used_vehicles(integer_solution, routes, instance);
     print_vehicles_non_covered(integer_solution, routes, instance);

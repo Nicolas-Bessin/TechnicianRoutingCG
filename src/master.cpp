@@ -19,32 +19,27 @@ MasterSolution cg_solver(const Instance& instance, const vector<Route>& routes, 
         // Create the variables
         vector<GRBVar> variables;
         for(int r = 0; r < routes.size(); r++){
-            string var_name = "x_" + std::to_string(r);
-            variables.push_back(master.addVar(0.0, 1.0, 0.0, GRB_CONTINUOUS, var_name));
+            variables.push_back(master.addVar(0.0, 1.0, 0.0, GRB_CONTINUOUS));
         }
         // Create the intervention constraints (each intervention is visited at most once)
         vector<GRBConstr> intervention_constraints;
         for (int i = 0; i < instance.number_interventions; i++){
-            string constraint_name = "i_" + std::to_string(i);
             GRBLinExpr expr = 0;
             for (int r = 0; r < routes.size(); r++){
                 expr += routes[r].is_in_route[i] * variables[r];
             }
-            GRBConstr constraint = master.addConstr(expr <= 1, constraint_name);
-            intervention_constraints.push_back(constraint);
+            intervention_constraints.push_back(master.addConstr(expr <= 1));
         }
         // And the vehicle constraints (each vehicle is used at most once)
         vector<GRBConstr> vehicle_constraints;
         for (int v = 0; v < instance.vehicles.size(); v++){
-            string constraint_name = "v_" + std::to_string(v);
             GRBLinExpr expr = 0;
             for (int r = 0; r < routes.size(); r++){
                 if (routes[r].vehicle_id == v){
                     expr += variables[r];
                 }
             }
-            GRBConstr constraint = master.addConstr(expr <= 1, constraint_name);
-            vehicle_constraints.push_back(constraint);
+            vehicle_constraints.push_back(master.addConstr(expr <= 1));
         }
 
         // Finally, we set the objective function
@@ -63,42 +58,22 @@ MasterSolution cg_solver(const Instance& instance, const vector<Route>& routes, 
         
         // Get the coefficients of the variables
         vector<double> coefficients;
-        for (int i = 0; i < variables.size(); i++){
-            string var_name = "x_" + std::to_string(i);
-            GRBVar var = master.getVarByName(var_name);
+        for (const GRBVar& var : variables){
             coefficients.push_back(var.get(GRB_DoubleAttr_X));
         }
 
         // Get the duals of the constraints
         vector<double> alphas;
-        for (int i = 0; i < intervention_constraints.size(); i++){
-            string constraint_name = "i_" + std::to_string(i);
-            GRBConstr constraint = master.getConstrByName(constraint_name);
+        for (const GRBConstr& constraint : intervention_constraints){
             alphas.push_back(constraint.get(GRB_DoubleAttr_Pi));
         }
         vector<double> betas;
-        for (int v = 0; v < vehicle_constraints.size(); v++){
-            string constraint_name = "v_" + std::to_string(v);
-            GRBConstr constraint = master.getConstrByName(constraint_name);
+        for (const GRBConstr& constraint : vehicle_constraints){
             betas.push_back(constraint.get(GRB_DoubleAttr_Pi));
         }
 
-        // Print the duals
-        // cout << "Duals of the intervention constraints: ";
-        // for (int i = 0; i < alphas.size(); i++){
-        //     cout << alphas[i] << " ";
-        // }
-        // cout << endl;
-        // cout << "Duals of the vehicle constraints: ";
-        // for (int i = 0; i < betas.size(); i++){
-        //     cout << betas[i] << " ";
-        // }
-        // cout << endl;
-
         // Return the duals by building a solution
         return MasterSolution(coefficients, alphas, betas, objective_value);
-
-
 
     } catch(GRBException e) {
         cout << "Error code = " << e.getErrorCode() << endl;
@@ -107,18 +82,16 @@ MasterSolution cg_solver(const Instance& instance, const vector<Route>& routes, 
         cout << "Exception during optimization" << endl;
     }
 
-    
     return MasterSolution();
 }
 
 
-IntegerSolution solve_integer_problem(const Instance& instance, const vector<Route>& routes, double time_limit){
+IntegerSolution solve_integer_problem(const Instance& instance, const vector<Route>& routes){
     try {
         // Formulate and solve model
         // Next step is creating the master problem
         GRBEnv env = GRBEnv(true);
         env.set(GRB_IntParam_OutputFlag, 0);
-        env.set(GRB_DoubleParam_TimeLimit, time_limit);
         // Start the environment
         env.start();
         // Create the master problem model

@@ -11,6 +11,27 @@ using std::vector, std::map, std::string, std::set;
 using std::find;
 
 
+int count_zeros(const vector<double>& vec) {
+    int count = 0;
+    for (int i = 0; i < vec.size(); i++) {
+        if (vec[i] < 0.0001) {
+            count++;
+        }
+    }
+    return count;
+}
+
+double count_covered_interventions(const MasterSolution& solution, const vector<Route>& routes, const Instance& instance) {
+    double count = 0;
+    for (int i = 0; i < instance.number_interventions; i++) {
+        for (int r = 0; r < routes.size(); r++) {
+            count += solution.coefficients[r] * routes[r].is_in_route[i];
+        }
+    }
+    return count;
+}
+
+
 // Returns a vector of size n_interventions, with a 1 at the index of each intervention that is covered by the solution
 std::vector<int> covered_interventions(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance) {
     using std::cout, std::endl;
@@ -344,19 +365,37 @@ void print_used_routes(const IntegerSolution& solution, const vector<Route>& rou
 
 
 
-void print_non_covered_interventions(const IntegerSolution& solution, const vector<Route>& routes, const Instance& instance) {
+void print_non_covered_interventions(const IntegerSolution& solution, const vector<Route>& routes, const Instance& instance, bool details) {
     using std::cout, std::endl;
     int nb_interventions = instance.number_interventions;
     vector<int> is_covered = covered_interventions(solution, routes, instance);
-
-    // Print the interventions that are not covered
-    cout << "Non-realised interventions: ";
+    if (!details) {
+        // Print the interventions that are not covered
+        cout << "Non-realised interventions: ";
+        for (int i = 0; i < nb_interventions; i++) {
+            if (is_covered[i] == 0) {
+                cout << i << ", ";
+            }
+        }
+        cout << endl;
+        return;
+    }
+    // Print the interventions that are not covered with details
+    cout << "Non-realised interventions: " << endl;
     for (int i = 0; i < nb_interventions; i++) {
         if (is_covered[i] == 0) {
-            cout << i << ", ";
+            cout << "Intervention " << i << endl;
+            cout << "Start window: " << instance.nodes[i].start_window << " ";
+            cout << "End window: " << instance.nodes[i].end_window << " ";
+            cout << "Duration: " << instance.nodes[i].duration << endl;
+            cout << "Consumption: ";
+            for (const auto& [label , value] : instance.nodes[i].quantities) {
+                cout << label << ": " << value << " ";
+            }
+            cout << endl;
+            cout << "----------------" << endl;
         }
     }
-    cout << endl;
 }
 
 void print_vehicles_non_covered(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance) {

@@ -5,6 +5,12 @@
 
 #include <vector>
 
+// Count the number of zeros in a vector
+int count_zeros(const std::vector<double>& vector);
+
+// Count the "number" of interventions covered by the solution (i.e. a_ir x_r)
+double count_covered_interventions(const MasterSolution& solution, const std::vector<Route>& routes, const Instance& instance);
+
 // Returns a vector of size n_interventions, with a 1 at the index of each intervention that is covered by the solution
 std::vector<int> covered_interventions(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
 
@@ -44,7 +50,7 @@ void print_route(const Route& route, const Instance& instance);
 void print_used_routes(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
 
 // Print the interventions not covered by the solution
-void print_non_covered_interventions(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
+void print_non_covered_interventions(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance, bool details = false);
 
 // Print the vehicles that can cover all the interventions not covered by the solution
 void print_vehicles_non_covered(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
