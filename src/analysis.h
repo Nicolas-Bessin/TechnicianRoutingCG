@@ -36,3 +36,6 @@ void print_route(const Route& route, const Instance& instance);
 
 // Print the used routes in a solution
 void print_used_routes(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
+
+// Print the interventions not covered by the solution
+void print_non_realised_interventions(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);

@@ -198,6 +198,7 @@ int main(int argc, char *argv[]){
 
     cout << "-----------------------------------" << endl;
     //print_used_routes(integer_solution, routes, instance); 
+    print_non_realised_interventions(integer_solution, routes, instance);
 
     return 0;
 }
