@@ -51,6 +51,8 @@ add_executable(technician_routing
     src/pricing.cpp
     src/lunch.h 
     src/lunch.cpp
+    src/time_window_lunch.h
+    src/time_window_lunch.cpp
     src/pricing/pricing_file.h
     src/pricing/pricing_file.cpp
     src/pricing/pricing_allinone.h
