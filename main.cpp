@@ -9,6 +9,7 @@
 
 #include <memory>   
 #include <iostream>
+#include <iomanip>
 #include <chrono>
 
 #include <algorithm>
@@ -26,6 +27,7 @@ void takes_an_int(int a){
 int main(int argc, char *argv[]){
 
     using std::cout, std::endl;
+    using std::setprecision, std::fixed;
     using std::vector, std::string, std::to_string;
     using std::unique_ptr;
     namespace chrono = std::chrono;
@@ -107,11 +109,11 @@ int main(int argc, char *argv[]){
             // cout << "Vehicle " << vehicle.id << " : " << best_new_routes.size() << " routes found" << endl;
             // Go through the returned routes, and add them to the master problem if they have a positive reduced cost
             for (const auto &route : best_new_routes){
+                max_reduced_cost = std::max(max_reduced_cost, route.reduced_cost);
                 //double computed_reduced_cost = compute_reduced_cost(route, solution.alphas, solution.betas[v], instance);
                 if (route.reduced_cost > 0){
                     routes.push_back(route);
                     n_added_routes++;
-                    max_reduced_cost = std::max(max_reduced_cost, route.reduced_cost);
                 }
             }
         }
@@ -119,7 +121,7 @@ int main(int argc, char *argv[]){
         auto end_pricing = chrono::steady_clock::now();
         int diff_pricing = chrono::duration_cast<chrono::milliseconds>(end_pricing - start_pricing).count();
         cout << "Pricing sub problems solved in " << diff_pricing << " ms - Added " << n_added_routes << " routes";
-        cout << " - Max reduced cost : " << max_reduced_cost / SCALE_FACTOR << "\n";
+        cout << " - Max reduced cost : " << setprecision(15) << max_reduced_cost / SCALE_FACTOR << "\n";
         pricing_time += diff_pricing;
         cout << "Iteration " << iteration << " - Objective value : " << solution.objective_value << "\n";
         // If no route was added, we stop the algorithm
@@ -134,7 +136,7 @@ int main(int argc, char *argv[]){
         cout << "Found no new route to add" << endl;
     }
     cout << "End of the column generation after " << iteration << " iterations" << endl;
-    cout << "Objective value : " << solution.objective_value << endl;
+    cout << "Objective value : " << setprecision(3) << solution.objective_value << endl;
 
     // Solve the integer version of the problem
     auto start_integer = chrono::steady_clock::now();
@@ -195,7 +197,7 @@ int main(int argc, char *argv[]){
     cout << "Time spent waiting : " << time_spent_waiting(integer_solution, routes, instance) << " minutes" << endl;
 
     cout << "-----------------------------------" << endl;
-    print_used_routes(integer_solution, routes, instance); 
+    //print_used_routes(integer_solution, routes, instance); 
 
     return 0;
 }
