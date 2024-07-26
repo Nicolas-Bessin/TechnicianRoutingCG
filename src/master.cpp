@@ -28,7 +28,7 @@ MasterSolution cg_solver(const Instance& instance, const vector<Route>& routes, 
             for (int r = 0; r < routes.size(); r++){
                 expr += routes[r].is_in_route[i] * variables[r];
             }
-            intervention_constraints.push_back(master.addConstr(expr - 1 <= 0));
+            intervention_constraints.push_back(master.addConstr(expr <= 1));
         }
         // And the vehicle constraints (each vehicle is used at most once)
         vector<GRBConstr> vehicle_constraints;
@@ -39,7 +39,7 @@ MasterSolution cg_solver(const Instance& instance, const vector<Route>& routes, 
                     expr += variables[r];
                 }
             }
-            vehicle_constraints.push_back(master.addConstr(expr -1 <= 0));
+            vehicle_constraints.push_back(master.addConstr(expr <= 1));
         }
 
         // Finally, we set the objective function

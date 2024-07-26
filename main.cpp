@@ -221,6 +221,8 @@ int main(int argc, char *argv[]){
     cout << "New master solution found with objective value : " << master_solution_v2.objective_value << endl;
     IntegerSolution integer_solution_v2 = solve_integer_problem(instance, routes);
     cout << "New integer solution found with objective value : " << integer_solution_v2.objective_value << endl;
+    cout << "-----------------------------------" << endl;
+    print_non_covered_interventions(integer_solution_v2, routes, instance, true);
 
     return 0;
 }
