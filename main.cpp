@@ -217,6 +217,8 @@ int main(int argc, char *argv[]){
         routes.push_back(route);
     }
     // Re-solve the integer problem
+    MasterSolution master_solution_v2 = cg_solver(instance, routes, 60);
+    cout << "New master solution found with objective value : " << master_solution_v2.objective_value << endl;
     IntegerSolution integer_solution_v2 = solve_integer_problem(instance, routes);
     cout << "New integer solution found with objective value : " << integer_solution_v2.objective_value << endl;
 
