@@ -106,6 +106,10 @@ struct Vehicle {
     }
 };
 
+// Generate a new vehicle from an existing one
+// We only keep in the interventions those that have a mask value of 0
+Vehicle vehicle_mask(const Vehicle& vehicle, const std::vector<int>& mask);
+
 struct Instance {
     int number_interventions;
     int number_warehouses;

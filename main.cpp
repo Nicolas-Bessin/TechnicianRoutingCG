@@ -197,6 +197,28 @@ int main(int argc, char *argv[]){
     cout << "-----------------------------------" << endl;
     print_used_vehicles(integer_solution, routes, instance);
     print_vehicles_non_covered(integer_solution, routes, instance);
+    cout << "-----------------------------------" << endl;
+    // Now, we try to create a route for an unused vehicle that cover interventions not already covered
+    const int vehicle_id = 2;
+    cout << "Creating a new route for vehicle " << vehicle_id << endl;
+    Vehicle newV2 = vehicle_mask(instance.vehicles[vehicle_id], covered_interventions(integer_solution, routes, instance));
+    // We know generate & solve the pricing problem for this new vehicle
+    unique_ptr<Problem> new_pricing_problem = create_pricing_instance(instance, newV2, SCALE_FACTOR);
+    // Update with alpahs and beta at 0 for now
+    update_pricing_instance(new_pricing_problem, vector<double>(instance.number_interventions, 0), 0, instance, newV2, SCALE_FACTOR);
+    // Solve the pricing problem
+    vector<Route> new_routes_v2 = solve_pricing_problem(new_pricing_problem, 5, instance, newV2);
+    // Print the cost of the new routes
+    for (const auto &route : new_routes_v2){
+        print_route(route, instance);
+    }
+    // Add the new route to the master problem
+    for (const auto &route : new_routes_v2){
+        routes.push_back(route);
+    }
+    // Re-solve the integer problem
+    IntegerSolution integer_solution_v2 = solve_integer_problem(instance, routes);
+    cout << "New integer solution found with objective value : " << integer_solution_v2.objective_value << endl;
 
     return 0;
 }

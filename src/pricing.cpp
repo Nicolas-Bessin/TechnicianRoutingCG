@@ -1,6 +1,5 @@
 #include "pricing.h"
 #include "constants.h"
-#include "lunch.h"
 #include "time_window_lunch.h"
 #include "../pathwyse/core/solver.h"
 

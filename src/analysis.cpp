@@ -430,5 +430,6 @@ void print_vehicles_non_covered(const IntegerSolution& solution, const std::vect
             cout << "v" << v << " : " << can_cover[v] <<" - ";
         }
     }
+    cout << endl;
 
 }
