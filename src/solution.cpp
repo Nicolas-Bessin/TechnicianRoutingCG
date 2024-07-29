@@ -166,8 +166,14 @@ bool is_route_feasible(const Route& route, const Instance& instance) {
         double duration = intervention.duration;
         // Check that the start time is the current time 
         // (for the first node which is the depot, the start time will hold the arrival time at the end of the day)
-        if (i > 0 && route.start_times[intervention_id] != current_time) {
-            cout << "Start time of intervention " << i << " is not the time of arrival" << endl;
+        if (i > 0 && route.start_times[intervention_id] > current_time) {
+            // This means we arrived too early - we thus wait until the time of the intervention
+            current_time = route.start_times[intervention_id];
+            
+        }
+        // If we are too late, the route is not feasible
+        if (route.start_times[intervention_id] < current_time) {
+            cout << "Start time of intervention " << intervention_id << " is not the time of arrival" << endl;
             cout << "Start time: " << route.start_times[intervention_id] << " Current time: " << current_time << endl;
             return false;
         }
@@ -207,9 +213,9 @@ bool is_route_feasible(const Route& route, const Instance& instance) {
     // Check the final intervention
     const Node& final_intervention = instance.nodes[route.id_sequence.back()];
     int final_intervention_id = route.id_sequence.back();
-    if (route.start_times[final_intervention_id] != current_time) {
-        cout << "Start time of the final intervention is not the time of arrival" << endl;
-        return false;
+    // If our arrival time is too early, we wait
+    if (route.start_times[final_intervention_id] < current_time) {
+        current_time = route.start_times[final_intervention_id];
     }
     if (current_time < final_intervention.start_window) {
         cout << "Final intervention starts too early" << endl;

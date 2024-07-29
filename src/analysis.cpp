@@ -51,7 +51,7 @@ std::vector<int> covered_interventions(const IntegerSolution& solution, const st
                 is_covered[i] += 1;
             }
             // If the intervention is covered, mark it as covered
-            if (solution.coefficients[r] > 0 && route.is_in_route[i] > 0) {
+            else if (solution.coefficients[r] > 0 && route.is_in_route[i] > 0) {
                 is_covered[i] = 1;
             }
         }

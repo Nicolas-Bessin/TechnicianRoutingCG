@@ -49,8 +49,17 @@ CompactSolution compact_solver(const Instance & instance) {
         }
 
         // Add the constraints
-        // Each intervention is visited at most once
-        vector<GRBConstr> intervention_constraints;
+        // Custom constraint : you cannot go into a depot that is not your own
+        for (int v = 0; v < n_vehicles; v++) {
+            int real_depot = instance.vehicles[v].depot;
+            for (int i = 0; i < n_nodes; i++) {
+                for (int j = n_interventions; j < n_nodes; j++) {
+                    if (j == real_depot) continue;
+                    model.addConstr(x[i][j][v] == 0);
+                }
+            }
+        }
+        //Each intervention is visited at most once
         for (int i = 0; i < n_interventions; i++) {
             GRBLinExpr expr = 0;
             for (int j = 0; j < n_nodes; j++) {
@@ -58,7 +67,7 @@ CompactSolution compact_solver(const Instance & instance) {
                     expr += x[i][j][v];
                 }
             }
-            intervention_constraints.push_back(model.addConstr(expr <= 1));
+            model.addConstr(expr <= 1);
         }
         // Vehicle routing contraints
         // Can't go from a node to itself
@@ -70,24 +79,29 @@ CompactSolution compact_solver(const Instance & instance) {
         // Flow conservation constraints
         for (int i = 0; i < n_nodes; i++) {
             for (int v = 0; v < n_vehicles; v++) {
-                GRBLinExpr expr = 0;
+                GRBLinExpr incoming = 0;
+                GRBLinExpr outgoing = 0;
                 for (int j = 0; j < n_nodes; j++) {
-                    expr += x[i][j][v] - x[j][i][v];
+                    incoming += x[j][i][v];
+                    outgoing += x[i][j][v];
                 }
-                model.addConstr(expr == 0);
+                model.addConstr(incoming == outgoing);
             }
         }
         // A vehicle leaves the depot only if used
         for (int v = 0; v < n_vehicles; v++) {
             int depot = instance.vehicles[v].depot;
-            GRBLinExpr expr = 0;
+            GRBLinExpr expr_out = 0;
+            GRBLinExpr expr_in = 0;
             for (int j = 0; j < n_nodes; j++) {
-                expr += x[depot][j][v];
+                expr_out += x[depot][j][v];
+                expr_in += x[j][depot][v];
             }
-            model.addConstr(expr == y[v]);
+            model.addConstr(expr_out == y[v]);
+            model.addConstr(expr_in == y[v]);
         }
         // A vehicle can't be used if not available
-        for (int i = 0; i < n_interventions; i++) {
+        for (int i = 0; i < n_nodes; i++) {
             for (int j = 0; j < n_nodes; j++) {
                 for (int v = 0; v < n_vehicles; v++) {
                     model.addConstr(x[i][j][v] <= y[v]);
@@ -100,7 +114,7 @@ CompactSolution compact_solver(const Instance & instance) {
             for (int v = 0; v < n_vehicles; v++) {
                 // Check wether vehcile v can do intervention i
                 const Vehicle& vehicle = instance.vehicles[v];
-                bool can_do = find(vehicle.interventions.begin(), vehicle.interventions.end(), i) != vehicle.interventions.end();
+                int can_do = find(vehicle.interventions.begin(), vehicle.interventions.end(), i) != vehicle.interventions.end();
                 for (int j = 0; j < n_nodes; j++) {
                     model.addConstr(x[i][j][v] <= can_do);
                 }
@@ -162,13 +176,13 @@ CompactSolution compact_solver(const Instance & instance) {
 
         // Set the objective function
         GRBLinExpr obj = 0;
-        for (int i = 0; i < n_interventions; i++) {
-            const Node & intervention_i = instance.nodes[i];
+        for (int i = 0; i < n_nodes; i++) {
+            const Node & node_i = instance.nodes[i];
             for (int j = 0; j < n_nodes; j++) {
-                const Node & intervention_j = instance.nodes[j];
-                int distance = metric(intervention_i, intervention_j, instance.distance_matrix);
+                const Node & node_j = instance.nodes[j];
+                int distance = metric(node_i, node_j, instance.distance_matrix);
                 for (int v = 0; v < n_vehicles; v++) {
-                    obj += (instance.M * intervention_i.duration - distance * instance.cost_per_km) * x[i][j][v];
+                    obj += (instance.M * node_i.duration - distance * instance.cost_per_km) * x[i][j][v];
                 }
             }
         }
@@ -182,7 +196,7 @@ CompactSolution compact_solver(const Instance & instance) {
         model.optimize();
 
         // Build the solution
-        CompactSolution solution = CompactSolution(n_nodes, n_vehicles);
+        CompactSolution solution = CompactSolution(n_nodes, n_interventions, n_vehicles);
         solution.objective_value = model.get(GRB_DoubleAttr_ObjVal);
 
         // Get the values of the variables x_ijv
@@ -214,3 +228,89 @@ CompactSolution compact_solver(const Instance & instance) {
 
     return CompactSolution();
 }   
+
+
+std::vector<Route> compact_solution_to_routes(const Instance& instance, const CompactSolution& compact_solution) {
+    using std::vector;
+    using std::cout, std::endl;
+
+    int n_nodes = instance.nodes.size();
+    int n_intervention = instance.number_interventions;
+    int n_vehicles = instance.number_vehicles;
+
+    // We will build a vector of routes from the compact solution
+    vector<Route> routes;
+
+    // For each vehicle, we will build a route if it is used
+    for (int v = 0; v < n_vehicles; v++) {
+        if (compact_solution.y[v] == 0) continue;
+        cout << "Vehicle " << v << " is used" << endl;
+        const Vehicle& vehicle = instance.vehicles[v];
+        // Initialize the route components
+        double total_cost = vehicle.cost;
+        double total_duration = 0;
+        double total_travelling_time = 0;
+        double total_waiting_time = 0;
+        vector<int> sequence;
+        vector<int> is_in_route = vector<int>(n_nodes, 0);
+        vector<double> start_times = vector<double>(n_nodes, 0);
+        // Go through the route
+        bool reached_depot = false;
+        int current_node = vehicle.depot;
+        while (!reached_depot) {
+            // Update the info relative to the current node
+            //cout << "Current node : " << current_node << endl;
+            const Node& node = instance.nodes[current_node];
+            sequence.push_back(current_node);
+            is_in_route[current_node] = 1;
+            if (current_node == vehicle.depot) {
+                start_times[current_node] = 0;
+            } else {
+                start_times[current_node] = compact_solution.u[current_node];
+            }
+            // Update the counters : waiting time is max between current start time and time elapsed until now
+            total_waiting_time += std::max(0.0, compact_solution.u[current_node] - (total_duration + total_travelling_time + total_waiting_time));
+            total_duration += node.duration;
+            // Find the next node
+            int next_node = -1;
+            for (int i = 0; i < n_nodes; i++) {
+                if (compact_solution.x[current_node][i][v] == 1) {
+                    next_node = i;
+                    break;
+                }
+            }
+            if (next_node == -1) {
+                std::cerr << "Error : no next node found" << std::endl;
+                break;
+            }
+            // If the next node is already in the route and is not the depot, we have a problem
+            if (is_in_route[next_node] == 1 && next_node != vehicle.depot) {
+                std::cerr << "Error : next node is already in the route" << " / Next node : " << next_node << std::endl;
+                break;
+            }
+            const Node& next = instance.nodes[next_node];
+            // Update the travelling time & cost
+            cout << "Current number of nodes : " << sequence.size() << endl;
+            cout << "Current node : " << current_node << " / Next node : " << next_node << endl;
+            int travelling_time = instance.time_matrix.at(node.node_id).at(next.node_id);
+            total_travelling_time += travelling_time;
+            int distance = instance.distance_matrix.at(node.node_id).at(next.node_id);
+            total_cost += distance * instance.cost_per_km;
+            // Check if we reached the depot
+            if (next_node == vehicle.depot) {
+                reached_depot = true;
+            } else {
+                current_node = next_node;
+            }
+        }
+        //cout << "------" << endl;
+        // Add the depot to the sequence
+        sequence.push_back(vehicle.depot);
+
+        // Create the route
+        Route route = Route(v, total_cost, 0.0, total_duration, total_travelling_time, total_waiting_time, sequence, is_in_route, start_times);
+        routes.push_back(route);
+    }
+
+    return routes;
+}
