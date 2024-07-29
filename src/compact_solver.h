@@ -5,4 +5,18 @@
 
 #include <vector>
 
-void compact_solver(const Instance& instance);
+
+struct CompactSolution{
+    double objective_value;
+    std::vector<std::vector<std::vector<int>>> x;
+    std::vector<int> y;
+    std::vector<int> u;
+
+    // Default constructor
+    CompactSolution() : objective_value(0.0), x(), y(), u() {}
+
+    // Constructor with sizes
+    CompactSolution(int n_nodes, int n_vehicles) : objective_value(0.0), x(n_nodes, std::vector<std::vector<int>>(n_nodes, std::vector<int>(n_vehicles))), y(n_vehicles), u(n_nodes) {}
+};
+
+CompactSolution compact_solver(const Instance& instance);

@@ -7,7 +7,7 @@
 
 
 
-void compact_solver(const Instance & instance) {
+CompactSolution compact_solver(const Instance & instance) {
     using std::vector, std::find;
     using std::string;
         
@@ -180,6 +180,31 @@ void compact_solver(const Instance & instance) {
 
         // Optimize the model
         model.optimize();
+
+        // Build the solution
+        CompactSolution solution = CompactSolution(n_nodes, n_vehicles);
+        solution.objective_value = model.get(GRB_DoubleAttr_ObjVal);
+
+        // Get the values of the variables x_ijv
+        for (int i = 0; i < n_nodes; i++) {
+            for (int j = 0; j < n_nodes; j++) {
+                for (int v = 0; v < n_vehicles; v++) {
+                    solution.x[i][j][v] = x[i][j][v].get(GRB_DoubleAttr_X);
+                }
+            }
+        }
+        // Get the values of the variables y_v
+        for (int v = 0; v < n_vehicles; v++) {
+            solution.y[v] = y[v].get(GRB_DoubleAttr_X);
+        }
+        // Get the values of the variables u_i
+        for (int i = 0; i < n_interventions; i++) {
+            solution.u[i] = u[i].get(GRB_DoubleAttr_X);
+        }
+
+        return solution;
+
+
     } catch (GRBException & e) {
         std::cerr << "Error code = " << e.getErrorCode() << std::endl;
         std::cerr << e.getMessage() << std::endl;
@@ -187,5 +212,5 @@ void compact_solver(const Instance & instance) {
         std::cerr << "Exception during optimization" << std::endl;
     }
 
-    return;
+    return CompactSolution();
 }   
