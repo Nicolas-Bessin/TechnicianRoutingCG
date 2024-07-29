@@ -424,9 +424,9 @@ void print_vehicles_non_covered(const IntegerSolution& solution, const std::vect
     }
 
     // Print the number of non-covered interventions that can be covered by each vehicle
-    cout << "Number of non covered interventions that can be covered by non used each vehicle: " << endl;
+    cout << "Number of non covered interventions that can be covered by each non used  vehicle: " << endl;
     for (int v = 0; v < nb_vehicles; v++) {
-        if (is_used[v] == 0) {
+        if (is_used[v] == 0) { 
             cout << "v" << v << " : " << can_cover[v] <<" - ";
         }
     }

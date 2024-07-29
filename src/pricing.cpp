@@ -38,7 +38,6 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
     // Initialize the problem
     problem->initProblem();
 
-
     // Initialize the objective function
     DefaultCost* objective = new DefaultCost();
     objective->initData(false, n_interventions_v + 2);
@@ -57,20 +56,15 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
             double arc_cost = instance.cost_per_km * distance;
             objective->setArcCost(i, j, arc_cost * scale_factor);
         }
-    }
-    // Also setup the arcs between the warehouse and the interventions
-    for (int i = 0; i < n_interventions_v; i++) {
-        // get the intervention referenced by the index i
-        const Node& intervention = (instance.nodes[vehicle.interventions[i]]);
         // Outgoing arcs from the warehouse
         problem->setNetworkArc(origin, i);
-        double distance_out = metric((instance.nodes[vehicle.depot]), intervention, instance.distance_matrix);
+        double distance_out = metric((instance.nodes[vehicle.depot]), intervention_i, instance.distance_matrix);
         // Set the arc cost, also adding the fixed cost of the vehicle (but not beta)
         objective->setArcCost(origin, i, (instance.cost_per_km * distance_out) * scale_factor);
         // Incoming arcs to the warehouse
         problem->setNetworkArc(i, destination);
         // Distance is probably the same as the outgoing distance but eh we never know
-        double distance_in = metric(intervention, (instance.nodes[vehicle.depot]), instance.distance_matrix);
+        double distance_in = metric(intervention_i, (instance.nodes[vehicle.depot]), instance.distance_matrix);
         // Here we only consider the cost of travelng, the node costs have already been set
         objective->setArcCost(i, destination, (instance.cost_per_km * distance_in) * scale_factor);
     }
@@ -240,7 +234,14 @@ vector<Route> solve_pricing_problem(unique_ptr<Problem> & problem, int pool_size
             int start_time_next = instance.nodes[true_j].start_window;
             int waiting_time = std::max(0, start_time_next - (current_time + duration + travel_time));
             total_waiting_time += waiting_time;
-            current_time = std::max(current_time + duration + travel_time, start_time_next); 
+            current_time = std::max(current_time + duration + travel_time, start_time_next);
+            // If we can't begin the next intervention before the lunch break, we wait until the lunch break
+            Node next_intervention = instance.nodes[true_j];
+            int next_duration = next_intervention.duration;
+            if (next_intervention.is_ambiguous && current_time < MID_DAY && current_time + next_duration > MID_DAY) {
+                current_time = MID_DAY;
+                total_waiting_time += std::max(0, MID_DAY - current_time);
+            }
         }
         // Add the checks related to the last intervention
         int true_last = vehicle.depot;
