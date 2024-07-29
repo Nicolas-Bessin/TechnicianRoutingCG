@@ -1,4 +1,4 @@
 build/
 bin/
 pricing_instances/
-data/*.json
+data/

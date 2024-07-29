@@ -35,8 +35,9 @@ include_directories(${GUROBI_INCLUDE_DIRS})
 add_subdirectory(pathwyse)
 
 #Source code
-add_executable(technician_routing
-    main.cpp
+set(
+    SOURCE_FILES_STANDALONE
+
     src/instance.h
     src/instance.cpp
     src/parser.h 
@@ -54,6 +55,7 @@ add_executable(technician_routing
     src/analysis.h
     src/analysis.cpp
 )
+add_executable(technician_routing main.cpp ${SOURCE_FILES_STANDALONE})
 
 #Link against the Gurobi library
 target_link_libraries(technician_routing PUBLIC gurobi)
