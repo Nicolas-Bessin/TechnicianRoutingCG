@@ -7,7 +7,7 @@
 
 
 
-CompactSolution compact_solver(const Instance & instance, int time_limit) {
+CompactSolution compact_solver(const Instance & instance, int time_limit, std::vector<std::pair<int, int>> imposed_routings) {
     using std::vector, std::find;
     using std::string;
         
@@ -176,6 +176,18 @@ CompactSolution compact_solver(const Instance & instance, int time_limit) {
                 model.addConstr(expr <= instance.vehicles[v].capacities.at(label));
             }
         }
+
+        // Finally, we can set the imposed routings
+        // Each pair is a pair (vehicle_id, intervention_id)
+        // Where the vehicle has to go through the intervention
+        for (const auto& [v, i] : imposed_routings) {
+            GRBLinExpr expr = 0;
+            for (int j = 0; j < n_nodes; j++) {
+                expr += x[i][j][v];
+            }
+            model.addConstr(expr == 1);
+        }
+            
 
         // Set the objective function
         GRBLinExpr obj = 0;

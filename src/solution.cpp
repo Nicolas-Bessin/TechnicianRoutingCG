@@ -241,3 +241,18 @@ bool is_route_feasible(const Route& route, const Instance& instance) {
 }
 
 
+std::vector<std::pair<int, int>> imposed_routings_from_routes(const std::vector<Route>& routes, const IntegerSolution& integer_solution) {
+    std::vector<std::pair<int, int>> imposed_routings;
+    for (int r = 0; r < routes.size(); r++) {
+        if (integer_solution.coefficients[r] == 0) continue;
+        // Only if the route is actually used
+        // Add every (vehicle_id, intervention_id) pair to the imposed routings
+        // We skip the first and last node which are the depot
+        for (int i = 1; i < routes[r].id_sequence.size() - 1; i++) {
+            imposed_routings.push_back(std::make_pair(routes[r].vehicle_id, routes[r].id_sequence[i]));
+        }
+    }
+    
+    return imposed_routings;
+}
+

@@ -433,3 +433,46 @@ void print_vehicles_non_covered(const IntegerSolution& solution, const std::vect
     cout << endl;
 
 }
+
+
+void full_analysis(const IntegerSolution& integer_solution, const vector<Route>& routes, const Instance& instance) {
+    using std::cout, std::endl;
+    // Solution analysis
+
+    cout << "-----------------------------------" << endl;
+    //print_used_routes(integer_solution, routes, instance); 
+    print_non_covered_interventions(integer_solution, routes, instance, false);
+    cout << "-----------------------------------" << endl;
+    print_used_vehicles(integer_solution, routes, instance);
+    print_vehicles_non_covered(integer_solution, routes, instance);
+    cout << "-----------------------------------" << endl;
+
+    cout << "Number of covered interventions : " << count_covered_interventions(integer_solution, routes, instance);
+    cout << " / " << instance.number_interventions << endl;
+
+    cout << "Number of used vehicles : " << count_used_vehicles(integer_solution, routes, instance);
+    cout << " / " << instance.vehicles.size() << endl;
+
+    cout << "Number of interventions that could be covered : " << count_coverable_interventions(integer_solution, routes, instance) << endl;
+
+    // Check that all used routes are feasible
+    bool all_feasible = true;
+    for (int i = 0; i < routes.size(); i++){
+        const Route& route = routes.at(i);
+        if (integer_solution.coefficients[i] > 0 && !is_route_feasible(route, instance)){
+            cout << "Route " << i << " is not feasible" << endl;
+            all_feasible = false;
+        }
+    }
+    if (all_feasible){
+        cout << "All routes are feasible" << endl;
+    }
+
+    cout << "Number of routes with duplicates : " << count_routes_with_duplicates(routes) << " / " << routes.size() << endl;
+    cout << "Number of used routes with duplicates : " << count_used_routes_with_duplicates(integer_solution, routes) << endl;
+    cout << "Number of route kilometres : " << count_kilometres_travelled(integer_solution, routes, instance) << " km" << endl;
+    cout << "Time spent travelling : " << time_spent_travelling(integer_solution, routes, instance) << " minutes" << endl;
+    cout << "Time spent working : " << time_spent_working(integer_solution, routes, instance) << " minutes" << endl;
+    cout << "Time spent waiting : " << time_spent_waiting(integer_solution, routes, instance) << " minutes" << endl;
+
+}

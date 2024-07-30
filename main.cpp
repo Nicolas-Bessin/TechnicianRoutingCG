@@ -2,10 +2,8 @@
 #include "src/preprocessing.h"
 #include "src/master.h"
 #include "src/pricing.h"
-#include "src/pricing/pricing_allinone.h"
-#include "src/pricing/pricing_file.h"
 #include "src/analysis.h"
-#include "pathwyse/core/solver.h"
+#include "src/compact_solver.h"
 
 #include <memory>   
 #include <iostream>
@@ -16,7 +14,7 @@
 #include <random>
 
 #define SCALE_FACTOR 1
-#define TIME_LIMIT 30
+#define TIME_LIMIT 150
 #define THRESHOLD 1e-6
 
 
@@ -29,7 +27,7 @@ int main(int argc, char *argv[]){
 
     using std::cout, std::endl;
     using std::setprecision, std::fixed;
-    using std::vector, std::string, std::to_string;
+    using std::vector, std::string, std::to_string, std::pair;
     using std::unique_ptr;
     namespace chrono = std::chrono;
 
@@ -159,45 +157,26 @@ int main(int argc, char *argv[]){
             cout << "Vehicle " << i << " : the time limit was reached " << time_limit_reached[i] << " times" << endl;
         }
     }
+    int remaining_time = TIME_LIMIT - (master_time + pricing_time + diff_integer) / 1000;
+    // Finally, we construct a vector of pairs (vehicle_id, intervention_id) that we can use to impose a routing
+    vector<pair<int, int>> imposed_routings = imposed_routings_from_routes(routes, integer_solution);
+    // We can then solve the compact model with these imposed routings
+    CompactSolution compact_solution = compact_solver(instance, remaining_time, imposed_routings);
+    // Convert back to routes
+    vector<Route> compact_routes = compact_solution_to_routes(instance, compact_solution);
+    // Create a dummy integer solution (all variables set to 1)
+    IntegerSolution compact_integer_solution = IntegerSolution(vector<int>(compact_routes.size(), 1), compact_solution.objective_value);
 
-    // Solution analysis
-    cout << "Number of covered interventions : " << count_covered_interventions(integer_solution, routes, instance);
-    cout << " / " << instance.number_interventions << endl;
+    cout << "Manual computing of the compact solution value : " << compute_integer_objective(compact_integer_solution, compact_routes, instance) << endl;
 
-    cout << "Number of used vehicles : " << count_used_vehicles(integer_solution, routes, instance);
-    cout << " / " << instance.vehicles.size() << endl;
+    // Run the analysis on the compact solution
+    full_analysis(compact_integer_solution, compact_routes, instance);
 
-    cout << "Number of interventions that could be covered : " << count_coverable_interventions(integer_solution, routes, instance) << endl;
+    return 0;
+}
 
-    // Check that all used routes are feasible
-    bool all_feasible = true;
-    for (int i = 0; i < routes.size(); i++){
-        const Route& route = routes.at(i);
-        if (integer_solution.coefficients[i] > 0 && !is_route_feasible(route, instance)){
-            cout << "Route " << i << " is not feasible" << endl;
-            all_feasible = false;
-        }
-    }
-    if (all_feasible){
-        cout << "All routes are feasible" << endl;
-    }
 
-    cout << "Number of routes with duplicates : " << count_routes_with_duplicates(routes) << " / " << routes.size() << endl;
-    cout << "Number of used routes with duplicates : " << count_used_routes_with_duplicates(integer_solution, routes) << endl;
-
-    cout << "Number of route kilometres : " << count_kilometres_travelled(integer_solution, routes, instance) << " km" << endl;
-
-    cout << "Time spent travelling : " << time_spent_travelling(integer_solution, routes, instance) << " minutes" << endl;
-    cout << "Time spent working : " << time_spent_working(integer_solution, routes, instance) << " minutes" << endl;
-    cout << "Time spent waiting : " << time_spent_waiting(integer_solution, routes, instance) << " minutes" << endl;
-
-    cout << "-----------------------------------" << endl;
-    //print_used_routes(integer_solution, routes, instance); 
-    print_non_covered_interventions(integer_solution, routes, instance, false);
-    cout << "-----------------------------------" << endl;
-    print_used_vehicles(integer_solution, routes, instance);
-    print_vehicles_non_covered(integer_solution, routes, instance);
-    cout << "-----------------------------------" << endl;
+/*
     // Now, we try to create a route for an unused vehicle that cover interventions not already covered
     const int vehicle_id = 2;
     cout << "Creating a new route for vehicle " << vehicle_id << endl;
@@ -223,9 +202,7 @@ int main(int argc, char *argv[]){
     cout << "New integer solution found with objective value : " << integer_solution_v2.objective_value << endl;
     cout << "-----------------------------------" << endl;
     print_non_covered_interventions(integer_solution_v2, routes, instance, true);
-
-    return 0;
-}
+*/
 
 
 
