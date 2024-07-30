@@ -68,11 +68,11 @@ target_link_libraries(technician_routing_lib PUBLIC gurobi)
 target_link_libraries(technician_routing_lib PUBLIC pathwyse_core)
 
 # Create the column generation executable
-add_executable(technician_routing main.cpp)
+add_executable(TRP_cg main.cpp)
 # Link against the core library
-target_link_libraries(technician_routing PUBLIC technician_routing_lib)
+target_link_libraries(TRP_cg PUBLIC technician_routing_lib)
 
 # Also create a compact formulation executable
-add_executable(technician_routing_compact main_compact.cpp)
+add_executable(TRP_compact main_compact.cpp)
 # Link against the core library
-target_link_libraries(technician_routing_compact PUBLIC technician_routing_lib)
+target_link_libraries(TRP_compact PUBLIC technician_routing_lib)
