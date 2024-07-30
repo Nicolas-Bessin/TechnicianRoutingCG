@@ -13,7 +13,7 @@ problem/scaling/target = objective
 ensemble/algorithms = PWDefaultRelaxQueue
 ensemble/active = 0
 
-main_algorithm = PWDefault
+main_algorithm = PWDefaultRelaxQueue
 
 algo/default/autoconfig = 0
 algo/default/timelimit = 0
