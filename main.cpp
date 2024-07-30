@@ -100,10 +100,24 @@ int main(int argc, char *argv[]){
     routes.push_back(Route(0, instance.number_interventions));
 
     // Do a first round of column generation
-    CGResult initial_cg = column_generation(instance, routes, THRESHOLD, TIME_LIMIT, true);
+    CGResult initial_cg = column_generation(instance, routes, THRESHOLD, TIME_LIMIT, false);
+
+    // Print the objective value of the initial solution
+    cout << "Initial solution objective value : " << initial_cg.master_solution.objective_value << endl;
+    cout << "Integer solution objective value : " << initial_cg.integer_solution.objective_value << endl;
+    cout << "-----------------------------------" << endl;
     
     // Analyze the solution
-    solution_analysis(instance, initial_cg);
+    // solution_analysis(instance, initial_cg);
+
+    // Get the new gap 
+    double gap = initial_cg.integer_solution.objective_value - initial_cg.master_solution.objective_value;
+
+    // Second round of column generation
+    CGResult final_cg = column_generation(instance, initial_cg.routes, gap, TIME_LIMIT, true);
+
+    // Analyze the solution
+    solution_analysis(instance, final_cg);
     
 
     return 0;

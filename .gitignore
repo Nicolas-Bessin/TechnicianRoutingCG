@@ -1,4 +1,5 @@
 build/
 bin/
+routes/
 pricing_instances/
 data/*.json
