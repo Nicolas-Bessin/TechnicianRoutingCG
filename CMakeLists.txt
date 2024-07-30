@@ -36,29 +36,43 @@ add_subdirectory(pathwyse)
 
 #Source code
 set(
-    SOURCE_FILES_STANDALONE
+    SOURCE_FILES_LIB
 
     src/instance.h
     src/instance.cpp
     src/parser.h 
     src/parser.cpp
-    src/master.h
-    src/master.cpp
     src/preprocessing.h
     src/preprocessing.cpp
+
     src/solution.h
     src/solution.cpp
-    src/pricing.h
-    src/pricing.cpp
-    src/time_window_lunch.h
-    src/time_window_lunch.cpp
     src/analysis.h
     src/analysis.cpp
+
+    src/master.h
+    src/master.cpp
+    src/pricing.h
+    src/pricing.cpp
+
+    src/time_window_lunch.h
+    src/time_window_lunch.cpp
+
+    src/compact_solver.h
+    src/compact_solver.cpp
 )
-add_executable(technician_routing main.cpp ${SOURCE_FILES_STANDALONE})
-
+add_library(technician_routing_lib ${SOURCE_FILES_LIB})
 #Link against the Gurobi library
-target_link_libraries(technician_routing PUBLIC gurobi)
+target_link_libraries(technician_routing_lib PUBLIC gurobi)
+#Link against the pathwyse core library
+target_link_libraries(technician_routing_lib PUBLIC pathwyse_core)
 
-# Add the pathwyse core library
-target_link_libraries(technician_routing PUBLIC pathwyse_core)
+# Create the column generation executable
+add_executable(technician_routing main.cpp)
+# Link against the core library
+target_link_libraries(technician_routing PUBLIC technician_routing_lib)
+
+# Also create a compact formulation executable
+add_executable(technician_routing_compact main_compact.cpp)
+# Link against the core library
+target_link_libraries(technician_routing_compact PUBLIC technician_routing_lib)
