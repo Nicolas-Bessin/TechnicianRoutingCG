@@ -7,7 +7,7 @@
 
 
 
-CompactSolution compact_solver(const Instance & instance) {
+CompactSolution compact_solver(const Instance & instance, int time_limit) {
     using std::vector, std::find;
     using std::string;
         
@@ -21,7 +21,11 @@ CompactSolution compact_solver(const Instance & instance) {
         // Create the model
         GRBEnv env = GRBEnv(true);
         env.start();
+        // Set the time limit
+        env.set(GRB_DoubleParam_TimeLimit, time_limit);
+        
         GRBModel model = GRBModel(env);
+
 
         // Build the 3D list of variables x_ijv
         vector<vector<vector<GRBVar>>> x(n_nodes, vector<vector<GRBVar>>(n_nodes, vector<GRBVar>(n_vehicles)));
@@ -40,7 +44,7 @@ CompactSolution compact_solver(const Instance & instance) {
         // The variables u_i (start time of intervention i)
         vector<GRBVar> u(n_interventions);
         for (int i = 0; i < n_interventions; i++) {
-            u[i] = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS);
+            u[i] = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_INTEGER);
         }
         // The variables z_i (wether intervention i is done in the afternoon)
         vector<GRBVar> z(n_interventions);
@@ -49,13 +53,14 @@ CompactSolution compact_solver(const Instance & instance) {
         }
 
         // Add the constraints
-        // Custom constraint : you cannot go into a depot that is not your own
+        // Custom constraint : you cannot go into a depot that is not your own, and you cannot go out of a depot that is not your own
         for (int v = 0; v < n_vehicles; v++) {
             int real_depot = instance.vehicles[v].depot;
             for (int i = 0; i < n_nodes; i++) {
                 for (int j = n_interventions; j < n_nodes; j++) {
                     if (j == real_depot) continue;
                     model.addConstr(x[i][j][v] == 0);
+                    model.addConstr(x[j][i][v] == 0);
                 }
             }
         }
@@ -79,13 +84,11 @@ CompactSolution compact_solver(const Instance & instance) {
         // Flow conservation constraints
         for (int i = 0; i < n_nodes; i++) {
             for (int v = 0; v < n_vehicles; v++) {
-                GRBLinExpr incoming = 0;
-                GRBLinExpr outgoing = 0;
+                GRBLinExpr expr = 0;
                 for (int j = 0; j < n_nodes; j++) {
-                    incoming += x[j][i][v];
-                    outgoing += x[i][j][v];
+                    expr += x[i][j][v] - x[j][i][v];
                 }
-                model.addConstr(incoming == outgoing);
+                model.addConstr(expr == 0);
             }
         }
         // A vehicle leaves the depot only if used
@@ -133,8 +136,8 @@ CompactSolution compact_solver(const Instance & instance) {
             for (int j = 0; j < n_interventions; j++) {
                 const Node& node_i = instance.nodes[i];
                 const Node& node_j = instance.nodes[j];
-                GRBLinExpr expr = u[i] - node_i.start_window;
-                double coef = node_i.start_window + node_i.duration + metric(node_i, node_j, instance.time_matrix);
+                GRBLinExpr expr = u[i] - node_i.end_window;
+                double coef = node_i.end_window + node_i.duration + metric(node_i, node_j, instance.time_matrix);
                 for (int v = 0; v < n_vehicles; v++) {
                     expr += coef * x[i][j][v];
                 }
@@ -244,7 +247,7 @@ std::vector<Route> compact_solution_to_routes(const Instance& instance, const Co
     // For each vehicle, we will build a route if it is used
     for (int v = 0; v < n_vehicles; v++) {
         if (compact_solution.y[v] == 0) continue;
-        cout << "Vehicle " << v << " is used" << endl;
+        //cout << "Vehicle " << v << " is used" << endl;
         const Vehicle& vehicle = instance.vehicles[v];
         // Initialize the route components
         double total_cost = vehicle.cost;
@@ -290,8 +293,8 @@ std::vector<Route> compact_solution_to_routes(const Instance& instance, const Co
             }
             const Node& next = instance.nodes[next_node];
             // Update the travelling time & cost
-            cout << "Current number of nodes : " << sequence.size() << endl;
-            cout << "Current node : " << current_node << " / Next node : " << next_node << endl;
+            //cout << "Current number of nodes : " << sequence.size() << endl;
+            //cout << "Current node : " << current_node << " / Next node : " << next_node << endl;
             int travelling_time = instance.time_matrix.at(node.node_id).at(next.node_id);
             total_travelling_time += travelling_time;
             int distance = instance.distance_matrix.at(node.node_id).at(next.node_id);
