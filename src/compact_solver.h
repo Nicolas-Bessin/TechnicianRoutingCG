@@ -5,6 +5,10 @@
 
 #include <vector>
 
+#define NO_ROUTING 0
+#define WARM_START 1
+#define IMPOSE_ROUTING 2
+
 
 struct CompactSolution{
     double objective_value;
@@ -23,9 +27,18 @@ struct CompactSolution{
     Solves the compact model for the problem
     @param instance: the instance of the problem
     @param time_limit: the time limit for the solver
-    @param imposed_routings: a vector of pairs (vehicle_id, intervention_id) the vehicle to go thorugh the intervention (default empty)
+    @param routes : a vector of routes to help the solver (default empty)
+    @param mode : the mode of the solver help : NO_ROUTING, WARM_START, IMPOSE_ROUTING
+
+    NO_ROUTING : no additional information is given to the solver   
+
+    WARM_START : the routes are use to warm start the variables   
+
+    IMPOSE_ROUTING : the routes are used to impose the routing of the vehicles  
+    
     @return a CompactSolution struct with the values of the variables
 */
-CompactSolution compact_solver(const Instance& instance, int time_limit = 60, std::vector<std::pair<int, int>> imposed_routings = std::vector<std::pair<int, int>>() );
+CompactSolution compact_solver(const Instance& instance, int time_limit = 60, std::vector<Route> routes = std::vector<Route>(), int mode = NO_ROUTING);
+
 
 std::vector<Route> compact_solution_to_routes(const Instance& instance, const CompactSolution& compact_solution);

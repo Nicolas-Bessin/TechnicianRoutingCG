@@ -256,3 +256,12 @@ std::vector<std::pair<int, int>> imposed_routings_from_routes(const std::vector<
     return imposed_routings;
 }
 
+std::vector<Route> keep_used_routes(const std::vector<Route>& routes, const IntegerSolution& integer_solution) {
+    std::vector<Route> used_routes;
+    for (int r = 0; r < routes.size(); r++) {
+        if (integer_solution.coefficients[r] == 0) continue;
+        used_routes.push_back(routes[r]);
+    }
+    return used_routes;
+}
+

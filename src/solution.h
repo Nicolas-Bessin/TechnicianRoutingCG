@@ -110,3 +110,6 @@ bool is_route_feasible(const Route& route, const Instance& instance);
 
 // Build a vector of pairs (vehicle_id, intervention_id) from the routes in an IntegerSolution
 std::vector<std::pair<int, int>> imposed_routings_from_routes(const std::vector<Route>& routes, const IntegerSolution& integer_solution);
+
+// Builds a new vector of routes containing only the routes that are used in the integer solution
+std::vector<Route> keep_used_routes(const std::vector<Route>& routes, const IntegerSolution& integer_solution);

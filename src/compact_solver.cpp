@@ -7,8 +7,9 @@
 
 
 
-CompactSolution compact_solver(const Instance & instance, int time_limit, std::vector<std::pair<int, int>> imposed_routings) {
+CompactSolution compact_solver(const Instance & instance, int time_limit, std::vector<Route> routes, int mode) {
     using std::vector, std::find;
+    using std::pair;
     using std::string;
         
     // Build the compact formulation of the problem then solve it
@@ -177,15 +178,32 @@ CompactSolution compact_solver(const Instance & instance, int time_limit, std::v
             }
         }
 
-        // Finally, we can set the imposed routings
-        // Each pair is a pair (vehicle_id, intervention_id)
-        // Where the vehicle has to go through the intervention
-        for (const auto& [v, i] : imposed_routings) {
-            GRBLinExpr expr = 0;
-            for (int j = 0; j < n_nodes; j++) {
-                expr += x[i][j][v];
+        // Mode specific constraints
+        if (mode == WARM_START) {
+            // Warm start : we use the routes to set the variables
+            for (const Route & route : routes) {
+                int v = route.vehicle_id;
+                for (int i = 0; i < route.id_sequence.size() - 1; i++) {
+                    int node_i = route.id_sequence[i];
+                    int node_j = route.id_sequence[i+1];
+                    x[node_i][node_j][v].set(GRB_DoubleAttr_Start, 1.0);
+                }
             }
-            model.addConstr(expr == 1);
+        }
+        if (mode == IMPOSE_ROUTING) {
+            // Dummy integer solution : we use all the routes
+            IntegerSolution integer_solution = IntegerSolution(vector<int>(routes.size(), 1), -1);
+            vector<pair<int, int>> imposed_routings = imposed_routings_from_routes(routes, integer_solution);
+            // Finally, we can set the imposed routings
+            // Each pair is a pair (vehicle_id, intervention_id)
+            // Where the vehicle has to go through the intervention
+            for (const auto& [v, i] : imposed_routings) {
+                GRBLinExpr expr = 0;
+                for (int j = 0; j < n_nodes; j++) {
+                    expr += x[i][j][v];
+                }
+                model.addConstr(expr == 1);
+            }
         }
             
 

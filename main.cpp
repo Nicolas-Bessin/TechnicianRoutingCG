@@ -161,10 +161,10 @@ int main(int argc, char *argv[]){
         }
     }
     int remaining_time = TIME_LIMIT - (master_time + pricing_time + diff_integer) / 1000;
-    // Finally, we construct a vector of pairs (vehicle_id, intervention_id) that we can use to impose a routing
-    vector<pair<int, int>> imposed_routings = imposed_routings_from_routes(routes, integer_solution);
+    // Keep only the routes that are used in the integer solution
+    vector<Route> used_routes = keep_used_routes(routes, integer_solution);
     // We can then solve the compact model with these imposed routings
-    CompactSolution compact_solution = compact_solver(instance, remaining_time, imposed_routings);
+    CompactSolution compact_solution = compact_solver(instance, remaining_time, used_routes, IMPOSE_ROUTING);
     // Convert back to routes
     vector<Route> compact_routes = compact_solution_to_routes(instance, compact_solution);
     // Create a dummy integer solution (all variables set to 1)
