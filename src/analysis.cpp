@@ -51,7 +51,7 @@ std::vector<int> covered_interventions(const IntegerSolution& solution, const st
                 is_covered[i] += 1;
             }
             // If the intervention is covered, mark it as covered
-            if (solution.coefficients[r] > 0 && route.is_in_route[i] > 0) {
+            else if (solution.coefficients[r] > 0 && route.is_in_route[i] > 0) {
                 is_covered[i] = 1;
             }
         }
@@ -300,15 +300,15 @@ void print_route(const Route & route, const Instance & instance) {
     
     // Print the tvehicle cost, travelling cost and total cost
     double travel_distance = count_route_kilometres(route, instance);
-    //cout << "Vehicle cost: " << instance.vehicles[route.vehicle_id].cost << " ";
-    //cout << "Travelling cost: " << travel_distance * instance.cost_per_km << " ";
-    //cout << "Total cost: " << route.total_cost << endl;
+    cout << "Vehicle cost: " << instance.vehicles[route.vehicle_id].cost << " ";
+    cout << "Travelling cost: " << travel_distance * instance.cost_per_km << " ";
+    cout << "Total cost: " << route.total_cost << endl;
     // Print the kilometres along the route
-    //cout << "Total distance: " << travel_distance << endl;
+    cout << "Total distance: " << travel_distance << endl;
     // Print the total duration, travelling time and waiting time
-    //cout << "Total duration: " << route.total_duration << " ";
-    //cout << "Total travelling time: " << route.total_travelling_time << " ";
-    //cout << "Total waiting time: " << route.total_waiting_time << endl;
+    cout << "Total duration: " << route.total_duration << " ";
+    cout << "Total travelling time: " << route.total_travelling_time << " ";
+    cout << "Total waiting time: " << route.total_waiting_time << endl;
     // Print the sequence of nodes
     cout << "Sequence: ";
     for (int i = 0; i < route.id_sequence.size(); i++) {
@@ -424,12 +424,55 @@ void print_vehicles_non_covered(const IntegerSolution& solution, const std::vect
     }
 
     // Print the number of non-covered interventions that can be covered by each vehicle
-    cout << "Number of non covered interventions that can be covered by non used each vehicle: " << endl;
+    cout << "Number of non covered interventions that can be covered by each non used  vehicle: " << endl;
     for (int v = 0; v < nb_vehicles; v++) {
-        if (is_used[v] == 0) {
+        if (is_used[v] == 0) { 
             cout << "v" << v << " : " << can_cover[v] <<" - ";
         }
     }
     cout << endl;
+
+}
+
+
+void full_analysis(const IntegerSolution& integer_solution, const vector<Route>& routes, const Instance& instance) {
+    using std::cout, std::endl;
+    // Solution analysis
+
+    cout << "-----------------------------------" << endl;
+    //print_used_routes(integer_solution, routes, instance); 
+    print_non_covered_interventions(integer_solution, routes, instance, false);
+    cout << "-----------------------------------" << endl;
+    print_used_vehicles(integer_solution, routes, instance);
+    print_vehicles_non_covered(integer_solution, routes, instance);
+    cout << "-----------------------------------" << endl;
+
+    cout << "Number of covered interventions : " << count_covered_interventions(integer_solution, routes, instance);
+    cout << " / " << instance.number_interventions << endl;
+
+    cout << "Number of used vehicles : " << count_used_vehicles(integer_solution, routes, instance);
+    cout << " / " << instance.vehicles.size() << endl;
+
+    cout << "Number of interventions that could be covered : " << count_coverable_interventions(integer_solution, routes, instance) << endl;
+
+    // Check that all used routes are feasible
+    bool all_feasible = true;
+    for (int i = 0; i < routes.size(); i++){
+        const Route& route = routes.at(i);
+        if (integer_solution.coefficients[i] > 0 && !is_route_feasible(route, instance)){
+            cout << "Route " << i << " is not feasible" << endl;
+            all_feasible = false;
+        }
+    }
+    if (all_feasible){
+        cout << "All routes are feasible" << endl;
+    }
+
+    cout << "Number of routes with duplicates : " << count_routes_with_duplicates(routes) << " / " << routes.size() << endl;
+    cout << "Number of used routes with duplicates : " << count_used_routes_with_duplicates(integer_solution, routes) << endl;
+    cout << "Number of route kilometres : " << count_kilometres_travelled(integer_solution, routes, instance) << " km" << endl;
+    cout << "Time spent travelling : " << time_spent_travelling(integer_solution, routes, instance) << " minutes" << endl;
+    cout << "Time spent working : " << time_spent_working(integer_solution, routes, instance) << " minutes" << endl;
+    cout << "Time spent waiting : " << time_spent_waiting(integer_solution, routes, instance) << " minutes" << endl;
 
 }

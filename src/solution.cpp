@@ -166,8 +166,14 @@ bool is_route_feasible(const Route& route, const Instance& instance) {
         double duration = intervention.duration;
         // Check that the start time is the current time 
         // (for the first node which is the depot, the start time will hold the arrival time at the end of the day)
-        if (i > 0 && route.start_times[intervention_id] != current_time) {
-            cout << "Start time of intervention " << i << " is not the time of arrival" << endl;
+        if (i > 0 && route.start_times[intervention_id] > current_time) {
+            // This means we arrived too early - we thus wait until the time of the intervention
+            current_time = route.start_times[intervention_id];
+            
+        }
+        // If we are too late, the route is not feasible
+        if (route.start_times[intervention_id] < current_time) {
+            cout << "Start time of intervention " << intervention_id << " is not the time of arrival" << endl;
             cout << "Start time: " << route.start_times[intervention_id] << " Current time: " << current_time << endl;
             return false;
         }
@@ -181,9 +187,11 @@ bool is_route_feasible(const Route& route, const Instance& instance) {
             return false;
         }
         // Check wether the lunch break is respected
+        // If  we arrive at a time where we can't begin the intervention before the lunch break, we wait out the lunch break
         if (intervention.is_ambiguous && current_time < MID_DAY && current_time + duration > MID_DAY) {
-            cout << "Intervention " << intervention_id << " ends after the lunch break : start = " << current_time << " end = " << current_time + duration << endl;
-            return false;
+            current_time = MID_DAY;
+            // cout << "Intervention " << intervention_id << " ends after the lunch break : start = " << current_time << " end = " << current_time + duration << endl;
+            // return false;
         }
         // Update the quantities consummed
         for (auto& [key, value] : intervention.quantities) {
@@ -197,13 +205,17 @@ bool is_route_feasible(const Route& route, const Instance& instance) {
         if (current_time < next_intervention.start_window) {
             current_time = next_intervention.start_window;
         }
+        // If we can't fit the next intervention before lunch, we wait until the lunch break is over
+        if (next_intervention.is_ambiguous && current_time < MID_DAY && current_time + next_intervention.duration > MID_DAY) {
+            current_time = MID_DAY;
+        }
     }
     // Check the final intervention
     const Node& final_intervention = instance.nodes[route.id_sequence.back()];
     int final_intervention_id = route.id_sequence.back();
-    if (route.start_times[final_intervention_id] != current_time) {
-        cout << "Start time of the final intervention is not the time of arrival" << endl;
-        return false;
+    // If our arrival time is too early, we wait
+    if (route.start_times[final_intervention_id] < current_time) {
+        current_time = route.start_times[final_intervention_id];
     }
     if (current_time < final_intervention.start_window) {
         cout << "Final intervention starts too early" << endl;
@@ -228,4 +240,28 @@ bool is_route_feasible(const Route& route, const Instance& instance) {
     return true;
 }
 
+
+std::vector<std::pair<int, int>> imposed_routings_from_routes(const std::vector<Route>& routes, const IntegerSolution& integer_solution) {
+    std::vector<std::pair<int, int>> imposed_routings;
+    for (int r = 0; r < routes.size(); r++) {
+        if (integer_solution.coefficients[r] == 0) continue;
+        // Only if the route is actually used
+        // Add every (vehicle_id, intervention_id) pair to the imposed routings
+        // We skip the first and last node which are the depot
+        for (int i = 1; i < routes[r].id_sequence.size() - 1; i++) {
+            imposed_routings.push_back(std::make_pair(routes[r].vehicle_id, routes[r].id_sequence[i]));
+        }
+    }
+    
+    return imposed_routings;
+}
+
+std::vector<Route> keep_used_routes(const std::vector<Route>& routes, const IntegerSolution& integer_solution) {
+    std::vector<Route> used_routes;
+    for (int r = 0; r < routes.size(); r++) {
+        if (integer_solution.coefficients[r] == 0) continue;
+        used_routes.push_back(routes[r]);
+    }
+    return used_routes;
+}
 

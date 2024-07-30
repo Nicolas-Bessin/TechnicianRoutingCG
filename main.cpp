@@ -2,7 +2,7 @@
 #include "src/preprocessing.h"
 #include "src/column_generation.h"
 #include "src/analysis.h"
-#include "pathwyse/core/solver.h"
+#include "src/compact_solver.h"
 
 #include <memory>   
 #include <iostream>
@@ -13,7 +13,8 @@
 #include <random>
 
 #define SCALE_FACTOR 1
-#define TIME_LIMIT 30
+#define TIME_LIMIT 300
+#define SOLVER_MODE IMPOSE_ROUTING
 #define THRESHOLD 1e-6
 #define VERBOSE true
 
@@ -78,7 +79,7 @@ int main(int argc, char *argv[]){
 
     using std::cout, std::endl;
     using std::setprecision, std::fixed;
-    using std::vector, std::string, std::to_string;
+    using std::vector, std::string, std::to_string, std::pair;
     using std::unique_ptr;
     namespace chrono = std::chrono;
 
@@ -106,22 +107,60 @@ int main(int argc, char *argv[]){
     cout << "Initial solution objective value : " << initial_cg.master_solution.objective_value << endl;
     cout << "Integer solution objective value : " << initial_cg.integer_solution.objective_value << endl;
     cout << "-----------------------------------" << endl;
-    
-    // Analyze the solution
-    // solution_analysis(instance, initial_cg);
 
-    // Get the new gap 
-    double gap = initial_cg.integer_solution.objective_value - initial_cg.master_solution.objective_value;
+    // Print the routes in the integer solution (in detail)
+    //print_used_routes(integer_solution, routes, instance);
 
-    // Second round of column generation
-    CGResult final_cg = column_generation(instance, initial_cg.routes, gap, TIME_LIMIT, true);
+    int remaining_time = TIME_LIMIT - (initial_cg.master_time + initial_cg.pricing_time + initial_cg.integer_time) / 1000;
+    // Keep only the routes that are used in the integer solution
+    vector<Route> used_routes = keep_used_routes(routes, initial_cg.integer_solution);
+    // We can then solve the compact model with these imposed routings
+    CompactSolution compact_solution = compact_solver(instance, remaining_time, used_routes, SOLVER_MODE);
+    // Convert back to routes
+    vector<Route> compact_routes = compact_solution_to_routes(instance, compact_solution);
+    // Create a dummy integer solution (all variables set to 1)
+    IntegerSolution compact_integer_solution = IntegerSolution(vector<int>(compact_routes.size(), 1), compact_solution.objective_value);
 
-    // Analyze the solution
-    solution_analysis(instance, final_cg);
-    
+    cout << "Manual computing of the compact solution value : " << compute_integer_objective(compact_integer_solution, compact_routes, instance) << endl;
+
+    cout << "-----------------------------------" << endl;
+    // Print the routes in the compact solution
+    //print_used_routes(compact_integer_solution, compact_routes, instance);
+
+    // Run the analysis on the compact solution
+    full_analysis(compact_integer_solution, compact_routes, instance);
 
     return 0;
 }
+
+
+/*
+    // Now, we try to create a route for an unused vehicle that cover interventions not already covered
+    const int vehicle_id = 2;
+    cout << "Creating a new route for vehicle " << vehicle_id << endl;
+    Vehicle newV2 = vehicle_mask(instance.vehicles[vehicle_id], covered_interventions(integer_solution, routes, instance));
+    // We know generate & solve the pricing problem for this new vehicle
+    unique_ptr<Problem> new_pricing_problem = create_pricing_instance(instance, newV2, SCALE_FACTOR);
+    // Update with alpahs and beta at 0 for now
+    update_pricing_instance(new_pricing_problem, vector<double>(instance.number_interventions, 0), 0, instance, newV2, SCALE_FACTOR);
+    // Solve the pricing problem
+    vector<Route> new_routes_v2 = solve_pricing_problem(new_pricing_problem, 5, instance, newV2);
+    // Print the cost of the new routes
+    for (const auto &route : new_routes_v2){
+        print_route(route, instance);
+    }
+    // Add the new route to the master problem
+    for (const auto &route : new_routes_v2){
+        routes.push_back(route);
+    }
+    // Re-solve the integer problem
+    MasterSolution master_solution_v2 = cg_solver(instance, routes, 60);
+    cout << "New master solution found with objective value : " << master_solution_v2.objective_value << endl;
+    IntegerSolution integer_solution_v2 = solve_integer_problem(instance, routes);
+    cout << "New integer solution found with objective value : " << integer_solution_v2.objective_value << endl;
+    cout << "-----------------------------------" << endl;
+    print_non_covered_interventions(integer_solution_v2, routes, instance, true);
+*/
 
 
 

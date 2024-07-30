@@ -269,7 +269,10 @@ Instance parse_file(string filename){
             }
         }
     }
-
+    // Also count the number of vehicle in each depot
+    for (int i = 0; i < nb_vehicles; i++){
+        nodes[vehicles[i].depot].nb_vehicles++;
+    }
     // Finally, compute the big M for the objective function
     // M is computed using : M = (END_DAY - min(durations .> 0)) * maxspeed * cost_per_km / gcd(durations)
     // We first put all the durations in a vector
