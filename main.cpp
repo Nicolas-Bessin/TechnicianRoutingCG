@@ -14,7 +14,8 @@
 #include <random>
 
 #define SCALE_FACTOR 1
-#define TIME_LIMIT 60
+#define TIME_LIMIT 300
+#define SOLVER_MODE IMPOSE_ROUTING
 #define THRESHOLD 1e-6
 
 
@@ -152,7 +153,7 @@ int main(int argc, char *argv[]){
     cout << "-----------------------------------" << endl;
 
     // Print the routes in the integer solution (in detail)
-    print_used_routes(integer_solution, routes, instance);
+    //print_used_routes(integer_solution, routes, instance);
 
     // Print the number of times each vehicle's sub problem reached the time limit
     for (int i = 0; i < instance.vehicles.size(); i++){
@@ -164,7 +165,7 @@ int main(int argc, char *argv[]){
     // Keep only the routes that are used in the integer solution
     vector<Route> used_routes = keep_used_routes(routes, integer_solution);
     // We can then solve the compact model with these imposed routings
-    CompactSolution compact_solution = compact_solver(instance, remaining_time, used_routes, IMPOSE_ROUTING);
+    CompactSolution compact_solution = compact_solver(instance, remaining_time, used_routes, SOLVER_MODE);
     // Convert back to routes
     vector<Route> compact_routes = compact_solution_to_routes(instance, compact_solution);
     // Create a dummy integer solution (all variables set to 1)
@@ -174,10 +175,10 @@ int main(int argc, char *argv[]){
 
     cout << "-----------------------------------" << endl;
     // Print the routes in the compact solution
-    print_used_routes(compact_integer_solution, compact_routes, instance);
+    //print_used_routes(compact_integer_solution, compact_routes, instance);
 
     // Run the analysis on the compact solution
-    //full_analysis(compact_integer_solution, compact_routes, instance);
+    full_analysis(compact_integer_solution, compact_routes, instance);
 
     return 0;
 }
