@@ -2,3 +2,4 @@ build/
 bin/
 pricing_instances/
 data/
+routes/

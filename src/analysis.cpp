@@ -300,15 +300,15 @@ void print_route(const Route & route, const Instance & instance) {
     
     // Print the tvehicle cost, travelling cost and total cost
     double travel_distance = count_route_kilometres(route, instance);
-    //cout << "Vehicle cost: " << instance.vehicles[route.vehicle_id].cost << " ";
-    //cout << "Travelling cost: " << travel_distance * instance.cost_per_km << " ";
-    //cout << "Total cost: " << route.total_cost << endl;
+    cout << "Vehicle cost: " << instance.vehicles[route.vehicle_id].cost << " ";
+    cout << "Travelling cost: " << travel_distance * instance.cost_per_km << " ";
+    cout << "Total cost: " << route.total_cost << endl;
     // Print the kilometres along the route
-    //cout << "Total distance: " << travel_distance << endl;
+    cout << "Total distance: " << travel_distance << endl;
     // Print the total duration, travelling time and waiting time
-    //cout << "Total duration: " << route.total_duration << " ";
-    //cout << "Total travelling time: " << route.total_travelling_time << " ";
-    //cout << "Total waiting time: " << route.total_waiting_time << endl;
+    cout << "Total duration: " << route.total_duration << " ";
+    cout << "Total travelling time: " << route.total_travelling_time << " ";
+    cout << "Total waiting time: " << route.total_waiting_time << endl;
     // Print the sequence of nodes
     cout << "Sequence: ";
     for (int i = 0; i < route.id_sequence.size(); i++) {

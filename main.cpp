@@ -14,7 +14,7 @@
 #include <random>
 
 #define SCALE_FACTOR 1
-#define TIME_LIMIT 150
+#define TIME_LIMIT 60
 #define THRESHOLD 1e-6
 
 
@@ -151,6 +151,9 @@ int main(int argc, char *argv[]){
 
     cout << "-----------------------------------" << endl;
 
+    // Print the routes in the integer solution (in detail)
+    print_used_routes(integer_solution, routes, instance);
+
     // Print the number of times each vehicle's sub problem reached the time limit
     for (int i = 0; i < instance.vehicles.size(); i++){
         if (time_limit_reached[i] > 0) {
@@ -169,8 +172,12 @@ int main(int argc, char *argv[]){
 
     cout << "Manual computing of the compact solution value : " << compute_integer_objective(compact_integer_solution, compact_routes, instance) << endl;
 
+    cout << "-----------------------------------" << endl;
+    // Print the routes in the compact solution
+    print_used_routes(compact_integer_solution, compact_routes, instance);
+
     // Run the analysis on the compact solution
-    full_analysis(compact_integer_solution, compact_routes, instance);
+    //full_analysis(compact_integer_solution, compact_routes, instance);
 
     return 0;
 }

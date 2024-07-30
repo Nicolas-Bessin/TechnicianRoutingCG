@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
 
     // Solve the problem using the compact formulation
     auto start_solve = chrono::steady_clock::now();
-    CompactSolution compact_solution = compact_solver(instance, 150);
+    CompactSolution compact_solution = compact_solver(instance, 60);
     auto end_solve = chrono::steady_clock::now();
 
     cout << "-----------------------------------" << endl;
