@@ -25,8 +25,7 @@ CGResult column_generation(const Instance & instance, std::vector<Route> initial
         pricing_problems.push_back(create_pricing_instance(instance, vehicle));
     }
     auto end_sub_building = chrono::steady_clock::now();
-    int diff_sub_building = chrono::duration_cast<chrono::milliseconds>(end_sub_building - start_sub_building).count();
-    cout << "Total time spent building the pricing sub problems : " << diff_sub_building << " ms" << endl;
+    int building_time = chrono::duration_cast<chrono::milliseconds>(end_sub_building - start_sub_building).count();
 
     // Copy the routes to avoid modifying the input
     vector<Route> routes = initial_routes;
@@ -107,7 +106,7 @@ CGResult column_generation(const Instance & instance, std::vector<Route> initial
         cout << "Found no new route to add" << endl;
     }
     cout << "End of the column generation after " << iteration << " iterations" << endl;
-    cout << "Objective value : " << setprecision(3) << solution.objective_value << endl;
+    cout << "Relaxed RMP objective value : " << setprecision(3) << solution.objective_value << endl;
 
     // Solve the integer version of the problem
     auto start_integer = chrono::steady_clock::now();
@@ -135,6 +134,7 @@ CGResult column_generation(const Instance & instance, std::vector<Route> initial
     result.master_time = master_time;
     result.pricing_time = pricing_time;
     result.integer_time = diff_integer;
+    result.building_time = building_time;
 
     return result;
 }

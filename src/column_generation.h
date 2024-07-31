@@ -13,6 +13,7 @@ struct CGResult {
     int master_time;
     int pricing_time;
     int integer_time;
+    int building_time;
 };
 
 

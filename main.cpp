@@ -61,6 +61,7 @@ int main(int argc, char *argv[]){
     int master_time = result.master_time;
     int pricing_time = result.pricing_time;
     int integer_time = result.integer_time;
+    int sub_building_time = result.building_time;
     vector<Route> routes = result.routes;
     MasterSolution master_solution = result.master_solution;
     IntegerSolution integer_solution = result.integer_solution;
@@ -68,15 +69,19 @@ int main(int argc, char *argv[]){
     // Print the routes in the integer solution (in detail)
     full_analysis(integer_solution, routes, instance);
 
+    int elapsed_time = chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - start_parse).count();
     // Print the time it took to solve the master problem
+    cout << "Total time spent building the pricing problems : " << sub_building_time << " ms" << endl;
     cout << "Total time spent solving the master problem : " << master_time << " ms" << endl;
     cout << "Total time spent solving the pricing problems : " << pricing_time << " ms" << endl;
     cout << "Total time spent solving the integer problem : " << integer_time << " ms" << endl;
+    cout << "Total elapsed time : " << elapsed_time << " ms" << endl;
     cout << "-----------------------------------" << endl;
 
     // cout << " Starting the compact solver using mode " << SOLVER_MODE << endl;
 
-    // int remaining_time = TIME_LIMIT - (master_time + pricing_time + integer_time) / 1000;
+    
+    // int remaining_time = TIME_LIMIT - elapsed_time / 1000;
     // // Keep only the routes that are used in the integer solution
     // vector<Route> used_routes = keep_used_routes(routes, integer_solution);
     // // We can then solve the compact model with these imposed routings
@@ -106,7 +111,7 @@ int main(int argc, char *argv[]){
     // Evaluate the objective value of the compact solution
     int compact_integer_objective = evaluate_compact_solution(compact_integer_solution, instance);
     cout << "Objective value of the integer converted compact solution : " << compact_integer_objective << endl;
-    
+
     return 0;
 }
 
