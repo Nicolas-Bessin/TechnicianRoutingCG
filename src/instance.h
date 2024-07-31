@@ -165,4 +165,6 @@ struct Instance {
 };
 
 
-bool is_symetric(const std::vector<std::vector<int>>& matrix);
+bool is_symmetric(const std::vector<std::vector<int>>& matrix);
+
+int symmetry_gap(const std::vector<std::vector<int>>& matrix);

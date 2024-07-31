@@ -37,8 +37,8 @@ int main(int argc, char *argv[]){
 
 
     // Check wether the time and distance matrices are symetric
-    cout << "Distance matrix is symetric : " << is_symetric(instance.distance_matrix) << endl;
-    cout << "Time matrix is symetric : " << is_symetric(instance.time_matrix) << endl;
+    cout << "Distance matrix is symetric : " << is_symmetric(instance.distance_matrix) << " - Biggest gap : " << symmetry_gap(instance.distance_matrix) << endl;
+    cout << "Time matrix is symetric : " << is_symmetric(instance.time_matrix) << " - Biggest gap : " << symmetry_gap(instance.time_matrix) << endl;
 
     preprocess_interventions(instance);
 
