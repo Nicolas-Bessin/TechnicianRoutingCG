@@ -13,7 +13,7 @@
 #include <random>
 
 #define SCALE_FACTOR 1
-#define TIME_LIMIT 300
+#define TIME_LIMIT 60
 #define SOLVER_MODE IMPOSE_ROUTING
 #define THRESHOLD 1e-6
 #define VERBOSE true
@@ -46,9 +46,10 @@ int main(int argc, char *argv[]){
     // Do a first round of column generation
     CGResult initial_cg = column_generation(instance, routes, THRESHOLD, TIME_LIMIT, false);
 
-    // Print the objective value of the initial solution
-    cout << "Initial solution objective value : " << initial_cg.master_solution.objective_value << endl;
-    cout << "Integer solution objective value : " << initial_cg.integer_solution.objective_value << endl;
+    // Print the time it took to solve the master problem
+    cout << "Total time spent solving the master problem : " << initial_cg.master_time << " ms" << endl;
+    cout << "Total time spent solving the pricing problems : " << initial_cg.pricing_time << " ms" << endl;
+    cout << "Total time spent solving the integer problem : " << initial_cg.integer_time << " ms" << endl;
     cout << "-----------------------------------" << endl;
 
     // Print the routes in the integer solution (in detail)
@@ -56,7 +57,7 @@ int main(int argc, char *argv[]){
 
     int remaining_time = TIME_LIMIT - (initial_cg.master_time + initial_cg.pricing_time + initial_cg.integer_time) / 1000;
     // Keep only the routes that are used in the integer solution
-    vector<Route> used_routes = keep_used_routes(routes, initial_cg.integer_solution);
+    vector<Route> used_routes = keep_used_routes(initial_cg.routes, initial_cg.integer_solution);
     // We can then solve the compact model with these imposed routings
     CompactSolution compact_solution = compact_solver(instance, remaining_time, used_routes, SOLVER_MODE);
     // Convert back to routes

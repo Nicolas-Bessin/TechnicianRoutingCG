@@ -88,6 +88,7 @@ CGResult column_generation(const Instance & instance, std::vector<Route> initial
 
         auto end_pricing = chrono::steady_clock::now();
         int diff_pricing = chrono::duration_cast<chrono::milliseconds>(end_pricing - start_pricing).count();
+        pricing_time += diff_pricing;
         if (verbose) {
             cout << "Pricing sub problems solved in " << diff_pricing << " ms - Added " << n_added_routes << " routes";
             cout << " - Max reduced cost : " << setprecision(15) << max_reduced_cost << "\n";

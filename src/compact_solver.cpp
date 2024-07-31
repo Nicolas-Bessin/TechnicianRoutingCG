@@ -192,6 +192,7 @@ CompactSolution compact_solver(const Instance & instance, int time_limit, std::v
             }
         }
         if (mode == IMPOSE_ROUTING) {
+            std::cout << "Imposed routing mode : " << routes.size() << " routes" << std::endl;
             // Dummy integer solution : we use all the routes
             IntegerSolution integer_solution = IntegerSolution(vector<int>(routes.size(), 1), -1);
             vector<pair<int, int>> imposed_routings = imposed_routings_from_routes(routes, integer_solution);
