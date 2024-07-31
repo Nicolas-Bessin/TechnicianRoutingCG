@@ -11,12 +11,11 @@
 // This is used in the initialization of each pricing sub problem
 //   @param instance: the instance of the problem
 //   @param vehicle: the vehicle that will perform the routes
-std::unique_ptr<Problem> create_pricing_instance(const Instance &instance, const Vehicle &vehicle, int scale_factor = 1);
+std::unique_ptr<Problem> create_pricing_instance(const Instance &instance, const Vehicle &vehicle);
 
 
 // Update a pricing problem with the dual values given by the master problem
-void update_pricing_instance(std::unique_ptr<Problem> & pricing_problem, const std::vector<double> &alphas, double beta,
-        const Instance &instance, const Vehicle &vehicle, int scale_factor = 1);
+void update_pricing_instance(std::unique_ptr<Problem> & pricing_problem, const std::vector<double> &alphas, double beta, const Instance &instance, const Vehicle &vehicle);
 
 
 /* Solves a pre-defined pricing problem and return a std::vector of routes that are feasible (of maximal reduced cost)

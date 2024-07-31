@@ -44,7 +44,7 @@ int CustomTimeWindow::extend(int current_value, int i, int j, bool direction) {
         }
     }
     else {
-        current_time += data->getNodeCost(j) + data->getArcCost(i, j);
+        current_time += data->getNodeCost(j) + data->getArcCost(j, i);
         current_time = std::max(current_time, upper_bound - (node_upper_bound[i] + data->getNodeCost(i)));    //bw: time between departure from j to arrival at destination
     }
 

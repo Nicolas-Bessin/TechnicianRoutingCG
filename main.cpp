@@ -14,8 +14,7 @@
 #include <algorithm>
 #include <random>
 
-#define SCALE_FACTOR 1
-#define TIME_LIMIT 60
+#define TIME_LIMIT 300
 #define SOLVER_MODE WARM_START
 #define THRESHOLD 1e-6
 #define VERBOSE false
@@ -50,7 +49,7 @@ int main(int argc, char *argv[]){
     vector<Route> routes;
     routes.push_back(Route(0, instance.number_interventions));
 
-        auto start_sub_building = chrono::steady_clock::now();
+    auto start_sub_building = chrono::steady_clock::now();
     // Create the pricing sub problems for each vehicle
     const string pricing_folder = "../pricing_instances/";
     vector<unique_ptr<Problem>> pricing_problems;
@@ -164,16 +163,17 @@ int main(int argc, char *argv[]){
     cout << "Total time spent solving the master problem : " << master_time << " ms" << endl;
     cout << "Total time spent solving the pricing problems : " << pricing_time << " ms" << endl;
     cout << "Total time spent solving the integer problem : " << integer_time << " ms" << endl;
-    cout << "-----------------------------------" << endl;
 
     // Print the routes in the integer solution (in detail)
     full_analysis(integer_solution, routes, instance);
+    cout << "-----------------------------------" << endl;
+    cout << " Starting the compact solver using mode " << SOLVER_MODE << endl;
 
     int remaining_time = TIME_LIMIT - (master_time + pricing_time + integer_time) / 1000;
     // Keep only the routes that are used in the integer solution
     vector<Route> used_routes = keep_used_routes(routes, integer_solution);
     // We can then solve the compact model with these imposed routings
-    CompactSolution<int> compact_solution = compact_solver(instance, remaining_time, used_routes, SOLVER_MODE);
+    CompactSolution<int> compact_solution = compact_solver(instance, remaining_time, used_routes, SOLVER_MODE, VERBOSE);
     // Convert back to routes
     vector<Route> compact_routes = compact_solution_to_routes(instance, compact_solution);
     // Create a dummy integer solution (all variables set to 1)

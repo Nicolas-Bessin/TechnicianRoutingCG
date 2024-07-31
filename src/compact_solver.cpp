@@ -7,7 +7,7 @@
 
 
 
-CompactSolution<int> compact_solver(const Instance & instance, int time_limit, std::vector<Route> routes, int mode) {
+CompactSolution<int> compact_solver(const Instance & instance, int time_limit, std::vector<Route> routes, int mode, bool verbose) {
     using std::vector, std::find;
     using std::pair;
     using std::string;
@@ -24,6 +24,10 @@ CompactSolution<int> compact_solver(const Instance & instance, int time_limit, s
         env.start();
         // Set the time limit
         env.set(GRB_DoubleParam_TimeLimit, time_limit);
+        // Set the verbosity
+        if (!verbose) {
+            env.set(GRB_IntParam_OutputFlag, 0);
+        }
         
         GRBModel model = GRBModel(env);
 

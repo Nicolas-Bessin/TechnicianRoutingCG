@@ -13,8 +13,7 @@ using std::vector, std::list, std::string;
 using std::unique_ptr;
 
 
-unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehicle& vehicle, int scale_factor) {
-    // We scale every cost up by the scale factor
+unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehicle& vehicle) {
     // in hopes of mitigating the issue of the costs & objctive values only being integers in pathwyse
     
     // Get the number of nodes in the problem : equal to the number of available interventions + 2
@@ -52,21 +51,21 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
             // Get the intervention referenced by the index j
             const Node& intervention_j = instance.nodes[vehicle.interventions[j]];
             // Get the distance between the two interventions
-            double distance = metric(intervention_i, intervention_j, instance.distance_matrix);
+            int distance = metric(intervention_i, intervention_j, instance.distance_matrix);
             double arc_cost = instance.cost_per_km * distance;
-            objective->setArcCost(i, j, arc_cost * scale_factor);
+            objective->setArcCost(i, j, arc_cost);
         }
         // Outgoing arcs from the warehouse
         problem->setNetworkArc(origin, i);
-        double distance_out = metric((instance.nodes[vehicle.depot]), intervention_i, instance.distance_matrix);
+        int distance_out = metric(instance.nodes[vehicle.depot], intervention_i, instance.distance_matrix);
         // Set the arc cost, also adding the fixed cost of the vehicle (but not beta)
-        objective->setArcCost(origin, i, (instance.cost_per_km * distance_out) * scale_factor);
+        objective->setArcCost(origin, i, instance.cost_per_km * distance_out);
         // Incoming arcs to the warehouse
         problem->setNetworkArc(i, destination);
         // Distance is probably the same as the outgoing distance but eh we never know
-        double distance_in = metric(intervention_i, (instance.nodes[vehicle.depot]), instance.distance_matrix);
+        int distance_in = metric(intervention_i, instance.nodes[vehicle.depot], instance.distance_matrix);
         // Here we only consider the cost of travelng, the node costs have already been set
-        objective->setArcCost(i, destination, (instance.cost_per_km * distance_in) * scale_factor);
+        objective->setArcCost(i, destination, instance.cost_per_km * distance_in);
     }
 
     // Set this resource as the objective function
@@ -81,34 +80,35 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
     time_window->setName("Time Window + Lunch");
     // For each node, add the UB and LB and node consumption
     for (int i = 0; i < n_interventions_v; i++) {
-        const Node& intervention = (instance.nodes[vehicle.interventions[i]]);
+        const Node& intervention_i = instance.nodes[vehicle.interventions[i]];
         // Get the time window of the intervention
-        int start_window = intervention.start_window;
-        int end_window = intervention.end_window - intervention.duration;
-        int time_to_depot = metric(intervention, (instance.nodes[vehicle.depot]), instance.time_matrix);
+        int start_window = intervention_i.start_window;
+        int end_window = intervention_i.end_window - intervention_i.duration;
+        int time_to_depot = metric(intervention_i, (instance.nodes[vehicle.depot]), instance.time_matrix);
         int max_end_time = END_DAY - time_to_depot;
         end_window = std::min(end_window, max_end_time);
         // Set the time window of the intervention
         time_window->setNodeBound(n_interventions_v + 2, i, start_window, end_window);
         // Set the node consumption of the time window
-        time_window->setNodeCost(i, intervention.duration);
+        time_window->setNodeCost(i, intervention_i.duration);
         // Sets the lunch break constraint
-        time_window->setLunchConstraint(i, intervention.is_ambiguous);
+        time_window->setLunchConstraint(i, intervention_i.is_ambiguous);
         // Also set the time consumption on the arcs between the interventions
         for (int j = 0; j < n_interventions_v; j++) {
             if (i == j) continue;
             // Get the two interventions referenced by the indices i and j
             const Node& intervention_j = (instance.nodes[vehicle.interventions[j]]);
             // Get the time it takes to go from intervention i to intervention j
-            double travel_time = metric(intervention, intervention_j, instance.time_matrix);
+            int travel_time = metric(intervention_i, intervention_j, instance.time_matrix);
             // Set the time consumption on the arc
             time_window->setArcCost(i, j, travel_time);
         }
 
         // Outgoing arcs from the warehouse
-        double travel_time = metric((instance.nodes[vehicle.depot]), intervention, instance.time_matrix);
-        time_window->setArcCost(origin, i, travel_time);
-        time_window->setArcCost(i, destination, travel_time);
+        int travel_time_out = metric(instance.nodes[vehicle.depot], intervention_i, instance.time_matrix);
+        int travel_time_in = metric(intervention_i, instance.nodes[vehicle.depot], instance.time_matrix);
+        time_window->setArcCost(origin, i, travel_time_out);
+        time_window->setArcCost(i, destination, travel_time_in);
     }
     // The time windows on the warehouse :
     time_window->setNodeBound(n_interventions_v + 2, origin, 0, END_DAY);
@@ -152,7 +152,7 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
 
 
 void update_pricing_instance(unique_ptr<Problem> & pricing_problem, const vector<double>& alphas, double beta,
-        const Instance& instance, const Vehicle& vehicle, int scale_factor) {
+        const Instance& instance, const Vehicle& vehicle) {
     // Get the number of nodes in the problem : equal to the number of available interventions + 2
     int n_interventions_v = vehicle.interventions.size();
     int origin = n_interventions_v;
@@ -163,10 +163,10 @@ void update_pricing_instance(unique_ptr<Problem> & pricing_problem, const vector
     for (int i = 0; i < n_interventions_v; i++) {
         int true_i = vehicle.interventions[i];
         double node_cost = alphas[true_i] - instance.M * instance.nodes[true_i].duration;
-        objective->setNodeCost(i, node_cost * scale_factor);
+        objective->setNodeCost(i, node_cost);
     }
     // Put in the constant part (only beta in the pricing problem, the cost of the vehicle is already accounted for on the arcs)
-    objective->setNodeCost(origin, (beta + vehicle.cost) * scale_factor);
+    objective->setNodeCost(origin, beta + vehicle.cost);
     // Re-set the objective function
     pricing_problem->setObjective(objective);
     return;
