@@ -2,6 +2,6 @@
 #pragma once
 #include "solution.h"
 
-MasterSolution cg_solver(const Instance& instance, const std::vector<Route>& routes, double time_limit);
+MasterSolution relaxed_RMP(const Instance& instance, const std::vector<Route>& routes);
 
-IntegerSolution solve_integer_problem(const Instance& instance, const std::vector<Route>& routes);
+IntegerSolution integer_RMP(const Instance& instance, const std::vector<Route>& routes);

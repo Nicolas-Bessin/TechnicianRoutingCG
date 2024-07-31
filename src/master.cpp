@@ -5,7 +5,7 @@ using std::vector;
 using std::cout, std::endl;
 using std::string;
 
-MasterSolution cg_solver(const Instance& instance, const vector<Route>& routes, double time_limit){
+MasterSolution relaxed_RMP(const Instance& instance, const vector<Route>& routes){
     try {
         // Formulate and solve model
         // Next step is creating the master problem
@@ -86,7 +86,7 @@ MasterSolution cg_solver(const Instance& instance, const vector<Route>& routes, 
 }
 
 
-IntegerSolution solve_integer_problem(const Instance& instance, const vector<Route>& routes){
+IntegerSolution integer_RMP(const Instance& instance, const vector<Route>& routes){
     try {
         // Formulate and solve model
         // Next step is creating the master problem

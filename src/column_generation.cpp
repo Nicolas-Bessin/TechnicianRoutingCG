@@ -50,7 +50,7 @@ CGResult column_generation(const Instance & instance, std::vector<Route> initial
     while (!stop && master_time + pricing_time < time_limit){
         // Solve the master problem
         auto start = chrono::steady_clock::now();
-        solution = cg_solver(instance, routes, 60);
+        solution = relaxed_RMP(instance, routes);
         auto end = chrono::steady_clock::now();
         int diff = chrono::duration_cast<chrono::milliseconds>(end - start).count();
         if (verbose) {
@@ -110,7 +110,7 @@ CGResult column_generation(const Instance & instance, std::vector<Route> initial
 
     // Solve the integer version of the problem
     auto start_integer = chrono::steady_clock::now();
-    IntegerSolution integer_solution = solve_integer_problem(instance, routes);
+    IntegerSolution integer_solution = integer_RMP(instance, routes);
     auto end_integer = chrono::steady_clock::now();
     int diff_integer = chrono::duration_cast<chrono::milliseconds>(end_integer - start_integer).count();
 

@@ -10,6 +10,8 @@
 #include <iomanip>
 #include <memory>
 
+#define TIME_LIMIT 60
+
 int main(int argc, char** argv) {
     using std::cout, std::endl;
     using std::setprecision, std::fixed;
@@ -29,7 +31,7 @@ int main(int argc, char** argv) {
 
     // Solve the problem using the compact formulation
     auto start_solve = chrono::steady_clock::now();
-    CompactSolution compact_solution = compact_solver(instance, 300);
+    CompactSolution compact_solution = compact_solver(instance, TIME_LIMIT);
     auto end_solve = chrono::steady_clock::now();
 
     cout << "-----------------------------------" << endl;

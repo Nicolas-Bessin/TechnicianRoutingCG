@@ -45,7 +45,7 @@ CompactSolution compact_solver(const Instance & instance, int time_limit, std::v
         // The variables u_i (start time of intervention i)
         vector<GRBVar> u(n_interventions);
         for (int i = 0; i < n_interventions; i++) {
-            u[i] = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_INTEGER);
+            u[i] = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS);
         }
         // The variables z_i (wether intervention i is done in the afternoon)
         vector<GRBVar> z(n_interventions);
@@ -180,6 +180,7 @@ CompactSolution compact_solver(const Instance & instance, int time_limit, std::v
 
         // Mode specific constraints
         if (mode == WARM_START) {
+            std::cout << "Warm start mode : " << routes.size() << " routes" << std::endl;
             // Warm start : we use the routes to set the variables
             for (const Route & route : routes) {
                 int v = route.vehicle_id;
