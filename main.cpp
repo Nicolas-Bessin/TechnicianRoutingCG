@@ -13,8 +13,8 @@
 #include <random>
 
 #define SCALE_FACTOR 1
-#define TIME_LIMIT 60
-#define SOLVER_MODE IMPOSE_ROUTING
+#define TIME_LIMIT 90
+#define SOLVER_MODE WARM_START
 #define THRESHOLD 1e-6
 #define VERBOSE true
 
