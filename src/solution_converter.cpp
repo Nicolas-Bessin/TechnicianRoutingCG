@@ -106,6 +106,8 @@ CompactSolution<double> to_compact_solution(const MasterSolution& master_solutio
 
     // Enumerate through all routes to update the compact solution
     for (int r = 0; r < routes.size(); r++) {
+        // Skip the routes that are not used
+        if (master_solution.coefficients[r] == 0) continue;
         const Route& route = routes[r];
         // Update the y variable - the vehicle v is used x_r times (x_r is fractional)
         compact_solution.y[route.vehicle_id] += master_solution.coefficients[r];
@@ -116,7 +118,39 @@ CompactSolution<double> to_compact_solution(const MasterSolution& master_solutio
             int current_node = route.id_sequence[i];
             int next_node = route.id_sequence[i + 1];
             //cout << "Current node : " << current_node << " / Next node : " << next_node << endl;
-            compact_solution.x[current_node][next_node][route.vehicle_id] = 1;
+            compact_solution.x[current_node][next_node][route.vehicle_id] += master_solution.coefficients[r];
+        }
+    }
+
+    return compact_solution;
+}
+
+CompactSolution<int> to_compact_solution(const IntegerSolution& integer_solution, const std::vector<Route>& routes, const Instance& instance) {
+    using std::vector;
+    using std::cout, std::endl;
+
+    int n_nodes = instance.nodes.size();
+    int n_intervention = instance.number_interventions;
+    int n_vehicles = instance.number_vehicles;
+
+    // Initialize the compact solution - the vectors are already initialized to 0
+    CompactSolution<int> compact_solution(n_nodes, n_intervention, n_vehicles);
+
+    // Enumerate through all routes to update the compact solution
+    for (int r = 0; r < routes.size(); r++) {
+        // Skip the routes that are not used
+        if (integer_solution.coefficients[r] == 0) continue;
+        const Route& route = routes[r];
+        // Update the y variable - the vehicle v is used x_r times (x_r is fractional)
+        compact_solution.y[route.vehicle_id] += integer_solution.coefficients[r];
+        // We don't care about the u and z variables for now - they are onyl relevant for defining an admissible solution
+        // But do not count in the cost of the solution
+        // Update the x variables
+        for (int i = 0; i < route.id_sequence.size() - 1; i++) {
+            int current_node = route.id_sequence[i];
+            int next_node = route.id_sequence[i + 1];
+            //cout << "Current node : " << current_node << " / Next node : " << next_node << endl;
+            compact_solution.x[current_node][next_node][route.vehicle_id] += integer_solution.coefficients[r];
         }
     }
 
