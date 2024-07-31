@@ -440,12 +440,12 @@ void full_analysis(const IntegerSolution& integer_solution, const vector<Route>&
     // Solution analysis
 
     cout << "-----------------------------------" << endl;
-    //print_used_routes(integer_solution, routes, instance); 
-    print_non_covered_interventions(integer_solution, routes, instance, false);
-    cout << "-----------------------------------" << endl;
-    print_used_vehicles(integer_solution, routes, instance);
-    print_vehicles_non_covered(integer_solution, routes, instance);
-    cout << "-----------------------------------" << endl;
+    // //print_used_routes(integer_solution, routes, instance); 
+    // print_non_covered_interventions(integer_solution, routes, instance, false);
+    // cout << "-----------------------------------" << endl;
+    // print_used_vehicles(integer_solution, routes, instance);
+    // print_vehicles_non_covered(integer_solution, routes, instance);
+    // cout << "-----------------------------------" << endl;
 
     cout << "Number of covered interventions : " << count_covered_interventions(integer_solution, routes, instance);
     cout << " / " << instance.number_interventions << endl;
@@ -467,12 +467,16 @@ void full_analysis(const IntegerSolution& integer_solution, const vector<Route>&
     if (all_feasible){
         cout << "All routes are feasible" << endl;
     }
-
+    int working_time = time_spent_working(integer_solution, routes, instance);
+    int travelling_time = time_spent_travelling(integer_solution, routes, instance);
+    int waiting_time = time_spent_waiting(integer_solution, routes, instance);
+    int total_time = working_time + travelling_time + waiting_time;
     cout << "Number of routes with duplicates : " << count_routes_with_duplicates(routes) << " / " << routes.size() << endl;
     cout << "Number of used routes with duplicates : " << count_used_routes_with_duplicates(integer_solution, routes) << endl;
     cout << "Number of route kilometres : " << count_kilometres_travelled(integer_solution, routes, instance) << " km" << endl;
-    cout << "Time spent travelling : " << time_spent_travelling(integer_solution, routes, instance) << " minutes" << endl;
-    cout << "Time spent working : " << time_spent_working(integer_solution, routes, instance) << " minutes" << endl;
-    cout << "Time spent waiting : " << time_spent_waiting(integer_solution, routes, instance) << " minutes" << endl;
+    cout << "Time spent travelling : " << travelling_time << " minutes" << endl;
+    cout << "Time spent working : " << working_time << " minutes" << endl;
+    cout << "Time spent waiting : " << waiting_time << " minutes" << endl;
+    cout << "Total time : " << total_time << " minutes - Average per route : " << total_time / count_used_vehicles(integer_solution, routes, instance) << " minutes" << endl;
 
 }

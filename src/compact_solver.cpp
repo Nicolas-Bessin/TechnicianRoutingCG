@@ -7,7 +7,7 @@
 
 
 
-CompactSolution compact_solver(const Instance & instance, int time_limit, std::vector<Route> routes, int mode) {
+CompactSolution<int> compact_solver(const Instance & instance, int time_limit, std::vector<Route> routes, int mode) {
     using std::vector, std::find;
     using std::pair;
     using std::string;
@@ -229,7 +229,7 @@ CompactSolution compact_solver(const Instance & instance, int time_limit, std::v
         model.optimize();
 
         // Build the solution
-        CompactSolution solution = CompactSolution(n_nodes, n_interventions, n_vehicles);
+        CompactSolution<int> solution = CompactSolution<int>(n_nodes, n_interventions, n_vehicles);
         solution.objective_value = model.get(GRB_DoubleAttr_ObjVal);
 
         // Get the values of the variables x_ijv
@@ -259,11 +259,11 @@ CompactSolution compact_solver(const Instance & instance, int time_limit, std::v
         std::cerr << "Exception during optimization" << std::endl;
     }
 
-    return CompactSolution();
+    return CompactSolution<int>();
 }   
 
 
-std::vector<Route> compact_solution_to_routes(const Instance& instance, const CompactSolution& compact_solution) {
+std::vector<Route> compact_solution_to_routes(const Instance& instance, const CompactSolution<int>& compact_solution) {
     using std::vector;
     using std::cout, std::endl;
 
