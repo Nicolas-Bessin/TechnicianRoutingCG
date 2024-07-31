@@ -19,7 +19,7 @@ CGResult column_generation(const Instance & instance, std::vector<Route> initial
     // Create the pricing sub problems for each vehicle
     const string pricing_folder = "../pricing_instances/";
     vector<unique_ptr<Problem>> pricing_problems;
-    for (auto vehicle : instance.vehicles){
+    for (const Vehicle& vehicle : instance.vehicles){
         string filename = pricing_folder + "v_" + to_string(vehicle.id) + ".txt";
         //write_pricing_instance(filename, instance, vehicle);
         pricing_problems.push_back(create_pricing_instance(instance, vehicle));

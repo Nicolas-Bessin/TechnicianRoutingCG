@@ -44,7 +44,7 @@ int main(int argc, char *argv[]){
     routes.push_back(Route(0, instance.number_interventions));
 
     // Do a first round of column generation
-    CGResult initial_cg = column_generation(instance, routes, THRESHOLD, TIME_LIMIT, false);
+    CGResult initial_cg = column_generation(instance, routes, THRESHOLD, TIME_LIMIT, VERBOSE);
 
     // Print the time it took to solve the master problem
     cout << "Total time spent solving the master problem : " << initial_cg.master_time << " ms" << endl;
