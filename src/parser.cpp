@@ -89,8 +89,10 @@ Technician parse_technician(json data){
 
 
 // Parse a JSON file to return a Instance object
-Instance parse_file(string filename){
-    cout << "Parsing file " << filename << endl;
+Instance parse_file(string filename, bool verbose){
+    if (verbose){
+        cout << "Parsing file " << filename << endl;
+    }
 
     // Read the JSON file
     ifstream f(filename);
@@ -112,8 +114,17 @@ Instance parse_file(string filename){
     };
 
     // Print the main constants
-    cout << "Cost per km: " << cost_per_km << endl;
-    cout << "Technician cost: " << tech_cost << endl;
+    if (verbose){
+        cout << "Number of ressources: " << number_ressources << endl;
+        cout << "Ressources: ";
+        for (const auto &ressource : ressources){
+            cout << ressource << " ";
+        }
+        cout << endl;
+        cout << "Cost per km: " << cost_per_km << endl;
+        cout << "Technician cost: " << tech_cost << endl;
+    }
+
 
     // Get the matrices of distance and time
     json loc_manager = data.at("loc_manager");
@@ -135,7 +146,9 @@ Instance parse_file(string filename){
 
     // Print the number of interventions
     int nb_interventions = nodes.size();
-    cout << "Number of interventions: " << nb_interventions << endl;
+    if (verbose){
+        cout << "Number of interventions: " << nb_interventions << endl;
+    }
 
     // Get the warehouses and add them to the nodes
     vector<json> warehouses_data = data.at("step_manager").at("warehouses");
@@ -147,8 +160,10 @@ Instance parse_file(string filename){
 
     // Print the number of warehouses and number of nodes
     int nb_warehouses = warehouses_data.size();
-    cout << "Number of warehouses: " << nb_warehouses << endl;
-    cout << "Number of nodes: " << nodes.size() << endl;
+    if (verbose){
+        cout << "Number of warehouses: " << nb_warehouses << endl;
+        cout << "Number of nodes: " << nodes.size() << endl;
+    }
 
 
     // Before building the teams, we put all the technicians into a dictionary for easy access
@@ -160,7 +175,9 @@ Instance parse_file(string filename){
     }
 
     // Print the number of technicians
-    cout << "Number of technicians: " << technicians.size() << endl;
+    if (verbose){
+        cout << "Number of technicians: " << technicians.size() << endl;
+    }
 
     // Teams are groups of technicians
     // Initially, we have fixed teams
@@ -180,7 +197,9 @@ Instance parse_file(string filename){
     }
     
     // Print the number of teams
-    cout << "Number of teams: " << tech_id_per_team.size() << endl;
+    if (verbose){
+        cout << "Number of teams: " << tech_id_per_team.size() << endl;
+    }
 
     // We now construct one vehicle per team
     vector<Vehicle> vehicles = vector<Vehicle>();
@@ -225,7 +244,9 @@ Instance parse_file(string filename){
 
     // Print the number of vehicles
     int nb_vehicles = vehicles.size();
-    cout << "Number of vehicles: " << nb_vehicles << endl;
+    if (verbose){
+        cout << "Number of vehicles: " << nb_vehicles << endl;
+    }
 
     // We now build a cross reference matrix between interventions and vehicles : has_skill[i][j] is true if vehicle j has the skills to do intervention i
     vector<vector<bool>> has_skill = vector<vector<bool>>(nb_interventions, vector<bool>(nb_vehicles, false));
@@ -307,13 +328,17 @@ Instance parse_file(string filename){
             }
         }
     }
-    cout << "GCD is " << gcd_durations << endl;
-    cout << "Max speed is " << max_speed << endl;
-    cout << "Max speed is between " << max_speed_pair.first << " and " << max_speed_pair.second << endl;
+
     double M = (END_DAY - min_duration) * max_speed * cost_per_km / gcd_durations;
 
-    // Print the value of M
-    cout << "Big M: " << M << endl;
+    if (verbose){
+        // Print the values of the constants
+        cout << "GCD is " << gcd_durations << endl;
+        cout << "Max speed is " << max_speed << endl;
+        cout << "Max speed is between " << max_speed_pair.first << " and " << max_speed_pair.second << endl;
+        // Print the value of M
+        cout << "Big M: " << M << endl;
+    }
 
     // We can now build the instance object
     return Instance(

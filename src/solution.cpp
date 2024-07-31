@@ -156,7 +156,7 @@ bool is_route_feasible(const Route& route, const Instance& instance) {
 
     // We now go through the route step by step to check the time windows and the capacities
     int route_length = route.id_sequence.size();
-    double current_time = 0;
+    int current_time = 0;
     map<string, int> consummed_capacities;
     // Go through every consecutive intervention in the route
     for (int i = 0; i < route_length - 1; i++) {
@@ -169,7 +169,6 @@ bool is_route_feasible(const Route& route, const Instance& instance) {
         if (i > 0 && route.start_times[intervention_id] > current_time) {
             // This means we arrived too early - we thus wait until the time of the intervention
             current_time = route.start_times[intervention_id];
-            
         }
         // If we are too late, the route is not feasible
         if (route.start_times[intervention_id] < current_time) {
@@ -205,28 +204,14 @@ bool is_route_feasible(const Route& route, const Instance& instance) {
         if (current_time < next_intervention.start_window) {
             current_time = next_intervention.start_window;
         }
-        // If we can't fit the next intervention before lunch, we wait until the lunch break is over
-        if (next_intervention.is_ambiguous && current_time < MID_DAY && current_time + next_intervention.duration > MID_DAY) {
-            current_time = MID_DAY;
-        }
     }
-    // Check the final intervention
-    const Node& final_intervention = instance.nodes[route.id_sequence.back()];
-    int final_intervention_id = route.id_sequence.back();
-    // If our arrival time is too early, we wait
-    if (route.start_times[final_intervention_id] < current_time) {
-        current_time = route.start_times[final_intervention_id];
-    }
-    if (current_time < final_intervention.start_window) {
-        cout << "Final intervention starts too early" << endl;
-        return false;
-    }
-    if (current_time + final_intervention.duration > final_intervention.end_window) {
-        cout << "Final intervention ends too late : " << current_time + final_intervention.duration << " > " << final_intervention.end_window << endl;
+    // Check the final intervention, we only have to check the end window
+    if (current_time > END_DAY) {
+        cout << "Final intervention ends too late : " << current_time << " > " << END_DAY << endl;
         return false;
     }
     // Finally, check that the capacities are respected
-    for (auto& [key, value] : consummed_capacities) {
+    for (const auto& [key, value] : consummed_capacities) {
         // If the key is not in the capacities, we don't care
         if (vehicle.capacities.find(key) == vehicle.capacities.end()) {
             continue;

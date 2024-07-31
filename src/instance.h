@@ -163,3 +163,6 @@ struct Instance {
     }
 
 };
+
+
+bool is_symetric(const std::vector<std::vector<int>>& matrix);

@@ -15,3 +15,19 @@ Vehicle vehicle_mask(const Vehicle& vehicle, const std::vector<int>& mask){
     }
     return Vehicle(vehicle.id, vehicle.technicians, vehicle.skills, new_interventions, vehicle.depot, vehicle.capacities, vehicle.cost);
 }
+
+
+bool is_symetric(const std::vector<std::vector<int>>& matrix) {
+    // First, to be symetric, the matrix must be square
+    if (matrix.size() != matrix[0].size()){
+        return false;
+    }
+    for (int i = 0; i < matrix.size(); i++){
+        for (int j = 0; j < matrix.size(); j++){
+            if (matrix[i][j] != matrix[j][i]){
+                return false;
+            }
+        }
+    }
+    return true;
+}

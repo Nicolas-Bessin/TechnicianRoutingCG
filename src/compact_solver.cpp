@@ -151,11 +151,12 @@ CompactSolution<int> compact_solver(const Instance & instance, int time_limit, s
             for (int v = 0; v < n_vehicles; v++) {
                 int depot = instance.vehicles[v].depot;
                 const Node & depot_node = instance.nodes[depot];
-                int travel_time = metric(depot_node, node_i, instance.time_matrix);
+                int travel_time_out = metric(depot_node, node_i, instance.time_matrix);
+                int travel_time_in = metric(node_i, depot_node, instance.time_matrix);
                 // from the depot
-                model.addConstr(travel_time * x[depot][i][v] <= u[i]);
+                model.addConstr(travel_time_out * x[depot][i][v] <= u[i]);
                 // to the depot
-                model.addConstr(u[i] + node_i.duration + travel_time* x[i][depot][v] <= END_DAY);
+                model.addConstr(u[i] + node_i.duration + travel_time_in* x[i][depot][v] <= END_DAY);
             }
         }
         // Lunch break

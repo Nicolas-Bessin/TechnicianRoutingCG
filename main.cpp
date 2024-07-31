@@ -31,16 +31,21 @@ int main(int argc, char *argv[]){
     // Parse the instance from a JSON file
     auto start_parse = chrono::steady_clock::now();
     cout << "Technician Routing Problem using Column Generation" << endl;
+    cout << "-----------------------------------" << endl;
     string default_filename = "../data/instance_1_all_feasible.json";
     Instance instance = parse_file(default_filename);
 
+
+    // Check wether the time and distance matrices are symetric
+    cout << "Distance matrix is symetric : " << is_symetric(instance.distance_matrix) << endl;
+    cout << "Time matrix is symetric : " << is_symetric(instance.time_matrix) << endl;
+
     preprocess_interventions(instance);
+
     auto end_parse = chrono::steady_clock::now();
     int diff_parse = chrono::duration_cast<chrono::milliseconds>(end_parse - start_parse).count();
 
-    
     cout << "Total time spent parsing the instance : " << diff_parse << " ms" << endl;
-
     // Create a dummy route for the first vehicle
     vector<Route> routes;
     routes.push_back(Route(0, instance.number_interventions));
@@ -58,6 +63,8 @@ int main(int argc, char *argv[]){
     int diff_sub_building = chrono::duration_cast<chrono::milliseconds>(end_sub_building - start_sub_building).count();
     cout << "Total time spent building the pricing sub problems : " << diff_sub_building << " ms" << endl;
 
+    cout << "-----------------------------------" << endl;
+    cout << "Starting the column generation algorithm" << endl;
     int master_time = 0;
     int pricing_time = 0;
 
@@ -183,35 +190,6 @@ int main(int argc, char *argv[]){
 
     return 0;
 }
-
-
-/*
-    // Now, we try to create a route for an unused vehicle that cover interventions not already covered
-    const int vehicle_id = 2;
-    cout << "Creating a new route for vehicle " << vehicle_id << endl;
-    Vehicle newV2 = vehicle_mask(instance.vehicles[vehicle_id], covered_interventions(integer_solution, routes, instance));
-    // We know generate & solve the pricing problem for this new vehicle
-    unique_ptr<Problem> new_pricing_problem = create_pricing_instance(instance, newV2, SCALE_FACTOR);
-    // Update with alpahs and beta at 0 for now
-    update_pricing_instance(new_pricing_problem, vector<double>(instance.number_interventions, 0), 0, instance, newV2, SCALE_FACTOR);
-    // Solve the pricing problem
-    vector<Route> new_routes_v2 = solve_pricing_problem(new_pricing_problem, 5, instance, newV2);
-    // Print the cost of the new routes
-    for (const auto &route : new_routes_v2){
-        print_route(route, instance);
-    }
-    // Add the new route to the master problem
-    for (const auto &route : new_routes_v2){
-        routes.push_back(route);
-    }
-    // Re-solve the integer problem
-    MasterSolution master_solution_v2 = cg_solver(instance, routes, 60);
-    cout << "New master solution found with objective value : " << master_solution_v2.objective_value << endl;
-    IntegerSolution integer_solution_v2 = solve_integer_problem(instance, routes);
-    cout << "New integer solution found with objective value : " << integer_solution_v2.objective_value << endl;
-    cout << "-----------------------------------" << endl;
-    print_non_covered_interventions(integer_solution_v2, routes, instance, true);
-*/
 
 
 

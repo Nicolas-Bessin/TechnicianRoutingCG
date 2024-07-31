@@ -171,6 +171,40 @@ double time_spent_waiting(const IntegerSolution& solution, const vector<Route>& 
     return total_time;
 }
 
+int shortest_time_route(const IntegerSolution& solution, const std::vector<Route>& routes) {
+    int shortest_time = END_DAY; // Set to the maximum possible time
+    for (int r = 0; r < routes.size(); r++) {
+        if (solution.coefficients[r] > 0) {
+            int route_time = routes[r].total_duration + routes[r].total_waiting_time + routes[r].total_travelling_time;
+            shortest_time = std::min(shortest_time, route_time);
+        }
+    }
+    return shortest_time;
+}
+
+int longest_time_route(const IntegerSolution& solution, const std::vector<Route>& routes) {
+    int longest_time = 0;
+    for (int r = 0; r < routes.size(); r++) {
+        if (solution.coefficients[r] > 0) {
+            int route_time = routes[r].total_duration + routes[r].total_waiting_time + routes[r].total_travelling_time;
+            longest_time = std::max(longest_time, route_time);
+        }
+    }
+    return longest_time;
+}
+
+void print_used_route_durations(const IntegerSolution& solution, const std::vector<Route>& routes) {
+    using std::cout, std::endl;
+    cout << "Route durations: ";
+    for (int r = 0; r < routes.size(); r++) {
+        if (solution.coefficients[r] > 0) {
+            int route_time = routes[r].total_duration + routes[r].total_waiting_time + routes[r].total_travelling_time;
+            cout << route_time << ", ";
+        }
+    }
+    cout << endl;
+}
+
 
 int count_coverable_interventions(const IntegerSolution& solution, const vector<Route>& routes, const Instance& instance) {
     int nb_routes = routes.size();
@@ -477,6 +511,10 @@ void full_analysis(const IntegerSolution& integer_solution, const vector<Route>&
     cout << "Time spent travelling : " << travelling_time << " minutes" << endl;
     cout << "Time spent working : " << working_time << " minutes" << endl;
     cout << "Time spent waiting : " << waiting_time << " minutes" << endl;
+    int shortest_time = shortest_time_route(integer_solution, routes);
+    int longest_time = longest_time_route(integer_solution, routes);
     cout << "Total time : " << total_time << " minutes - Average per route : " << total_time / count_used_vehicles(integer_solution, routes, instance) << " minutes" << endl;
+    cout << "Shortest route time : " << shortest_time << " minutes - Longest route time : " << longest_time << " minutes" << endl;
+    print_used_route_durations(integer_solution, routes);
 
 }

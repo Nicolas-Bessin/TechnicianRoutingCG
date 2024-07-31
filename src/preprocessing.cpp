@@ -3,7 +3,7 @@
 
 using std::cout, std::endl;
 
-void preprocess_interventions(Instance &instance){
+void preprocess_interventions(Instance &instance, bool verbose){
     // Number of already non-ambiguous interventions
     int nb_non_ambiguous = 0;
     // Number of interventions that we could reduce the time window for
@@ -53,10 +53,12 @@ void preprocess_interventions(Instance &instance){
     }
 
     // Print the informations
-    cout << "Number of non-ambiguous interventions: " << nb_non_ambiguous << endl;
-    cout << "Number of interventions that we could reduce the time window for: " << nb_reductions << endl;
-    cout << "Number of ambiguous interventions: " << nb_ambiguous << endl;
-    cout << "----------------------------------------" << endl;
+    if (verbose){
+        cout << "Number of non-ambiguous interventions: " << nb_non_ambiguous << endl;
+        cout << "Number of interventions that we could reduce the time window for: " << nb_reductions << endl;
+        cout << "Number of ambiguous interventions: " << nb_ambiguous << endl;
+        cout << "----------------------------------------" << endl;
+    }
 
     return;
 }
