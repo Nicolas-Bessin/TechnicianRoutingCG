@@ -44,5 +44,4 @@ struct CompactSolution{
 */
 CompactSolution<int> compact_solver(const Instance& instance, int time_limit = 60, std::vector<Route> routes = std::vector<Route>(), int mode = NO_ROUTING, bool verbose = false);
 
-
-std::vector<Route> compact_solution_to_routes(const Instance& instance, const CompactSolution<int>& compact_solution);
+CompactSolution<double> relaxed_compact_solver(const Instance& instance, int time_limit = 60, std::vector<Route> routes = std::vector<Route>(), int mode = NO_ROUTING, bool verbose = false);

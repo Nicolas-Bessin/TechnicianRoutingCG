@@ -62,6 +62,8 @@ set(
 
     src/compact_solver.h
     src/compact_solver.cpp
+    src/solution_converter.h
+    src/solution_converter.cpp
 )
 add_library(technician_routing_lib ${SOURCE_FILES_LIB})
 #Link against the Gurobi library
