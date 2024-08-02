@@ -9,15 +9,17 @@
 #include "src/compact_solver.h"
 #include "src/solution_converter.h"
 
+#include "src/heuristics.h"
+
 #include <memory>   
 #include <iostream>
 #include <iomanip>
 #include <chrono>
 
-#define TIME_LIMIT 300
+#define TIME_LIMIT 60
 #define SOLVER_MODE WARM_START
 #define THRESHOLD 1e-6
-#define VERBOSE true
+#define VERBOSE false
 
 int main(int argc, char *argv[]){
 
@@ -46,11 +48,13 @@ int main(int argc, char *argv[]){
 
     cout << "Total time spent parsing the instance : " << diff_parse << " ms" << endl;
     cout << "-----------------------------------" << endl;
+    cout << "Initializing the routes with a greedy heuristic" << endl;
+    vector<Route> initial_routes = greedy_heuristic(instance);
+    IntegerSolution greedy_solution = IntegerSolution(vector<int>(initial_routes.size(), 1), 0);
+    greedy_solution.objective_value = compute_integer_objective(greedy_solution, initial_routes, instance);
+    cout << "Objective value of the greedy heuristic : " << greedy_solution.objective_value << endl;
+    cout << "-----------------------------------" << endl;
     cout << "Starting the column generation algorithm" << endl;
-
-    // Create a dummy route for the first vehicle
-    vector<Route> initial_routes;
-    initial_routes.push_back(Route(0, instance.number_interventions));
 
     // Global time limit for the column generation algorithm of 60 seconds
     const int time_limit = TIME_LIMIT * 1000;
@@ -77,24 +81,24 @@ int main(int argc, char *argv[]){
     // Print the routes in the integer solution (in detail)
     full_analysis(integer_solution, routes, instance);
 
-    int elapsed_time = chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - start_parse).count();
-    // Print the time it took to solve the master problem
-    cout << "-----------------------------------" << endl;
-    cout << "Total time spent building the pricing problems : " << sub_building_time << " ms" << endl;
-    cout << "Total time spent solving the master problem : " << master_time << " ms" << endl;
-    cout << "Total time spent solving the pricing problems : " << pricing_time << " ms - Average : " << pricing_time / result.number_of_iterations << " ms" << endl;
-    cout << "Total time spent solving the integer problem : " << integer_time << " ms" << endl;
-    cout << "Total elapsed time : " << elapsed_time << " ms" << endl;
-    cout << "-----------------------------------" << endl;
+    // int elapsed_time = chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - start_parse).count();
+    // // Print the time it took to solve the master problem
+    // cout << "-----------------------------------" << endl;
+    // cout << "Total time spent building the pricing problems : " << sub_building_time << " ms" << endl;
+    // cout << "Total time spent solving the master problem : " << master_time << " ms" << endl;
+    // cout << "Total time spent solving the pricing problems : " << pricing_time << " ms - Average : " << pricing_time / result.number_of_iterations << " ms" << endl;
+    // cout << "Total time spent solving the integer problem : " << integer_time << " ms" << endl;
+    // cout << "Total elapsed time : " << elapsed_time << " ms" << endl;
+    // cout << "-----------------------------------" << endl;
 
-    // cout << " Starting the compact solver using mode " << SOLVER_MODE << endl;
+    // // cout << " Starting the compact solver using mode " << SOLVER_MODE << endl;
 
     
     // int remaining_time = TIME_LIMIT - elapsed_time / 1000;
     // // Keep only the routes that are used in the integer solution
     // vector<Route> used_routes = keep_used_routes(routes, integer_solution);
     // // We can then solve the compact model with these imposed routings
-    // CompactSolution<int> compact_solution = compact_solver(instance, remaining_time, used_routes, SOLVER_MODE, VERBOSE);
+    // CompactSolution<int> compact_solution = compact_solver(instance, remaining_time, used_routes, SOLVER_MODE, true);
     // // Convert back to routes
     // vector<Route> compact_routes = compact_solution_to_routes(instance, compact_solution);
     // // Create a dummy integer solution (all variables set to 1)
@@ -102,31 +106,24 @@ int main(int argc, char *argv[]){
 
     // cout << "Manual computing of the compact solution value : " << compute_integer_objective(compact_integer_solution, compact_routes, instance) << endl;
 
-    // cout << "-----------------------------------" << endl;
-    // // Print the routes in the compact solution
-    // //print_used_routes(compact_integer_solution, compact_routes, instance);
+    cout << "-----------------------------------" << endl;
+    // Print the routes in the compact solution
+    //print_used_routes(compact_integer_solution, compact_routes, instance);
 
-    // // Run the analysis on the compact solution
-    // full_analysis(compact_integer_solution, compact_routes, instance);
+    // Run the analysis on the compact solution
+    //full_analysis(compact_integer_solution, compact_routes, instance);
 
-    // Convert our master solution to a compact solution
-    CompactSolution<double> compact_solution = to_compact_solution(master_solution, routes, instance);
-    // Evaluate the objective value of the compact solution
-    double compact_objective = evaluate_compact_solution(compact_solution, instance);
-    cout << "Objective value of the relaxed converted compact solution : " << compact_objective << endl;
+    // // Convert our master solution to a compact solution
+    // CompactSolution<double> compact_solution = to_compact_solution(master_solution, routes, instance);
+    // // Evaluate the objective value of the compact solution
+    // double compact_objective = evaluate_compact_solution(compact_solution, instance);
+    // cout << "Objective value of the relaxed converted compact solution : " << compact_objective << endl;
 
-    // Do the same thing for the integer solution
-    CompactSolution<int> compact_integer_solution = to_compact_solution(integer_solution, routes, instance);
-    // Evaluate the objective value of the compact solution
-    double compact_integer_objective = evaluate_compact_solution(compact_integer_solution, instance);
-    cout << "Objective value of the integer converted compact solution : " << compact_integer_objective << endl;
-
-
-    // // We now want to get a solution to the relaxed compact formulation
-    // CompactSolution<double> relaxed_compact_solution = relaxed_compact_solver(instance, TIME_LIMIT, true);
-    // // Evaluate the objective value of the relaxed compact solution
-    // double relaxed_compact_objective = evaluate_compact_solution(relaxed_compact_solution, instance);
-    // cout << "Objective value of the relaxed compact solution : " << relaxed_compact_objective << endl;
+    // // Do the same thing for the integer solution
+    // CompactSolution<int> compact_integer_solution = to_compact_solution(integer_solution, routes, instance);
+    // // Evaluate the objective value of the compact solution
+    // double compact_integer_objective = evaluate_compact_solution(compact_integer_solution, instance);
+    // cout << "Objective value of the integer converted compact solution : " << compact_integer_objective << endl;
 
     return 0;
 }
