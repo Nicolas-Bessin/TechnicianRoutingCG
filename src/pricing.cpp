@@ -58,7 +58,7 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
         // Outgoing arcs from the warehouse
         problem->setNetworkArc(origin, i);
         int distance_out = metric(instance.nodes[vehicle.depot], intervention_i, instance.distance_matrix);
-        // Set the arc cost, also adding the fixed cost of the vehicle (but not beta)
+        // Set the arc cost
         objective->setArcCost(origin, i, instance.cost_per_km * distance_out);
         // Incoming arcs to the warehouse
         problem->setNetworkArc(i, destination);
@@ -84,9 +84,6 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
         // Get the time window of the intervention
         int start_window = intervention_i.start_window;
         int end_window = intervention_i.end_window - intervention_i.duration;
-        int time_to_depot = metric(intervention_i, (instance.nodes[vehicle.depot]), instance.time_matrix);
-        int max_end_time = END_DAY - time_to_depot;
-        end_window = std::min(end_window, max_end_time);
         // Set the time window of the intervention
         time_window->setNodeBound(n_interventions_v + 2, i, start_window, end_window);
         // Set the node consumption of the time window
@@ -165,10 +162,8 @@ void update_pricing_instance(unique_ptr<Problem> & pricing_problem, const vector
         double node_cost = alphas[true_i] - instance.M * instance.nodes[true_i].duration;
         objective->setNodeCost(i, node_cost);
     }
-    // Put in the constant part (only beta in the pricing problem, the cost of the vehicle is already accounted for on the arcs)
+    // Put in the constant part of the objective function
     objective->setNodeCost(origin, beta + vehicle.cost);
-    // Re-set the objective function
-    pricing_problem->setObjective(objective);
     return;
 }
 

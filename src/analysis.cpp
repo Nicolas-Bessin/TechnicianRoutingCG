@@ -487,7 +487,7 @@ void full_analysis(const IntegerSolution& integer_solution, const vector<Route>&
     cout << "Number of used vehicles : " << count_used_vehicles(integer_solution, routes, instance);
     cout << " / " << instance.vehicles.size() << endl;
 
-    cout << "Number of interventions that could be covered : " << count_coverable_interventions(integer_solution, routes, instance) << endl;
+    //cout << "Number of interventions that could be covered : " << count_coverable_interventions(integer_solution, routes, instance) << endl;
 
     // Check that all used routes are feasible
     bool all_feasible = true;

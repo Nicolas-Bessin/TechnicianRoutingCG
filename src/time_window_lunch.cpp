@@ -63,7 +63,13 @@ bool CustomTimeWindow::isFeasible(int current_value, int current_node, double bo
     if(current_value > upper_bound*bounding) return false;
 
     if(current_node >= 0) {
-        int feasible_value = direction ? node_upper_bound[current_node] : upper_bound - (node_lower_bound[current_node] + data->getNodeCost(current_node));
+        int feasible_value = 0;
+        if(direction) {
+            feasible_value = node_upper_bound[current_node];
+        }
+        else {
+            feasible_value = upper_bound - (node_lower_bound[current_node] + data->getNodeCost(current_node));
+        }
         if(current_value >= feasible_value) return false;
     }
     // We we reached this point, we know know the time window is respected

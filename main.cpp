@@ -47,12 +47,18 @@ int main(int argc, char *argv[]){
     int diff_parse = chrono::duration_cast<chrono::milliseconds>(end_parse - start_parse).count();
 
     cout << "Total time spent parsing the instance : " << diff_parse << " ms" << endl;
-    cout << "-----------------------------------" << endl;
-    cout << "Initializing the routes with a greedy heuristic" << endl;
-    vector<Route> initial_routes = greedy_heuristic(instance);
-    IntegerSolution greedy_solution = IntegerSolution(vector<int>(initial_routes.size(), 1), 0);
-    greedy_solution.objective_value = compute_integer_objective(greedy_solution, initial_routes, instance);
-    cout << "Objective value of the greedy heuristic : " << greedy_solution.objective_value << endl;
+
+    // cout << "-----------------------------------" << endl;
+    // cout << "Initializing the routes with a greedy heuristic" << endl;
+    // vector<Route> initial_routes = greedy_heuristic(instance);
+    // IntegerSolution greedy_solution = IntegerSolution(vector<int>(initial_routes.size(), 1), 0);
+    // greedy_solution.objective_value = compute_integer_objective(greedy_solution, initial_routes, instance);
+    // cout << "Objective value of the greedy heuristic : " << greedy_solution.objective_value << endl;
+
+    // Initialize with an empty route
+    vector<Route> initial_routes;
+    initial_routes.push_back(Route(0, instance.nodes.size()));
+
     cout << "-----------------------------------" << endl;
     cout << "Starting the column generation algorithm" << endl;
 
