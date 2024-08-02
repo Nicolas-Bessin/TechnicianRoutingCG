@@ -1,6 +1,9 @@
 #include "src/parser.h"
 #include "src/preprocessing.h"
 
+#include "src/master.h"
+#include "src/pricing.h"
+
 #include "src/column_generation.h"
 
 #include "src/analysis.h"
@@ -20,6 +23,7 @@
 #define SOLVER_MODE WARM_START
 #define THRESHOLD 1e-6
 #define VERBOSE false
+#define GREEDY_INIT false
 
 int main(int argc, char *argv[]){
 
@@ -48,16 +52,19 @@ int main(int argc, char *argv[]){
 
     cout << "Total time spent parsing the instance : " << diff_parse << " ms" << endl;
 
-    // cout << "-----------------------------------" << endl;
-    // cout << "Initializing the routes with a greedy heuristic" << endl;
-    // vector<Route> initial_routes = greedy_heuristic(instance);
-    // IntegerSolution greedy_solution = IntegerSolution(vector<int>(initial_routes.size(), 1), 0);
-    // greedy_solution.objective_value = compute_integer_objective(greedy_solution, initial_routes, instance);
-    // cout << "Objective value of the greedy heuristic : " << greedy_solution.objective_value << endl;
-
-    // Initialize with an empty route
+    cout << "-----------------------------------" << endl;
     vector<Route> initial_routes;
-    initial_routes.push_back(Route(0, instance.nodes.size()));
+    if (GREEDY_INIT) {
+        cout << "Initializing the routes with a greedy heuristic" << endl;
+        initial_routes = greedy_heuristic(instance);
+        IntegerSolution greedy_solution = IntegerSolution(vector<int>(initial_routes.size(), 1), 0);
+        greedy_solution.objective_value = compute_integer_objective(greedy_solution, initial_routes, instance);
+        cout << "Objective value of the greedy heuristic : " << greedy_solution.objective_value << endl;
+    } else {
+        cout << "Initializing the routes with an empty route" << endl;
+        initial_routes = vector<Route>();
+        initial_routes.push_back(Route(0, instance.nodes.size()));
+    }
 
     cout << "-----------------------------------" << endl;
     cout << "Starting the column generation algorithm" << endl;
@@ -85,17 +92,17 @@ int main(int argc, char *argv[]){
     }
     
     // Print the routes in the integer solution (in detail)
-    full_analysis(integer_solution, routes, instance);
+    // full_analysis(integer_solution, routes, instance);
 
-    // int elapsed_time = chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - start_parse).count();
+    int elapsed_time = chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - start_parse).count();
     // // Print the time it took to solve the master problem
-    // cout << "-----------------------------------" << endl;
-    // cout << "Total time spent building the pricing problems : " << sub_building_time << " ms" << endl;
-    // cout << "Total time spent solving the master problem : " << master_time << " ms" << endl;
-    // cout << "Total time spent solving the pricing problems : " << pricing_time << " ms - Average : " << pricing_time / result.number_of_iterations << " ms" << endl;
-    // cout << "Total time spent solving the integer problem : " << integer_time << " ms" << endl;
-    // cout << "Total elapsed time : " << elapsed_time << " ms" << endl;
-    // cout << "-----------------------------------" << endl;
+    cout << "-----------------------------------" << endl;
+    cout << "Total time spent building the pricing problems : " << sub_building_time << " ms" << endl;
+    cout << "Total time spent solving the master problem : " << master_time << " ms" << endl;
+    cout << "Total time spent solving the pricing problems : " << pricing_time << " ms - Average : " << pricing_time / result.number_of_iterations << " ms" << endl;
+    cout << "Total time spent solving the integer problem : " << integer_time << " ms" << endl;
+    cout << "Total elapsed time : " << elapsed_time << " ms" << endl;
+    cout << "-----------------------------------" << endl;
 
     // // cout << " Starting the compact solver using mode " << SOLVER_MODE << endl;
 
@@ -112,7 +119,7 @@ int main(int argc, char *argv[]){
 
     // cout << "Manual computing of the compact solution value : " << compute_integer_objective(compact_integer_solution, compact_routes, instance) << endl;
 
-    cout << "-----------------------------------" << endl;
+    // cout << "-----------------------------------" << endl;
     // Print the routes in the compact solution
     //print_used_routes(compact_integer_solution, compact_routes, instance);
 
@@ -130,6 +137,22 @@ int main(int argc, char *argv[]){
     // // Evaluate the objective value of the compact solution
     // double compact_integer_objective = evaluate_compact_solution(compact_integer_solution, instance);
     // cout << "Objective value of the integer converted compact solution : " << compact_integer_objective << endl;
+
+    
+    // Generate new routes using the greedy heuristic
+    cout << "Adding new routes using the greedy heuristic" << endl;
+    vector<Route> new_routes = greedy_heuristic(instance);
+    // Compute the standalone value of the new routes
+    IntegerSolution new_routes_solution = IntegerSolution(vector<int>(new_routes.size(), 1), 0);
+    new_routes_solution.objective_value = compute_integer_objective(new_routes_solution, new_routes, instance);
+    cout << "Objective value using only the new routes : " << new_routes_solution.objective_value << endl;
+    // Add them to the existing routes
+    routes.insert(routes.end(), new_routes.begin(), new_routes.end());
+    // Re-compute the master then the integer solution
+    MasterSolution new_master_solution = relaxed_RMP(instance, routes);
+    cout << "Objective value of the new master solution : " << new_master_solution.objective_value << endl;
+    IntegerSolution new_integer_solution = integer_RMP(instance, routes);
+    cout << "Objective value of the new integer solution : " << new_integer_solution.objective_value << endl;
 
     return 0;
 }

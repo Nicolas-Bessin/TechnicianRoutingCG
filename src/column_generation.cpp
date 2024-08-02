@@ -65,8 +65,11 @@ CGResult column_generation(const Instance & instance, std::vector<Route> initial
 
         double max_reduced_cost = 0;
 
+        // Explore all the vehicles in order at each iteration
+        vector<int> vehicle_order(instance.vehicles.size());
+        std::iota(vehicle_order.begin(), vehicle_order.end(), 0);
 
-        for (int v = 0; v < instance.vehicles.size(); v++){
+        for (const int& v : vehicle_order){
             const Vehicle& vehicle = instance.vehicles.at(v);
             update_pricing_instance(pricing_problems.at(v), solution.alphas, solution.betas[v], instance, vehicle);
             vector<Route> best_new_routes = solve_pricing_problem(pricing_problems.at(v), 5, instance, vehicle);
