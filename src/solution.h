@@ -19,14 +19,17 @@ struct MasterSolution {
     std::vector<double> betas;
     // Objective value of the master problem
     double objective_value;
+    // Is this solution feasible
+    bool is_feasible;
     // Empty constructor
-    MasterSolution(){}
+    MasterSolution(){ is_feasible = false; }
     // Constructor
     MasterSolution(std::vector<double> coefficients, std::vector<double> alphas, std::vector<double> betas, double objective_value){
         this->coefficients = coefficients;
         this->alphas = alphas;
         this->betas = betas;
         this->objective_value = objective_value;
+        this->is_feasible = true;
     }
 };
 
@@ -36,12 +39,15 @@ bool operator==(const MasterSolution& lhs, const MasterSolution& rhs);
 struct IntegerSolution {
     std::vector<int> coefficients;
     double objective_value;
+    // Is this solution feasible
+    bool is_feasible;
     // Empty constructor
-    IntegerSolution(){}
+    IntegerSolution(){ is_feasible = false; }
     // Constructor
     IntegerSolution(std::vector<int> coefficients, double objective_value){
         this->coefficients = coefficients;
         this->objective_value = objective_value;
+        this->is_feasible = true;
     }
 };
 

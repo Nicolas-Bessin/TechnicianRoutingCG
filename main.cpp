@@ -66,14 +66,23 @@ int main(int argc, char *argv[]){
     MasterSolution master_solution = result.master_solution;
     IntegerSolution integer_solution = result.integer_solution;
     
+
+    // If the integer solution is not feasible, we can't do much
+    if (!integer_solution.is_feasible){
+        cout << "-----------------------------------" << endl;
+        cout << "The integer solution is not feasible" << endl;
+        return 0;
+    }
+    
     // Print the routes in the integer solution (in detail)
     full_analysis(integer_solution, routes, instance);
 
     int elapsed_time = chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - start_parse).count();
     // Print the time it took to solve the master problem
+    cout << "-----------------------------------" << endl;
     cout << "Total time spent building the pricing problems : " << sub_building_time << " ms" << endl;
     cout << "Total time spent solving the master problem : " << master_time << " ms" << endl;
-    cout << "Total time spent solving the pricing problems : " << pricing_time << " ms" << endl;
+    cout << "Total time spent solving the pricing problems : " << pricing_time << " ms - Average : " << pricing_time / result.number_of_iterations << " ms" << endl;
     cout << "Total time spent solving the integer problem : " << integer_time << " ms" << endl;
     cout << "Total elapsed time : " << elapsed_time << " ms" << endl;
     cout << "-----------------------------------" << endl;
@@ -109,8 +118,15 @@ int main(int argc, char *argv[]){
     // Do the same thing for the integer solution
     CompactSolution<int> compact_integer_solution = to_compact_solution(integer_solution, routes, instance);
     // Evaluate the objective value of the compact solution
-    int compact_integer_objective = evaluate_compact_solution(compact_integer_solution, instance);
+    double compact_integer_objective = evaluate_compact_solution(compact_integer_solution, instance);
     cout << "Objective value of the integer converted compact solution : " << compact_integer_objective << endl;
+
+
+    // // We now want to get a solution to the relaxed compact formulation
+    // CompactSolution<double> relaxed_compact_solution = relaxed_compact_solver(instance, TIME_LIMIT, true);
+    // // Evaluate the objective value of the relaxed compact solution
+    // double relaxed_compact_objective = evaluate_compact_solution(relaxed_compact_solution, instance);
+    // cout << "Objective value of the relaxed compact solution : " << relaxed_compact_objective << endl;
 
     return 0;
 }

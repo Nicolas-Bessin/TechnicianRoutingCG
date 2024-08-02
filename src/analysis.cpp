@@ -199,7 +199,7 @@ void print_used_route_durations(const IntegerSolution& solution, const std::vect
     for (int r = 0; r < routes.size(); r++) {
         if (solution.coefficients[r] > 0) {
             int route_time = routes[r].total_duration + routes[r].total_waiting_time + routes[r].total_travelling_time;
-            cout << route_time << ", ";
+            cout << "v" << routes[r].vehicle_id << " : " << route_time << ", ";
         }
     }
     cout << endl;
@@ -460,7 +460,7 @@ void print_vehicles_non_covered(const IntegerSolution& solution, const std::vect
     // Print the number of non-covered interventions that can be covered by each vehicle
     cout << "Number of non covered interventions that can be covered by each non used  vehicle: " << endl;
     for (int v = 0; v < nb_vehicles; v++) {
-        if (is_used[v] == 0) { 
+        if (is_used[v] == 0 || is_used[v] == 1) { 
             cout << "v" << v << " : " << can_cover[v] <<" - ";
         }
     }
@@ -516,5 +516,7 @@ void full_analysis(const IntegerSolution& integer_solution, const vector<Route>&
     cout << "Total time : " << total_time << " minutes - Average per route : " << total_time / count_used_vehicles(integer_solution, routes, instance) << " minutes" << endl;
     cout << "Shortest route time : " << shortest_time << " minutes - Longest route time : " << longest_time << " minutes" << endl;
     print_used_route_durations(integer_solution, routes);
+    print_non_covered_interventions(integer_solution, routes, instance, false);
+    print_vehicles_non_covered(integer_solution, routes, instance);
 
 }

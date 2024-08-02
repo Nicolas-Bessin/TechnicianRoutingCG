@@ -38,6 +38,8 @@ CGResult column_generation(const Instance & instance, std::vector<Route> initial
 
     // Count the number of time each vehicle's sub problem reached the time limit
     vector<int> time_limit_reached(instance.vehicles.size(), 0);
+    // Aslo count the number of routes added for each vehicle
+    vector<int> n_routes_per_v(instance.vehicles.size(), 0);
 
     // Main loop of the column generation algorithm
     int iteration = 0;
@@ -81,6 +83,7 @@ CGResult column_generation(const Instance & instance, std::vector<Route> initial
                 if (route.reduced_cost > reduced_cost_threshold){
                     routes.push_back(route);
                     n_added_routes++;
+                    n_routes_per_v[v]++;
                 }
             }
         }
@@ -114,7 +117,14 @@ CGResult column_generation(const Instance & instance, std::vector<Route> initial
     auto end_integer = chrono::steady_clock::now();
     int diff_integer = chrono::duration_cast<chrono::milliseconds>(end_integer - start_integer).count();
 
-    cout << "Integer solution found with objective value : " << integer_solution.objective_value << endl;
+    cout << "Integer RMP objective value : " << integer_solution.objective_value << endl;
+
+    // Print the number of routes added for each vehicle
+    cout << "Number of routes added for each vehicle : " << endl;
+    for (int i = 0; i < instance.vehicles.size(); i++){
+        cout << "v" << i << " : " << n_routes_per_v[i] << ", ";
+    }
+    cout << endl;
 
     if (verbose){
         // Print the number of times each vehicle's sub problem reached the time limit

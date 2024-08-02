@@ -269,7 +269,7 @@ CompactSolution<int> compact_solver(const Instance & instance, int time_limit, s
 
 
 
-CompactSolution<double> relaxed_compact_solver(const Instance & instance, int time_limit, std::vector<Route> routes, int mode, bool verbose) {
+CompactSolution<double> relaxed_compact_solver(const Instance & instance, int time_limit, bool verbose) {
     using std::vector, std::find;
     using std::pair;
     using std::string;
@@ -306,7 +306,7 @@ CompactSolution<double> relaxed_compact_solver(const Instance & instance, int ti
         // The list of variables y_v
         vector<GRBVar> y(n_vehicles);
         for (int v = 0; v < n_vehicles; v++) {
-            y[v] = model.addVar(0.0, 1.0, 0.0, GRB_CONTINUOUS);
+            y[v] = model.addVar(0.0, 1.0, 0.0, GRB_BINARY);
         }
         // The variables u_i (start time of intervention i)
         vector<GRBVar> u(n_interventions);
@@ -443,36 +443,7 @@ CompactSolution<double> relaxed_compact_solver(const Instance & instance, int ti
                 }
                 model.addConstr(expr <= instance.vehicles[v].capacities.at(label));
             }
-        }
-
-        // Mode specific constraints
-        if (mode == WARM_START) {
-            // Warm start : we use the routes to set the variables
-            for (const Route & route : routes) {
-                int v = route.vehicle_id;
-                for (int i = 0; i < route.id_sequence.size() - 1; i++) {
-                    int node_i = route.id_sequence[i];
-                    int node_j = route.id_sequence[i+1];
-                    x[node_i][node_j][v].set(GRB_DoubleAttr_Start, 1.0);
-                }
-            }
-        }
-        if (mode == IMPOSE_ROUTING) {
-            // Dummy integer solution : we use all the routes
-            IntegerSolution integer_solution = IntegerSolution(vector<int>(routes.size(), 1), -1);
-            vector<pair<int, int>> imposed_routings = imposed_routings_from_routes(routes, integer_solution);
-            // Finally, we can set the imposed routings
-            // Each pair is a pair (vehicle_id, intervention_id)
-            // Where the vehicle has to go through the intervention
-            for (const auto& [v, i] : imposed_routings) {
-                GRBLinExpr expr = 0;
-                for (int j = 0; j < n_nodes; j++) {
-                    expr += x[i][j][v];
-                }
-                model.addConstr(expr == 1);
-            }
-        }
-            
+        }            
 
         // Set the objective function
         GRBLinExpr obj = 0;
