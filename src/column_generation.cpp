@@ -8,7 +8,7 @@
 #include <chrono>
 
 
-CGResult column_generation(const Instance & instance, std::vector<Route> initial_routes, double reduced_cost_threshold, int time, bool verbose){
+CGResult column_generation(const Instance & instance, std::vector<Route> initial_routes, double reduced_cost_threshold, int time_limit, bool verbose){
     using std::cout, std::endl;
     using std::setprecision, std::fixed;
     using std::vector, std::string, std::to_string;
@@ -32,9 +32,6 @@ CGResult column_generation(const Instance & instance, std::vector<Route> initial
 
     int master_time = 0;
     int pricing_time = 0;
-
-    // Global time limit for the column generation algorithm of 60 seconds
-    const int time_limit = time * 1000;
 
     // Count the number of time each vehicle's sub problem reached the time limit
     vector<int> time_limit_reached(instance.vehicles.size(), 0);

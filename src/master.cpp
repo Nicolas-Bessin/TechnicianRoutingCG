@@ -121,23 +121,6 @@ IntegerSolution integer_RMP(const Instance& instance, const vector<Route>& route
             }
             vehicle_constraints.push_back(master.addConstr(expr <= 1));
         }
-        // Test: impose more than 13 routes
-        GRBLinExpr total_routes = 0;
-        for (int r = 0; r < routes.size(); r++){
-            total_routes += variables[r];
-        }
-        master.addConstr(0 <= total_routes);
-
-        // Test : impose covering more than 75 interventions
-        GRBLinExpr total_interventions = 0;
-        for (int i = 0; i < instance.number_interventions; i++){
-            GRBLinExpr expr = 0;
-            for (int r = 0; r < routes.size(); r++){
-                expr += routes[r].is_in_route[i] * variables[r];
-            }
-            total_interventions += expr;
-        }
-        master.addConstr(72 <= total_interventions);
 
         // Finally, we set the objective function
         GRBLinExpr obj = 0;

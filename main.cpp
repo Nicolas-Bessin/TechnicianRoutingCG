@@ -14,10 +14,10 @@
 #include <iomanip>
 #include <chrono>
 
-#define TIME_LIMIT 60
+#define TIME_LIMIT 300
 #define SOLVER_MODE WARM_START
 #define THRESHOLD 1e-6
-#define VERBOSE false
+#define VERBOSE true
 
 int main(int argc, char *argv[]){
 
