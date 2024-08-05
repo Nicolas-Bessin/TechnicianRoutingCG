@@ -14,14 +14,21 @@ std::vector<Route> greedy_heuristic(const Instance& instance) {
     int n_vehicles = instance.vehicles.size();
     vector<int> covered(n_interventions, 0);
     
-    // Randomly shuffle the vehicles
-    std::random_device rd;
-    std::mt19937 g(rd());
+    // // Randomly shuffle the vehicles
+    // std::random_device rd;
+    // std::mt19937 g(rd());
+    // vector<int> vehicle_indices(n_vehicles);
+    // // Fill the vector with the indices of the vehicles
+    // std::iota(vehicle_indices.begin(), vehicle_indices.end(), 0);
+    // // Shuffle the indices
+    // std::shuffle(vehicle_indices.begin(), vehicle_indices.end(), g);
+    
+    // Order the vehicles by increasing number of interventions available
     vector<int> vehicle_indices(n_vehicles);
-    // Fill the vector with the indices of the vehicles
     std::iota(vehicle_indices.begin(), vehicle_indices.end(), 0);
-    // Shuffle the indices
-    std::shuffle(vehicle_indices.begin(), vehicle_indices.end(), g);
+    std::sort(vehicle_indices.begin(), vehicle_indices.end(), [&instance](int i, int j) {
+        return instance.vehicles[i].interventions.size() < instance.vehicles[j].interventions.size();
+    });
     
     // Enumerate through all vehicles : generate a route that maximizes its benefit
     // Among the interventions that are not yet covered

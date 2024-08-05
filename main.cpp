@@ -22,7 +22,7 @@
 #define TIME_LIMIT 120
 #define SOLVER_MODE WARM_START
 #define THRESHOLD 1e-6
-#define VERBOSE true
+#define VERBOSE false
 #define GREEDY_INIT false
 
 int main(int argc, char *argv[]){
