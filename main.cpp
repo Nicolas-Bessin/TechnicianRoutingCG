@@ -22,7 +22,7 @@
 #define TIME_LIMIT 120
 #define SOLVER_MODE WARM_START
 #define THRESHOLD 1e-6
-#define VERBOSE true
+#define VERBOSE false
 #define GREEDY_INIT false
 
 int main(int argc, char *argv[]){
@@ -103,9 +103,15 @@ int main(int argc, char *argv[]){
     cout << "Total time spent solving the integer problem : " << integer_time << " ms" << endl;
     cout << "Total elapsed time : " << elapsed_time << " ms" << endl;
     cout << "-----------------------------------" << endl;
+    // Print the number of interventions covered
+    int n_covered = count_covered_interventions(integer_solution, routes, instance);
+    cout << "Number of interventions covered : " << n_covered << " / " << instance.number_interventions << endl;
+
+    return 0;
+}
+
 
     // // cout << " Starting the compact solver using mode " << SOLVER_MODE << endl;
-
     
     // int remaining_time = TIME_LIMIT - elapsed_time / 1000;
     // // Keep only the routes that are used in the integer solution
@@ -139,48 +145,42 @@ int main(int argc, char *argv[]){
     // cout << "Objective value of the integer converted compact solution : " << compact_integer_objective << endl;
 
     
-    // Generate new routes using the greedy heuristic
-    cout << "Adding new routes using the greedy heuristic" << endl;
-    vector<Route> new_routes = greedy_heuristic_alphas(instance);
-    // Compute the standalone value of the new routes
-    IntegerSolution new_routes_solution = IntegerSolution(vector<int>(new_routes.size(), 1), 0);
-    new_routes_solution.objective_value = compute_integer_objective(new_routes_solution, new_routes, instance);
-    cout << "Objective value using only the new routes : " << new_routes_solution.objective_value << endl;
-    // Check the feasibility of the routes we have generated (this call checks wether interventions are covered more than once)
-    covered_interventions(new_routes_solution, new_routes, instance);
-    // Compute the reduced costs of the new routes in the master problem
-    double min_reduced_cost = +INFINITY;
-    double max_reduced_cost = -INFINITY;
-    Route& best_route = new_routes[0];
-    for (Route &route : new_routes){
-        double reduced_cost = compute_reduced_cost(route, master_solution.alphas, master_solution.betas[route.vehicle_id], instance);
-        min_reduced_cost = std::min(min_reduced_cost, reduced_cost);
-        if (reduced_cost > max_reduced_cost){
-            max_reduced_cost = reduced_cost;
-            best_route = route;
-        }
-    }
-    
-    cout << "Minimum reduced cost of the new routes : " << min_reduced_cost << endl;
-    cout << "Maximum reduced cost of the new routes : " << max_reduced_cost << endl;
-    if (max_reduced_cost > THRESHOLD){
-        cout << "Route with the highest >0 reduced cost : " << endl;
-        print_route(best_route, instance);
-    }
-    // Add them to the existing routes
-    routes.insert(routes.end(), new_routes.begin(), new_routes.end());
-    cout << "-----------------------------------" << endl;
-    cout << "Re-solving the master and integer problems with the new routes" << endl;
-    // Re-compute the master then the integer solution
-    MasterSolution new_master_solution = relaxed_RMP(instance, routes);
-    cout << "Objective value of the new master solution : " << new_master_solution.objective_value << endl;
-    IntegerSolution new_integer_solution = integer_RMP(instance, routes);
-    cout << "Objective value of the new integer solution : " << new_integer_solution.objective_value << endl;
-
-    return 0;
-}
-
 
     
-
-
+    // // Generate new routes using the greedy heuristic
+    // cout << "Adding new routes using the greedy heuristic" << endl;
+    // vector<Route> new_routes = greedy_heuristic_alphas(instance);
+    // // Compute the standalone value of the new routes
+    // IntegerSolution new_routes_solution = IntegerSolution(vector<int>(new_routes.size(), 1), 0);
+    // new_routes_solution.objective_value = compute_integer_objective(new_routes_solution, new_routes, instance);
+    // cout << "Objective value using only the new routes : " << new_routes_solution.objective_value << endl;
+    // // Check the feasibility of the routes we have generated (this call checks wether interventions are covered more than once)
+    // covered_interventions(new_routes_solution, new_routes, instance);
+    // // Compute the reduced costs of the new routes in the master problem
+    // double min_reduced_cost = +INFINITY;
+    // double max_reduced_cost = -INFINITY;
+    // Route& best_route = new_routes[0];
+    // for (Route &route : new_routes){
+    //     double reduced_cost = compute_reduced_cost(route, master_solution.alphas, master_solution.betas[route.vehicle_id], instance);
+    //     min_reduced_cost = std::min(min_reduced_cost, reduced_cost);
+    //     if (reduced_cost > max_reduced_cost){
+    //         max_reduced_cost = reduced_cost;
+    //         best_route = route;
+    //     }
+    // }
+    
+    // cout << "Minimum reduced cost of the new routes : " << min_reduced_cost << endl;
+    // cout << "Maximum reduced cost of the new routes : " << max_reduced_cost << endl;
+    // if (max_reduced_cost > THRESHOLD){
+    //     cout << "Route with the highest >0 reduced cost : " << endl;
+    //     print_route(best_route, instance);
+    // }
+    // // Add them to the existing routes
+    // routes.insert(routes.end(), new_routes.begin(), new_routes.end());
+    // cout << "-----------------------------------" << endl;
+    // cout << "Re-solving the master and integer problems with the new routes" << endl;
+    // // Re-compute the master then the integer solution
+    // MasterSolution new_master_solution = relaxed_RMP(instance, routes);
+    // cout << "Objective value of the new master solution : " << new_master_solution.objective_value << endl;
+    // IntegerSolution new_integer_solution = integer_RMP(instance, routes);
+    // cout << "Objective value of the new integer solution : " << new_integer_solution.objective_value << endl;
