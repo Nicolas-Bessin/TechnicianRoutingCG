@@ -54,8 +54,8 @@ CGResult column_generation(const Instance & instance, std::vector<Route> initial
         if (verbose) {
             cout << "Master problem solved in " << diff << " ms \n";
             cout << "Number of interventions covered : " << setprecision(2) << count_covered_interventions(solution, routes, instance);
-            cout << " - Number of zeros in alphas : " << count_zeros(solution.alphas);
-            cout << " - Number of zeros in betas : " << count_zeros(solution.betas) << "\n";
+            cout << " - Min alpha : " << *std::min_element(solution.alphas.begin(), solution.alphas.end());
+            cout << " - Max alpha : " << *std::max_element(solution.alphas.begin(), solution.alphas.end()) << "\n";
         }
         master_time += diff;
 

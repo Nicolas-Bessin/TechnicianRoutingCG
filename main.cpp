@@ -22,7 +22,7 @@
 #define TIME_LIMIT 120
 #define SOLVER_MODE WARM_START
 #define THRESHOLD 1e-6
-#define VERBOSE false
+#define VERBOSE true
 #define GREEDY_INIT false
 
 int main(int argc, char *argv[]){
@@ -141,11 +141,13 @@ int main(int argc, char *argv[]){
     
     // Generate new routes using the greedy heuristic
     cout << "Adding new routes using the greedy heuristic" << endl;
-    vector<Route> new_routes = greedy_heuristic(instance);
+    vector<Route> new_routes = greedy_heuristic_alphas(instance);
     // Compute the standalone value of the new routes
     IntegerSolution new_routes_solution = IntegerSolution(vector<int>(new_routes.size(), 1), 0);
     new_routes_solution.objective_value = compute_integer_objective(new_routes_solution, new_routes, instance);
     cout << "Objective value using only the new routes : " << new_routes_solution.objective_value << endl;
+    // Check the feasibility of the routes we have generated (this call checks wether interventions are covered more than once)
+    covered_interventions(new_routes_solution, new_routes, instance);
     // Compute the reduced costs of the new routes in the master problem
     double min_reduced_cost = +INFINITY;
     double max_reduced_cost = -INFINITY;
@@ -158,6 +160,7 @@ int main(int argc, char *argv[]){
             best_route = route;
         }
     }
+    
     cout << "Minimum reduced cost of the new routes : " << min_reduced_cost << endl;
     cout << "Maximum reduced cost of the new routes : " << max_reduced_cost << endl;
     if (max_reduced_cost > THRESHOLD){
@@ -173,19 +176,6 @@ int main(int argc, char *argv[]){
     cout << "Objective value of the new master solution : " << new_master_solution.objective_value << endl;
     IntegerSolution new_integer_solution = integer_RMP(instance, routes);
     cout << "Objective value of the new integer solution : " << new_integer_solution.objective_value << endl;
-    // Check the feasibility of the routes we have
-    cout << "-----------------------------------" << endl;
-    bool all_feasible = true;
-    for (int i = 0; i < routes.size(); i++){
-        const Route& route = routes.at(i);
-        if (new_integer_solution.coefficients[i] > 0 && !is_route_feasible(route, instance)){
-            cout << "Route " << i << " is not feasible" << endl;
-            all_feasible = false;
-        }
-    }
-    if (all_feasible){
-        cout << "All routes are feasible" << endl;
-    }
 
     return 0;
 }
