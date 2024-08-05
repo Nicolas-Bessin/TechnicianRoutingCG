@@ -94,7 +94,6 @@ CGResult column_generation(const Instance & instance, std::vector<Route> initial
         if (verbose) {
             cout << "Pricing sub problems solved in " << diff_pricing << " ms - Added " << n_added_routes << " routes";
             cout << " - Max reduced cost : " << setprecision(15) << max_reduced_cost << "\n";
-            pricing_time += diff_pricing;
             cout << "Iteration " << iteration << " - Objective value : " << solution.objective_value << "\n";
         }
         // If no route was added, we stop the algorithm

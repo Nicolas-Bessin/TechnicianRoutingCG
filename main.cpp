@@ -19,10 +19,10 @@
 #include <iomanip>
 #include <chrono>
 
-#define TIME_LIMIT 60
+#define TIME_LIMIT 120
 #define SOLVER_MODE WARM_START
 #define THRESHOLD 1e-6
-#define VERBOSE false
+#define VERBOSE true
 #define GREEDY_INIT false
 
 int main(int argc, char *argv[]){
@@ -146,13 +146,46 @@ int main(int argc, char *argv[]){
     IntegerSolution new_routes_solution = IntegerSolution(vector<int>(new_routes.size(), 1), 0);
     new_routes_solution.objective_value = compute_integer_objective(new_routes_solution, new_routes, instance);
     cout << "Objective value using only the new routes : " << new_routes_solution.objective_value << endl;
+    // Compute the reduced costs of the new routes in the master problem
+    double min_reduced_cost = +INFINITY;
+    double max_reduced_cost = -INFINITY;
+    Route& best_route = new_routes[0];
+    for (Route &route : new_routes){
+        double reduced_cost = compute_reduced_cost(route, master_solution.alphas, master_solution.betas[route.vehicle_id], instance);
+        min_reduced_cost = std::min(min_reduced_cost, reduced_cost);
+        if (reduced_cost > max_reduced_cost){
+            max_reduced_cost = reduced_cost;
+            best_route = route;
+        }
+    }
+    cout << "Minimum reduced cost of the new routes : " << min_reduced_cost << endl;
+    cout << "Maximum reduced cost of the new routes : " << max_reduced_cost << endl;
+    if (max_reduced_cost > THRESHOLD){
+        cout << "Route with the highest >0 reduced cost : " << endl;
+        print_route(best_route, instance);
+    }
     // Add them to the existing routes
     routes.insert(routes.end(), new_routes.begin(), new_routes.end());
+    cout << "-----------------------------------" << endl;
+    cout << "Re-solving the master and integer problems with the new routes" << endl;
     // Re-compute the master then the integer solution
     MasterSolution new_master_solution = relaxed_RMP(instance, routes);
     cout << "Objective value of the new master solution : " << new_master_solution.objective_value << endl;
     IntegerSolution new_integer_solution = integer_RMP(instance, routes);
     cout << "Objective value of the new integer solution : " << new_integer_solution.objective_value << endl;
+    // Check the feasibility of the routes we have
+    cout << "-----------------------------------" << endl;
+    bool all_feasible = true;
+    for (int i = 0; i < routes.size(); i++){
+        const Route& route = routes.at(i);
+        if (new_integer_solution.coefficients[i] > 0 && !is_route_feasible(route, instance)){
+            cout << "Route " << i << " is not feasible" << endl;
+            all_feasible = false;
+        }
+    }
+    if (all_feasible){
+        cout << "All routes are feasible" << endl;
+    }
 
     return 0;
 }

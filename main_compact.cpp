@@ -1,7 +1,12 @@
-#include "src/compact_solver.h"
 #include "src/instance.h"
 #include "src/parser.h"
 #include "src/preprocessing.h"
+
+#include "src/heuristics.h"
+#include "src/compact_solver.h"
+
+#include "src/solution_converter.h"
+
 #include "src/analysis.h"
 
 #include <iostream>
@@ -11,6 +16,7 @@
 #include <memory>
 
 #define TIME_LIMIT 60
+#define HEURISTIC_INIT true
 
 int main(int argc, char** argv) {
     using std::cout, std::endl;
@@ -21,17 +27,31 @@ int main(int argc, char** argv) {
 
     // Parse the instance from a JSON file
     auto start_parse = chrono::steady_clock::now();
-    cout << "Technician Routing Problem using Column Generation" << endl;
+    cout << "Technician Routing Problem using the compact formulation" << endl;
     string default_filename = "../data/instance_1_all_feasible.json";
-    Instance instance = parse_file(default_filename);
+    Instance instance = parse_file(default_filename, false);
 
     preprocess_interventions(instance);
     auto end_parse = chrono::steady_clock::now();
     int diff_parse = chrono::duration_cast<chrono::milliseconds>(end_parse - start_parse).count();
 
+    // Define a vector of routes to help the solver
+    vector<Route> initial_routes;
+    if (HEURISTIC_INIT){
+        cout << "Initializing the routes with a greedy heuristic" << endl;
+        initial_routes = greedy_heuristic(instance);
+        // Print the objective value of the greedy solution
+        IntegerSolution greedy_solution = IntegerSolution(vector<int>(initial_routes.size(), 1), 0);
+        double greedy_objective = compute_integer_objective(greedy_solution, initial_routes, instance);
+        cout << "Objective value of the greedy solution : " << setprecision(2) << fixed << greedy_objective << endl;
+    } else {
+        cout << "No heuristic initialization" << endl;
+    }
+
+
     // Solve the problem using the compact formulation
     auto start_solve = chrono::steady_clock::now();
-    CompactSolution compact_solution = compact_solver(instance, TIME_LIMIT);
+    CompactSolution compact_solution = compact_solver(instance, TIME_LIMIT, initial_routes, WARM_START, true);
     auto end_solve = chrono::steady_clock::now();
 
     cout << "-----------------------------------" << endl;
