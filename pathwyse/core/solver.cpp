@@ -38,7 +38,8 @@ Solver::Solver(std::string file_path) {
  */
 Solver::~Solver() {
     delete main_algorithm;
-    delete problem;
+    if (!shared_problem)
+        delete problem;
 
     for(auto &a: ensemble_algorithms)
         delete a;
@@ -136,8 +137,9 @@ void Solver::readProblem(std::string file_name) {
  * 
  * @param problem - Problem object (pointer).
  */
-void Solver::setCustomProblem(Problem& problem) {
+void Solver::setCustomProblem(Problem& problem, bool shared) {
     this->problem = &problem;
+    this->shared_problem = shared;
     scaleData();
     setStatus(SOLVER_READY);
 }

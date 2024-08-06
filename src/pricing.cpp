@@ -173,19 +173,19 @@ vector<Route> solve_pricing_problem(unique_ptr<Problem> & problem, int pool_size
     int origin = problem->getOrigin();
     int destination = problem->getDestination();
     // We now want to solve the problem
-    Solver* solver = new Solver("../pathwyse.set");
-    solver->setCustomProblem(*problem);
-    solver->setupAlgorithms();
-    solver->solve();
+    Solver solver = Solver("../pathwyse.set");
+    solver.setCustomProblem(*problem, true);
+    solver.setupAlgorithms();
+    solver.solve();
     // If the problem is indeterminate (time limit reached, we return an empty vector)
-    if (solver->getProblem()->getStatus() == PROBLEM_INDETERMINATE) {
+    if (solver.getProblem()->getStatus() == PROBLEM_INDETERMINATE) {
         cout << "Time limit reached for vehicle " << vehicle.id << endl;
         return vector<Route>();
     }
-    //solver->printBestSolution();
+    //solver.printBestSolution();
     // Get the solution we found
-    vector<Path> solutions = solver->getBestSolutions(pool_size);
-    //cout << "Solver found " << solver->getNumberOfSolutions() << " solutions" << endl;
+    vector<Path> solutions = solver.getBestSolutions(pool_size);
+    //cout << "Solver found " << solver.getNumberOfSolutions() << " solutions" << endl;
     // Convert each Path object to a Route object
     vector<Route> routes;
     for (auto& path : solutions) {

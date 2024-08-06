@@ -20,9 +20,9 @@
 #include <chrono>
 
 #define TIME_LIMIT 120
-#define SOLVER_MODE WARM_START
-#define THRESHOLD 1e-6
-#define VERBOSE false
+#define SOLVER_MODE IMPOSE_ROUTING
+#define THRESHOLD 1e-15
+#define VERBOSE true
 #define GREEDY_INIT false
 
 int main(int argc, char *argv[]){
@@ -106,13 +106,15 @@ int main(int argc, char *argv[]){
     // Print the number of interventions covered
     int n_covered = count_covered_interventions(integer_solution, routes, instance);
     cout << "Number of interventions covered : " << n_covered << " / " << instance.number_interventions << endl;
+    // Print the numbe rof columns generated
+    cout << "Number of columns generated : " << routes.size() << endl;
+    cout << "In " << result.number_of_iterations << " iterations" << endl;
+    // Print the number of duplicate routes
+    cout << "Number of duplicate routes : " << count_routes_with_duplicates(routes) << endl;
 
-    return 0;
-}
+    // cout << "-----------------------------------" << endl;
+    // cout << " Starting the compact solver using mode " << SOLVER_MODE << endl;
 
-
-    // // cout << " Starting the compact solver using mode " << SOLVER_MODE << endl;
-    
     // int remaining_time = TIME_LIMIT - elapsed_time / 1000;
     // // Keep only the routes that are used in the integer solution
     // vector<Route> used_routes = keep_used_routes(routes, integer_solution);
@@ -126,11 +128,23 @@ int main(int argc, char *argv[]){
     // cout << "Manual computing of the compact solution value : " << compute_integer_objective(compact_integer_solution, compact_routes, instance) << endl;
 
     // cout << "-----------------------------------" << endl;
-    // Print the routes in the compact solution
-    //print_used_routes(compact_integer_solution, compact_routes, instance);
+    // // Print the routes in the compact solution
+    // // print_used_routes(compact_integer_solution, compact_routes, instance);
 
-    // Run the analysis on the compact solution
-    //full_analysis(compact_integer_solution, compact_routes, instance);
+    // // Run the analysis on the compact solution
+    // // full_analysis(compact_integer_solution, compact_routes, instance);
+
+    // // Re-compute the master objective value using the compact routes only first
+    // MasterSolution compact_master_solution = relaxed_RMP(instance, compact_routes);
+    // cout << "Objective value of the RMP with only the routes from the compact formulation : " << compact_master_solution.objective_value << endl;
+    // // Then, add those routes to the existing routes and re-solve the master problem
+    // routes.insert(routes.end(), compact_routes.begin(), compact_routes.end());
+    // MasterSolution new_master_solution = relaxed_RMP(instance, routes);
+    // cout << "Objective value of the RMP with the routes from the compact formulation added : " << new_master_solution.objective_value << endl;
+
+    return 0;
+}
+
 
     // // Convert our master solution to a compact solution
     // CompactSolution<double> compact_solution = to_compact_solution(master_solution, routes, instance);
@@ -143,6 +157,7 @@ int main(int argc, char *argv[]){
     // // Evaluate the objective value of the compact solution
     // double compact_integer_objective = evaluate_compact_solution(compact_integer_solution, instance);
     // cout << "Objective value of the integer converted compact solution : " << compact_integer_objective << endl;
+
 
     
 
@@ -168,7 +183,6 @@ int main(int argc, char *argv[]){
     //         best_route = route;
     //     }
     // }
-    
     // cout << "Minimum reduced cost of the new routes : " << min_reduced_cost << endl;
     // cout << "Maximum reduced cost of the new routes : " << max_reduced_cost << endl;
     // if (max_reduced_cost > THRESHOLD){
