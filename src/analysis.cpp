@@ -110,6 +110,22 @@ int count_used_vehicles(const IntegerSolution& solution, const vector<Route>& ro
     return count;
 }
 
+double count_used_vehicles(const MasterSolution& solution, const vector<Route>& routes, const Instance& instance) {
+    using std::cout, std::endl;
+
+    int nb_routes = routes.size();
+    int nb_vehicles = instance.vehicles.size();
+    double used_vehicles = 0;
+    for (int v = 0; v < nb_vehicles; v++) {
+        for (int r = 0; r < nb_routes; r++) {
+            if (routes[r].vehicle_id == v) {
+                used_vehicles += solution.coefficients[r];
+            }
+        }
+    }
+    return used_vehicles;
+}
+
 void print_used_vehicles(const IntegerSolution& solution, const vector<Route>& routes, const Instance& instance) {
     using std::cout, std::endl;
 
@@ -487,6 +503,15 @@ void full_analysis(const IntegerSolution& integer_solution, const vector<Route>&
     cout << "Number of used vehicles : " << count_used_vehicles(integer_solution, routes, instance);
     cout << " / " << instance.vehicles.size() << endl;
 
+    // Compute the sum of the vehicles fixed costs
+    int fixed_costs = 0;
+    vector<int> is_vehicle_used = used_vehicles(integer_solution, routes, instance);
+    for (int i = 0; i < is_vehicle_used.size(); i++) {
+        if (is_vehicle_used[i] > 0) {
+            fixed_costs += instance.vehicles[i].cost;
+        }
+    }
+
     //cout << "Number of interventions that could be covered : " << count_coverable_interventions(integer_solution, routes, instance) << endl;
 
     // Check that all used routes are feasible
@@ -508,9 +533,10 @@ void full_analysis(const IntegerSolution& integer_solution, const vector<Route>&
     cout << "Number of routes with duplicates : " << count_routes_with_duplicates(routes) << " / " << routes.size() << endl;
     cout << "Number of used routes with duplicates : " << count_used_routes_with_duplicates(integer_solution, routes) << endl;
     cout << "Number of route kilometres : " << count_kilometres_travelled(integer_solution, routes, instance) << " km" << endl;
-    cout << "Time spent travelling : " << travelling_time << " minutes" << endl;
-    cout << "Time spent working : " << working_time << " minutes" << endl;
-    cout << "Time spent waiting : " << waiting_time << " minutes" << endl;
+    cout << "Total fixed costs : " << fixed_costs << endl;
+    cout << "Time spent travelling : " << travelling_time << " minutes";
+    cout << "- Time spent working : " << working_time << " minutes";
+    cout << " - Time spent waiting : " << waiting_time << " minutes" << endl;
     int shortest_time = shortest_time_route(integer_solution, routes);
     int longest_time = longest_time_route(integer_solution, routes);
     cout << "Total time : " << total_time << " minutes - Average per route : " << total_time / count_used_vehicles(integer_solution, routes, instance) << " minutes" << endl;

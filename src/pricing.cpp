@@ -162,8 +162,6 @@ void update_pricing_instance(unique_ptr<Problem> & pricing_problem, const vector
         double node_cost = alphas[true_i] - instance.M * instance.nodes[true_i].duration;
         objective->setNodeCost(i, node_cost);
     }
-    // Put in the constant part of the objective function
-    objective->setNodeCost(origin, beta + vehicle.cost);
     return;
 }
 

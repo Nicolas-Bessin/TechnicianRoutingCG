@@ -21,7 +21,7 @@
 
 #define TIME_LIMIT 120
 #define SOLVER_MODE IMPOSE_ROUTING
-#define THRESHOLD 1e-15
+#define THRESHOLD 1e-6
 #define VERBOSE true
 #define GREEDY_INIT false
 
@@ -38,8 +38,7 @@ int main(int argc, char *argv[]){
     cout << "Technician Routing Problem using Column Generation" << endl;
     cout << "-----------------------------------" << endl;
     string default_filename = "../data/instance_1_all_feasible.json";
-    Instance instance = parse_file(default_filename);
-
+    Instance instance = parse_file(default_filename, VERBOSE);
 
     // Check wether the time and distance matrices are symetric
     cout << "Distance matrix is symetric : " << is_symmetric(instance.distance_matrix) << " - Biggest gap : " << symmetry_gap(instance.distance_matrix) << endl;
@@ -103,14 +102,7 @@ int main(int argc, char *argv[]){
     cout << "Total time spent solving the integer problem : " << integer_time << " ms" << endl;
     cout << "Total elapsed time : " << elapsed_time << " ms" << endl;
     cout << "-----------------------------------" << endl;
-    // Print the number of interventions covered
-    int n_covered = count_covered_interventions(integer_solution, routes, instance);
-    cout << "Number of interventions covered : " << n_covered << " / " << instance.number_interventions << endl;
-    // Print the numbe rof columns generated
-    cout << "Number of columns generated : " << routes.size() << endl;
-    cout << "In " << result.number_of_iterations << " iterations" << endl;
-    // Print the number of duplicate routes
-    cout << "Number of duplicate routes : " << count_routes_with_duplicates(routes) << endl;
+    full_analysis(integer_solution, routes, instance);
 
     // cout << "-----------------------------------" << endl;
     // cout << " Starting the compact solver using mode " << SOLVER_MODE << endl;
