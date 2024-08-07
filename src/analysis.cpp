@@ -254,6 +254,10 @@ int count_coverable_interventions(const IntegerSolution& solution, const vector<
 }
 
 
+/*
+    Count the number of routes that have a duplicate anywhere in the list of routes.
+    Thus, if there is a pair of equal routes, both will be counted.
+*/
 int count_routes_with_duplicates(const vector<Route>& routes) {
     int nb_routes = routes.size();
     vector<int8_t> has_duplicate(nb_routes, 0);

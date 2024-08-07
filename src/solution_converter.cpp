@@ -66,10 +66,9 @@ std::vector<Route> compact_solution_to_routes(const Instance& instance, const Co
             // Update the edge matrix
             route_edges[current_node][next_node] = 1;
             // Update the travelling time & cost
-            const Node& next = instance.nodes[next_node];
-            int travelling_time = instance.time_matrix.at(node.node_id).at(next.node_id);
+            int travelling_time = instance.time_matrix[current_node][next_node];
             total_travelling_time += travelling_time;
-            int distance = instance.distance_matrix.at(node.node_id).at(next.node_id);
+            int distance = instance.distance_matrix[current_node][next_node];
             total_cost += distance * instance.cost_per_km;
 
             current_time += travelling_time;

@@ -38,7 +38,7 @@ int main(int argc, char *argv[]){
     cout << "Technician Routing Problem using Column Generation" << endl;
     cout << "-----------------------------------" << endl;
     string default_filename = "../data/instance_1_all_feasible.json";
-    Instance instance = parse_file(default_filename, true);
+    Instance instance = parse_file(default_filename, VERBOSE);
 
     // Check wether the time and distance matrices are symetric
     cout << "Distance matrix is symetric : " << is_symmetric(instance.distance_matrix) << " - Biggest gap : " << symmetry_gap(instance.distance_matrix) << endl;
@@ -103,17 +103,8 @@ int main(int argc, char *argv[]){
     cout << "Total elapsed time : " << elapsed_time << " ms" << endl;
 
     full_analysis(integer_solution, routes, instance);
-    full_analysis(integer_solution, routes, instance);
 
     cout << "-----------------------------------" << endl;
-    cout << "One round of generation in the gap" << endl;
-    double gap = integer_solution.objective_value - master_solution.objective_value;
-    cout << "Gap : " << gap << endl;
-    CGResult gap_result = column_generation(instance, routes, gap, time_limit, 1, VERBOSE);
-    // Insert the new routes in the existing routes
-    
-
-    full_analysis(gap_result.integer_solution, gap_result.routes, instance);
 
 
     return 0;
@@ -130,38 +121,18 @@ int main(int argc, char *argv[]){
     // vector<Route> compact_routes = compact_solution_to_routes(instance, compact_solution);
     // // Create a dummy integer solution (all variables set to 1)
     // IntegerSolution compact_integer_solution = IntegerSolution(vector<int>(compact_routes.size(), 1), compact_solution.objective_value);
-    // int remaining_time = TIME_LIMIT - elapsed_time / 1000;
-    // // Keep only the routes that are used in the integer solution
-    // vector<Route> used_routes = keep_used_routes(routes, integer_solution);
-    // // We can then solve the compact model with these imposed routings
-    // CompactSolution<int> compact_solution = compact_solver(instance, remaining_time, used_routes, SOLVER_MODE, true);
-    // // Convert back to routes
-    // vector<Route> compact_routes = compact_solution_to_routes(instance, compact_solution);
-    // // Create a dummy integer solution (all variables set to 1)
-    // IntegerSolution compact_integer_solution = IntegerSolution(vector<int>(compact_routes.size(), 1), compact_solution.objective_value);
 
-    // cout << "Manual computing of the compact solution value : " << compute_integer_objective(compact_integer_solution, compact_routes, instance) << endl;
     // cout << "Manual computing of the compact solution value : " << compute_integer_objective(compact_integer_solution, compact_routes, instance) << endl;
 
     // cout << "-----------------------------------" << endl;
     // // Print the routes in the compact solution
     // // print_used_routes(compact_integer_solution, compact_routes, instance);
-    // cout << "-----------------------------------" << endl;
-    // // Print the routes in the compact solution
-    // // print_used_routes(compact_integer_solution, compact_routes, instance);
+
+
 
     // // Run the analysis on the compact solution
     // // full_analysis(compact_integer_solution, compact_routes, instance);
-    // // Run the analysis on the compact solution
-    // // full_analysis(compact_integer_solution, compact_routes, instance);
 
-    // // Re-compute the master objective value using the compact routes only first
-    // MasterSolution compact_master_solution = relaxed_RMP(instance, compact_routes);
-    // cout << "Objective value of the RMP with only the routes from the compact formulation : " << compact_master_solution.objective_value << endl;
-    // // Then, add those routes to the existing routes and re-solve the master problem
-    // routes.insert(routes.end(), compact_routes.begin(), compact_routes.end());
-    // MasterSolution new_master_solution = relaxed_RMP(instance, routes);
-    // cout << "Objective value of the RMP with the routes from the compact formulation added : " << new_master_solution.objective_value << endl;
     // // Re-compute the master objective value using the compact routes only first
     // MasterSolution compact_master_solution = relaxed_RMP(instance, compact_routes);
     // cout << "Objective value of the RMP with only the routes from the compact formulation : " << compact_master_solution.objective_value << endl;
@@ -245,3 +216,14 @@ int main(int argc, char *argv[]){
 
     // full_analysis(new_integer_solution, routes, instance);
     
+
+
+
+    // cout << "One round of generation in the gap" << endl;
+    // double gap = integer_solution.objective_value - master_solution.objective_value;
+    // cout << "Gap : " << gap << endl;
+    // CGResult gap_result = column_generation(instance, routes, gap, time_limit, 1, VERBOSE);
+    // // Insert the new routes in the existing routes
+    
+
+    // full_analysis(gap_result.integer_solution, gap_result.routes, instance);
