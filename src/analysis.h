@@ -21,6 +21,8 @@ std::vector<int> used_vehicles(const IntegerSolution& solution, const std::vecto
 
 int count_used_vehicles(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
 
+double count_used_vehicles(const MasterSolution& solution, const std::vector<Route>& routes, const Instance& instance);
+
 void print_used_vehicles(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
 
 double time_spent_travelling(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);

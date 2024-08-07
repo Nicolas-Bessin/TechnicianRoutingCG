@@ -54,8 +54,11 @@ CGResult column_generation(const Instance & instance, std::vector<Route> initial
         if (verbose) {
             cout << "Master problem solved in " << diff << " ms \n";
             cout << "Number of interventions covered : " << setprecision(2) << count_covered_interventions(solution, routes, instance);
-            cout << " - Number of zeros in alphas : " << count_zeros(solution.alphas);
-            cout << " - Number of zeros in betas : " << count_zeros(solution.betas) << "\n";
+            cout << " - Number of vehicles used : " << count_used_vehicles(solution, routes, instance) << "\n";
+            cout << "Min alpha : " << *std::min_element(solution.alphas.begin(), solution.alphas.end());
+            cout << " - Max alpha : " << *std::max_element(solution.alphas.begin(), solution.alphas.end());
+            cout << " - Min beta : " << *std::min_element(solution.betas.begin(), solution.betas.end());
+            cout << " - Max beta : " << *std::max_element(solution.betas.begin(), solution.betas.end()) << "\n";
         }
         master_time += diff;
 
@@ -71,16 +74,17 @@ CGResult column_generation(const Instance & instance, std::vector<Route> initial
 
         for (const int& v : vehicle_order){
             const Vehicle& vehicle = instance.vehicles.at(v);
-            update_pricing_instance(pricing_problems.at(v), solution.alphas, solution.betas[v], instance, vehicle);
+            update_pricing_instance(pricing_problems.at(v), solution.alphas, instance, vehicle);
             vector<Route> best_new_routes = solve_pricing_problem(pricing_problems.at(v), 5, instance, vehicle);
             if (best_new_routes.size() == 0){
                 time_limit_reached[vehicle.id]++;
             }
             // Go through the returned routes, and add them to the master problem if they have a positive reduced cost
             for (const auto &route : best_new_routes){
-                max_reduced_cost = std::max(max_reduced_cost, route.reduced_cost);
-                //double computed_reduced_cost = compute_reduced_cost(route, solution.alphas, solution.betas[v], instance);
-                if (route.reduced_cost > reduced_cost_threshold){
+                double reduced_cost = route.reduced_cost - solution.betas[v] - vehicle.cost;
+                max_reduced_cost = std::max(max_reduced_cost, reduced_cost);
+                double computed_reduced_cost = compute_reduced_cost(route, solution.alphas, solution.betas[v], instance);
+                if (reduced_cost> reduced_cost_threshold){
                     routes.push_back(route);
                     n_added_routes++;
                     n_routes_per_v[v]++;

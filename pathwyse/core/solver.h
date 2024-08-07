@@ -30,7 +30,7 @@ public:
 
     /** Problem management **/
     void readProblem(std::string file_name = "");                                           //Use default problem/reader
-    void setCustomProblem(Problem& problem);                                                //Set a custom problem
+    void setCustomProblem(Problem& problem, bool shared = false);                           //Set a custom problem, if it is shared, the solver will not delete it
     Problem* getProblem() {return problem;}                                                 //Get problem pointer
     int getNumberOfNodes();
     void setInitCost(double cost);
@@ -117,6 +117,9 @@ private:
 
     //Data collection
     DataCollector collector;
+
+    // If the problem is shared, the solver will not delete it
+    bool shared_problem;
 
 };
 #endif

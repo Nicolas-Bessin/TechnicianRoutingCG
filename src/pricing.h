@@ -15,7 +15,7 @@ std::unique_ptr<Problem> create_pricing_instance(const Instance &instance, const
 
 
 // Update a pricing problem with the dual values given by the master problem
-void update_pricing_instance(std::unique_ptr<Problem> & pricing_problem, const std::vector<double> &alphas, double beta, const Instance &instance, const Vehicle &vehicle);
+void update_pricing_instance(std::unique_ptr<Problem> & pricing_problem, const std::vector<double> &alphas, const Instance &instance, const Vehicle &vehicle);
 
 
 /* Solves a pre-defined pricing problem and return a std::vector of routes that are feasible (of maximal reduced cost)

@@ -1,4 +1,5 @@
-#include <gurobi_c++.h>
+#include "gurobi_c++.h"
+
 #include "master.h"
 
 using std::vector;
@@ -19,7 +20,7 @@ MasterSolution relaxed_RMP(const Instance& instance, const vector<Route>& routes
         // Create the variables
         vector<GRBVar> variables;
         for(int r = 0; r < routes.size(); r++){
-            variables.push_back(master.addVar(0.0, 1.0, 0.0, GRB_CONTINUOUS));
+            variables.push_back(master.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS));
         }
         // Create the intervention constraints (each intervention is visited at most once)
         vector<GRBConstr> intervention_constraints;
@@ -99,7 +100,7 @@ IntegerSolution integer_RMP(const Instance& instance, const vector<Route>& route
         // Create the variables
         vector<GRBVar> variables;
         for(int r = 0; r < routes.size(); r++){
-            variables.push_back(master.addVar(0, 1, 0, GRB_BINARY));
+            variables.push_back(master.addVar(0, GRB_INFINITY, 0, GRB_INTEGER));
         }
         // Create the intervention constraints (each intervention is visited at most once)
         vector<GRBConstr> intervention_constraints;
@@ -121,6 +122,22 @@ IntegerSolution integer_RMP(const Instance& instance, const vector<Route>& route
             }
             vehicle_constraints.push_back(master.addConstr(expr <= 1));
         }
+
+        // Test : impose using more than 15 vehicles
+        GRBLinExpr expr = 0;
+        for (int r = 0; r < routes.size(); r++){
+            expr += variables[r];
+        }
+        //master.addConstr(expr >= 14);
+
+        // Test : impose covering more than 75 interventions
+        GRBLinExpr expr2 = 0;
+        for (int i = 0; i < instance.number_interventions; i++){
+            for (int r = 0; r < routes.size(); r++){
+                expr2 += routes[r].is_in_route[i] * variables[r];
+            }
+        }
+        //master.addConstr(expr2 >= 75);
 
         // Finally, we set the objective function
         GRBLinExpr obj = 0;

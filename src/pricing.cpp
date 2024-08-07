@@ -148,8 +148,7 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
 
 
 
-void update_pricing_instance(unique_ptr<Problem> & pricing_problem, const vector<double>& alphas, double beta,
-        const Instance& instance, const Vehicle& vehicle) {
+void update_pricing_instance(unique_ptr<Problem> & pricing_problem, const vector<double>& alphas, const Instance& instance, const Vehicle& vehicle) {
     // Get the number of nodes in the problem : equal to the number of available interventions + 2
     int n_interventions_v = vehicle.interventions.size();
     int origin = n_interventions_v;
@@ -162,8 +161,6 @@ void update_pricing_instance(unique_ptr<Problem> & pricing_problem, const vector
         double node_cost = alphas[true_i] - instance.M * instance.nodes[true_i].duration;
         objective->setNodeCost(i, node_cost);
     }
-    // Put in the constant part of the objective function
-    objective->setNodeCost(origin, beta + vehicle.cost);
     return;
 }
 
@@ -173,19 +170,19 @@ vector<Route> solve_pricing_problem(unique_ptr<Problem> & problem, int pool_size
     int origin = problem->getOrigin();
     int destination = problem->getDestination();
     // We now want to solve the problem
-    Solver* solver = new Solver("../pathwyse.set");
-    solver->setCustomProblem(*problem);
-    solver->setupAlgorithms();
-    solver->solve();
+    Solver solver = Solver("../pathwyse.set");
+    solver.setCustomProblem(*problem, true);
+    solver.setupAlgorithms();
+    solver.solve();
     // If the problem is indeterminate (time limit reached, we return an empty vector)
-    if (solver->getProblem()->getStatus() == PROBLEM_INDETERMINATE) {
+    if (solver.getProblem()->getStatus() == PROBLEM_INDETERMINATE) {
         cout << "Time limit reached for vehicle " << vehicle.id << endl;
         return vector<Route>();
     }
-    //solver->printBestSolution();
+    //solver.printBestSolution();
     // Get the solution we found
-    vector<Path> solutions = solver->getBestSolutions(pool_size);
-    //cout << "Solver found " << solver->getNumberOfSolutions() << " solutions" << endl;
+    vector<Path> solutions = solver.getBestSolutions(pool_size);
+    //cout << "Solver found " << solver.getNumberOfSolutions() << " solutions" << endl;
     // Convert each Path object to a Route object
     vector<Route> routes;
     for (auto& path : solutions) {
