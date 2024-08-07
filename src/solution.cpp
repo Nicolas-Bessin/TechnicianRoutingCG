@@ -178,11 +178,13 @@ bool is_route_feasible(const Route& route, const Instance& instance) {
         }
         // Check that the time window is respected (with the way we built the solution, we can't arrive too early)
         if (current_time < intervention.start_window) {
-            cout << "Intervention " << i << " starts too early" << endl;
+            cout << "Intervention " << intervention_id << " starts too early";
+            cout << " : " << current_time << " < " << intervention.start_window << endl;
             return false;
         }
         if (current_time + duration > intervention.end_window) {
-            cout << "Intervention " << i << " ends too late : " << current_time + duration << " > " << intervention.end_window << endl;
+            cout << "Intervention " << intervention_id << " ends too late : ";
+            cout << current_time + duration << " > " << intervention.end_window << endl;
             return false;
         }
         // Check wether the lunch break is respected
