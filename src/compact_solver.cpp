@@ -142,7 +142,7 @@ CompactSolution<int> compact_solver(const Instance & instance, int time_limit, s
                 const Node& node_i = instance.nodes[i];
                 const Node& node_j = instance.nodes[j];
                 GRBLinExpr expr = u[i] - node_i.end_window;
-                double coef = node_i.end_window + node_i.duration + metric(node_i, node_j, instance.time_matrix);
+                double coef = node_i.end_window + node_i.duration + instance.time_matrix[i][j];
                 for (int v = 0; v < n_vehicles; v++) {
                     expr += coef * x[i][j][v];
                 }
@@ -155,8 +155,8 @@ CompactSolution<int> compact_solver(const Instance & instance, int time_limit, s
             for (int v = 0; v < n_vehicles; v++) {
                 int depot = instance.vehicles[v].depot;
                 const Node & depot_node = instance.nodes[depot];
-                int travel_time_out = metric(depot_node, node_i, instance.time_matrix);
-                int travel_time_in = metric(node_i, depot_node, instance.time_matrix);
+                int travel_time_out = instance.time_matrix[depot][i];
+                int travel_time_in = instance.time_matrix[i][depot];
                 // from the depot
                 model.addConstr(travel_time_out * x[depot][i][v] <= u[i]);
                 // to the depot
@@ -218,7 +218,7 @@ CompactSolution<int> compact_solver(const Instance & instance, int time_limit, s
             const Node & node_i = instance.nodes[i];
             for (int j = 0; j < n_nodes; j++) {
                 const Node & node_j = instance.nodes[j];
-                int distance = metric(node_i, node_j, instance.distance_matrix);
+                int distance = instance.distance_matrix[i][j];
                 for (int v = 0; v < n_vehicles; v++) {
                     obj += (instance.M * node_i.duration - distance * instance.cost_per_km) * x[i][j][v];
                 }
@@ -404,7 +404,7 @@ CompactSolution<double> relaxed_compact_solver(const Instance & instance, int ti
                 const Node& node_i = instance.nodes[i];
                 const Node& node_j = instance.nodes[j];
                 GRBLinExpr expr = u[i] - node_i.end_window;
-                double coef = node_i.end_window + node_i.duration + metric(node_i, node_j, instance.time_matrix);
+                double coef = node_i.end_window + node_i.duration + instance.time_matrix[i][j];
                 for (int v = 0; v < n_vehicles; v++) {
                     expr += coef * x[i][j][v];
                 }
@@ -417,8 +417,8 @@ CompactSolution<double> relaxed_compact_solver(const Instance & instance, int ti
             for (int v = 0; v < n_vehicles; v++) {
                 int depot = instance.vehicles[v].depot;
                 const Node & depot_node = instance.nodes[depot];
-                int travel_time_out = metric(depot_node, node_i, instance.time_matrix);
-                int travel_time_in = metric(node_i, depot_node, instance.time_matrix);
+                int travel_time_out = instance.time_matrix[depot][i];
+                int travel_time_in = instance.time_matrix[i][depot];
                 // from the depot
                 model.addConstr(travel_time_out * x[depot][i][v] <= u[i]);
                 // to the depot
@@ -451,7 +451,7 @@ CompactSolution<double> relaxed_compact_solver(const Instance & instance, int ti
             const Node & node_i = instance.nodes[i];
             for (int j = 0; j < n_nodes; j++) {
                 const Node & node_j = instance.nodes[j];
-                int distance = metric(node_i, node_j, instance.distance_matrix);
+                int distance = instance.distance_matrix[i][j];
                 for (int v = 0; v < n_vehicles; v++) {
                     obj += (instance.M * node_i.duration - distance * instance.cost_per_km) * x[i][j][v];
                 }

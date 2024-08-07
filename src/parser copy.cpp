@@ -12,10 +12,27 @@ using std::vector, std::string, std::map, std::set;
 using std::ifstream, std::cout, std::endl;
 using std::min, std::max, std::__gcd;
 
-// Convert a time into a relative time
+// Convert a start time into a relative time 
 // 0 is the beginning of the work day
 // Lunch break not included in the work time measurement
-int convert_to_relative_time(int end_time){
+int convert_start_time(int start_time){
+    if (start_time < START_MORNING){
+        return 0;
+    } else if (start_time < END_MORNING){
+        return start_time - START_MORNING;
+    } else if (start_time < START_AFTERNOON){
+        return MID_DAY;
+    } else if (start_time < END_AFTERNOON){
+        return start_time - START_MORNING - LUNCH_BREAK;
+    } else {
+        return END_DAY;
+    }
+}
+
+// Convert an end time into a relative time
+// 0 is the beginning of the work day
+// Lunch break not included in the work time measurement
+int convert_end_time(int end_time){
     if (end_time < START_MORNING){
         return 0;
     } else if (end_time < END_MORNING){
@@ -34,8 +51,8 @@ Node parse_intervention(json data){
     string id = data.at("id");
     int node_id = data.at("node_id");
     int duration = data.at("duration");
-    int start_window = convert_to_relative_time(data.at("start_window"));
-    int end_window = convert_to_relative_time(data.at("end_window"));
+    int start_window = convert_start_time(data.at("start_window"));
+    int end_window = convert_end_time(data.at("end_window"));
     bool is_long = duration >= LONG_INTERVENTION;
     map<string, int> skills = map<string, int>();
     // data.at("skills") is a list of list of skills (i.e the skills needed by each technician)
@@ -68,21 +85,6 @@ Technician parse_technician(json data){
     map<string, int> capacities = data.at("capacities");
     string operationnal_base = data.at("ope_base");
     return Technician(id, skills, capacities, operationnal_base);
-}
-
-bool can_do_intervention(const Node& intervention, const Vehicle& vehicle){
-    // Check that the vehicle has the skills to do the intervention
-    for (const auto &[skill, quantity] : intervention.required_skills){
-        // If the skill is not in the vehicle, the vehicle cannot do the intervention
-        if (vehicle.skills.find(skill) == vehicle.skills.end()){
-            return false;
-        }
-        // If the vehicle does not have enough technicians with the skill, the vehicle cannot do the intervention
-        if (vehicle.skills.at(skill) < quantity){
-            return false;
-        }
-    }
-    return true;
 }
 
 
@@ -126,8 +128,8 @@ Instance parse_file(string filename, bool verbose){
 
     // Get the matrices of distance and time
     json loc_manager = data.at("loc_manager");
-    vector<vector<int>> distance_matrix_raw = loc_manager.at("matrix").at("distance");
-    vector<vector<int>> time_matrix_raw = loc_manager.at("matrix").at("time");
+    vector<vector<int>> distance_matrix = loc_manager.at("matrix").at("distance");
+    vector<vector<int>> time_matrix = loc_manager.at("matrix").at("time");
 
     // For the interventions and warehouse, we wil put them into a single vector
     // Also build a map from intervention / warehouse id to index in the vector
@@ -166,20 +168,6 @@ Instance parse_file(string filename, bool verbose){
         cout << "Number of nodes: " << nodes.size() << endl;
     }
 
-    // Build the time and distance matrix for the nodes :
-    // time_matrix[i][j] is the time to go from node i to node j
-    vector<vector<int>> time_matrix = vector<vector<int>>(nodes.size(), vector<int>(nodes.size(), 0));
-    vector<vector<int>> distance_matrix = vector<vector<int>>(nodes.size(), vector<int>(nodes.size(), 0));
-    for (int i = 0; i < nodes.size(); i++){
-        for (int j = 0; j < nodes.size(); j++){
-            // The distance and time matrices are indexed by the node_id
-            int node1_id = nodes[i].node_id;
-            int node2_id = nodes[j].node_id;
-            distance_matrix[i][j] = distance_matrix_raw.at(node1_id).at(node2_id);
-            time_matrix[i][j] = time_matrix_raw.at(node1_id).at(node2_id);
-        }
-    }
-
 
     // Before building the teams, we put all the technicians into a dictionary for easy access
     vector<json> technicians_data = data.at("tech_manager").at("technicians");
@@ -199,8 +187,10 @@ Instance parse_file(string filename, bool verbose){
     vector<vector<string>> tech_id_per_team = data.at("tech_manager").at("teams").at("fixed_teams");
     // Also keep track of the technicians already in a team
     set<string> tech_with_team = set<string>();
-    for (const auto &team_ids : tech_id_per_team){
-        tech_with_team.insert(team_ids.begin(), team_ids.end());
+    for (int i = 0; i < tech_id_per_team.size(); i++){
+        for (int j = 0; j < tech_id_per_team[i].size(); j++){
+            tech_with_team.insert(tech_id_per_team[i][j]);
+        }
     }
     // We then add every technician not into a fixed team as a team of one
     for (const auto &[tech_id, tech] : technicians){
@@ -216,13 +206,14 @@ Instance parse_file(string filename, bool verbose){
 
     // We now construct one vehicle per team
     vector<Vehicle> vehicles = vector<Vehicle>();
-    for (int v = 0; v < tech_id_per_team.size(); v++){
+    for (int i = 0; i < tech_id_per_team.size(); i++){
+        vector<string> team = tech_id_per_team[i];
         // Collect the technicians in the team
-        vector<string> team_ids = tech_id_per_team[v];
+        vector<string> tech_ids = vector<string>(team);
         // Build the map of available skills for the vehicle
         map<string, int> skills = map<string, int>();
-        for (const string & id : team_ids){
-            for (const string &skill : technicians[id].skills){
+        for (const auto &[tech_id, tech] : technicians){
+            for (const auto &skill : tech.skills){
                 // If accessing the skill for the first time, it is initialized to 0 by the [] operator
                 skills[skill] += 1;
             }
@@ -230,28 +221,32 @@ Instance parse_file(string filename, bool verbose){
         // We will build the list of interventions for the vehicle later
         vector<int> interventions = vector<int>();
         // Check that every technician in the team has the same operationnal base
-        string operationnal_base = technicians[team_ids[0]].operationnal_base;
-        for (const string& id : team_ids){
-            if (technicians[id].operationnal_base != operationnal_base){
-                cout << "Warning : technicians in the same team must have the same operationnal base - team " << v << endl;
-                cout << "Technician " << id << " has operationnal base " << technicians[id].operationnal_base << endl;
-                cout << "Technician " << team_ids[0] << " has operationnal base " << technicians[team_ids[0]].operationnal_base << endl;
+        string operationnal_base = technicians[team[0]].operationnal_base;
+        for (const auto &tech_id : team){
+            if (technicians[tech_id].operationnal_base != operationnal_base){
+                cout << "Warning : technicians in the same team must have the same operationnal base - team " << i << endl;
+                cout << "Technician " << tech_id << " has operationnal base " << technicians[tech_id].operationnal_base << endl;
+                cout << "Technician " << team[0] << " has operationnal base " << technicians[team[0]].operationnal_base << endl;
+                // ONLY FOR THE INITIAL INSTANCE, WE HARDCODE THE OPERATIONNAL BASE
+                cout << "Hard coding operationnal base to ope_base5" << endl;
+                operationnal_base = "ope_base5";
             }
         }
         // Get the depot node
         int depot = node_id_to_index[operationnal_base];
-        // Build the capacities of the vehicles as the min of the capacities of each technician for each ressource
+        // Build the capacities of the vehicles as the min of the capacities each technician for each ressource
         map<string, int> capacities = map<string, int>();
-        for (const string & label : ressources){
-            int min_capacity = technicians[team_ids[0]].capacities[label];
-            for (const string &id : team_ids){
-                min_capacity = min(min_capacity, technicians[id].capacities[label]);
+        for (int j = 0; j < number_ressources; j++){
+            string ressource = ressources[j];
+            int min_capacity = technicians[team[0]].capacities[ressource];
+            for (int k = 1; k < team.size(); k++){
+                min_capacity = min(min_capacity, technicians[team[k]].capacities[ressource]);
             }
-            capacities[label] = min_capacity;
+            capacities[ressource] = min_capacity;
         }
         // Vehicle cost is the sum of the cost of each technician in the team
-        double vehicle_cost = tech_cost * team_ids.size();
-        vehicles.push_back(Vehicle(v, team_ids, skills, interventions, depot, capacities, vehicle_cost));
+        double vehicle_cost = tech_cost * team.size();
+        vehicles.push_back(Vehicle(i, tech_ids, skills, interventions, depot, capacities, vehicle_cost));
     }
 
     // Print the number of vehicles
@@ -265,8 +260,20 @@ Instance parse_file(string filename, bool verbose){
     for (int i = 0; i < nb_interventions; i++){
         for (int v = 0; v < nb_vehicles; v++){
             // We must ensure that the vehicle has enough technicians with each skill to do the intervention
-            bool can_do = can_do_intervention(nodes[i], vehicles[v]);
-            has_skill[i][v] = can_do;
+            bool can_do_intervention = true;
+            for (const auto & [skill, quantity] : nodes[i].required_skills){
+                // If the skill needed for the intervention is not in the vehicle, the vehicle cannot do the intervention
+                if (vehicles[v].skills.find(skill) == vehicles[v].skills.end()){
+                    can_do_intervention = false;
+                    break;
+                }
+                // If the vehicle does not have enough technicians with the skill, the vehicle cannot do the intervention
+                if (vehicles[v].skills[skill] < quantity){
+                    can_do_intervention = false;
+                    break;
+                }
+            }
+            has_skill[i][v] = can_do_intervention;
         }
     }
 
@@ -290,7 +297,6 @@ Instance parse_file(string filename, bool verbose){
             }
         }
     }
-
     // Also count the number of vehicle in each depot
     for (int i = 0; i < nb_vehicles; i++){
         nodes[vehicles[i].depot].nb_vehicles++;
@@ -316,13 +322,15 @@ Instance parse_file(string filename, bool verbose){
     // Only among the pairs of node that we parsed previously
     double max_speed = 0;
     std::pair<int, int> max_speed_pair = std::make_pair(0, 0);
-    for (int i = 0; i < nodes.size(); i++){
-        for (int j = 0; j < nodes.size(); j++){
-            if (time_matrix[i][j] > 0){
-                double speed = distance_matrix[i][j] / (double) time_matrix[i][j];
+    for (const Node & node1 : nodes){
+        for (const Node & node2 : nodes){
+            double dist = distance_matrix[node1.node_id][node2.node_id];
+            double time = time_matrix[node1.node_id][node2.node_id];
+            if (time > 0){
+                double speed = dist / time;
                 if (speed > max_speed){
                     max_speed = speed;
-                    max_speed_pair = std::make_pair(i, j);
+                    max_speed_pair = std::make_pair(node1.node_id, node2.node_id);
                 }
             }
         }

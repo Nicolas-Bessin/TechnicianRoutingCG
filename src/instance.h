@@ -56,8 +56,6 @@ struct Node {
     }
 };
 
-int metric(const Node& node1, const Node& node2, std::vector<std::vector<int>> metric_matrix);
-
 struct Technician {
     std::string id;
     std::set<std::string> skills;

@@ -105,19 +105,18 @@ double compute_reduced_cost(const Route& route, const std::vector<double>& alpha
         return reduced_cost;
     }
     // Add the cost of the edge from the warehouse to the first node
-    const Node& depot = instance.nodes[route.id_sequence[0]];
-    const Node& first_inervention = instance.nodes[route.id_sequence[1]];
-    double distance = metric(depot, first_inervention, instance.distance_matrix);
+    double distance = instance.distance_matrix[route.id_sequence[0]][route.id_sequence[1]];
     reduced_cost -= distance * instance.cost_per_km;
 
     // Go through the consecutive interventions in the route
     for (int i = 1; i < tour_length - 1; i++) {
-        const Node& node = instance.nodes[route.id_sequence[i]];
-        const Node& next_node = instance.nodes[route.id_sequence[i + 1]];
+        int node_id = route.id_sequence[i];
+        const Node& node = instance.nodes[node_id];
+        int next_node_id = route.id_sequence[i + 1];
         // Add the cost associated with the node
-        reduced_cost += instance.M * node.duration - alphas.at(route.id_sequence[i]);
+        reduced_cost += instance.M * node.duration - alphas.at(node_id);
         // Then add the cost associated with the arc
-        double distance = metric(node, next_node, instance.distance_matrix);
+        double distance = instance.distance_matrix[node_id][next_node_id];
         reduced_cost -= distance * instance.cost_per_km;
     }
     // Add the cost associated with the last node
@@ -199,8 +198,9 @@ bool is_route_feasible(const Route& route, const Instance& instance) {
             consummed_capacities[key] += value;
         }
         // Update the current time
-        const Node& next_intervention = instance.nodes[route.id_sequence[i + 1]];
-        double travel_time = metric(intervention, next_intervention, instance.time_matrix);
+        int next_intervention_id = route.id_sequence[i + 1];
+        const Node& next_intervention = instance.nodes[next_intervention_id];
+        double travel_time = instance.time_matrix[intervention_id][next_intervention_id];
         current_time += duration + travel_time;
         // If we arrive too early, we will wait
         if (current_time < next_intervention.start_window) {
