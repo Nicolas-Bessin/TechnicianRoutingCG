@@ -74,7 +74,7 @@ CGResult column_generation(const Instance & instance, std::vector<Route> initial
 
         for (const int& v : vehicle_order){
             const Vehicle& vehicle = instance.vehicles.at(v);
-            update_pricing_instance(pricing_problems.at(v), solution.alphas, solution.betas[v], instance, vehicle);
+            update_pricing_instance(pricing_problems.at(v), solution.alphas, instance, vehicle);
             vector<Route> best_new_routes = solve_pricing_problem(pricing_problems.at(v), 5, instance, vehicle);
             if (best_new_routes.size() == 0){
                 time_limit_reached[vehicle.id]++;
@@ -83,7 +83,7 @@ CGResult column_generation(const Instance & instance, std::vector<Route> initial
             for (const auto &route : best_new_routes){
                 double reduced_cost = route.reduced_cost - solution.betas[v] - vehicle.cost;
                 max_reduced_cost = std::max(max_reduced_cost, reduced_cost);
-                //double computed_reduced_cost = compute_reduced_cost(route, solution.alphas, solution.betas[v], instance);
+                double computed_reduced_cost = compute_reduced_cost(route, solution.alphas, solution.betas[v], instance);
                 if (reduced_cost> reduced_cost_threshold){
                     routes.push_back(route);
                     n_added_routes++;

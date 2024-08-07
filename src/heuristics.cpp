@@ -40,7 +40,7 @@ std::vector<Route> greedy_heuristic(const Instance& instance) {
         // Create a pricing problem for the vehicle
         unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, v);
         // Update it with zeros for alphas and betas
-        update_pricing_instance(pricing_problem, vector<double>(n_interventions, 0), 0, instance, v);
+        update_pricing_instance(pricing_problem, vector<double>(n_interventions, 0), instance, v);
         // Solve the pricing problem
         vector<Route> new_routes = solve_pricing_problem(pricing_problem, 1, instance, v);
         // If no route was found, continue to the next vehicle
@@ -105,7 +105,7 @@ std::vector<Route> greedy_heuristic_alphas(const Instance& instance) {
         // Create a pricing problem for the vehicle
         unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, vehicle);
         // Update it with alphas and zeros for betas
-        update_pricing_instance(pricing_problem, alphas, 0, instance, vehicle);
+        update_pricing_instance(pricing_problem, alphas, instance, vehicle);
         // Solve the pricing problem
         vector<Route> new_routes = solve_pricing_problem(pricing_problem, 1, instance, vehicle);
         // If no route was found, continue to the next vehicle
