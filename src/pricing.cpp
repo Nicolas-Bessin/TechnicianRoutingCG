@@ -202,6 +202,7 @@ vector<Route> solve_pricing_problem(unique_ptr<Problem> & problem, int pool_size
         vector<int> id_sequence;
         vector<int> is_in_route(instance.nodes.size(), 0);
         vector<double> start_times(instance.nodes.size(), 0);
+        vector<vector<int>> route_edges(instance.nodes.size(), vector<int>(instance.nodes.size(), 0));
         
         // Keep track of the time ellapsed
         int current_time = 0;
@@ -210,6 +211,8 @@ vector<Route> solve_pricing_problem(unique_ptr<Problem> & problem, int pool_size
             int true_j = i+1 == tour.size()-1 ? vehicle.depot : vehicle.interventions[tour[i + 1]];
             // Update the sequence of interventions
             id_sequence.push_back(true_i);
+            // Update the edge matrix
+            route_edges[true_i][true_j] = 1;
             // Update the is_in_route and start_times vectors
             is_in_route[true_i] = 1;
             start_times[true_i] = current_time;
@@ -240,10 +243,22 @@ vector<Route> solve_pricing_problem(unique_ptr<Problem> & problem, int pool_size
         id_sequence.push_back(true_last);
         is_in_route[true_last] = 1;
         start_times[true_last] = current_time;
-        
-        routes.push_back(Route(vehicle.id, total_cost, reduced_cost, total_duration, total_travelling_time, total_waiting_time, id_sequence, is_in_route, start_times));
-    }
 
+        // Create the Route object
+        Route new_route(instance.nodes.size());
+        new_route.vehicle_id = vehicle.id;
+        new_route.total_cost = total_cost;
+        new_route.reduced_cost = reduced_cost;
+        new_route.total_duration = total_duration;
+        new_route.total_travelling_time = total_travelling_time;
+        new_route.total_waiting_time = total_waiting_time;
+        new_route.id_sequence = id_sequence;
+        new_route.is_in_route = is_in_route;
+        new_route.start_times = start_times;
+        new_route.route_edges = route_edges;
+        
+        routes.push_back(new_route);
+    }
     
     return routes;
 }

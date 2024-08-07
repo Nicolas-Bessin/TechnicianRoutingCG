@@ -25,6 +25,7 @@ std::vector<Route> compact_solution_to_routes(const Instance& instance, const Co
         vector<int> sequence;
         vector<int> is_in_route = vector<int>(n_nodes, 0);
         vector<double> start_times = vector<double>(n_nodes, 0);
+        vector<vector<int>> route_edges = vector<vector<int>>(n_nodes, vector<int>(n_nodes, 0));
         // Go through the route
         bool reached_depot = false;
         int current_node = vehicle.depot;
@@ -62,10 +63,10 @@ std::vector<Route> compact_solution_to_routes(const Instance& instance, const Co
                 std::cerr << "Error : next node is already in the route" << " / Next node : " << next_node << std::endl;
                 break;
             }
-            const Node& next = instance.nodes[next_node];
+            // Update the edge matrix
+            route_edges[current_node][next_node] = 1;
             // Update the travelling time & cost
-            //cout << "Current number of nodes : " << sequence.size() << endl;
-            //cout << "Current node : " << current_node << " / Next node : " << next_node << endl;
+            const Node& next = instance.nodes[next_node];
             int travelling_time = instance.time_matrix.at(node.node_id).at(next.node_id);
             total_travelling_time += travelling_time;
             int distance = instance.distance_matrix.at(node.node_id).at(next.node_id);
@@ -83,8 +84,19 @@ std::vector<Route> compact_solution_to_routes(const Instance& instance, const Co
         // Add the depot to the sequence
         sequence.push_back(vehicle.depot);
 
-        // Create the route
-        Route route = Route(v, total_cost, 0.0, total_duration, total_travelling_time, total_waiting_time, sequence, is_in_route, start_times);
+        // Create the route and add it to the list
+        Route route(n_nodes);
+        route.vehicle_id = v;
+        route.total_cost = total_cost;
+        route.reduced_cost = 0.0;
+        route.total_duration = total_duration;
+        route.total_travelling_time = total_travelling_time;
+        route.total_waiting_time = total_waiting_time;
+        route.id_sequence = sequence;
+        route.is_in_route = is_in_route;
+        route.start_times = start_times;
+        route.route_edges = route_edges;
+
         routes.push_back(route);
     }
 
