@@ -15,7 +15,7 @@ struct BPNode {
     // Node upper bound and lower bound
     double upper_bound;
     double lower_bound;
-    // Active routes in the node : a route is active if its coefficient is 1
+    // Active routes in the node : routes[r] is acive if active_routes[r] == 1
     std::vector<int> active_routes;
     // Upper bounds constraints imposed on the x_ijv variables - x_ijv <= 0 for (i, j, v) in upper_bounds
     std::set<std::tuple<int, int, int>> upper_bounds;
