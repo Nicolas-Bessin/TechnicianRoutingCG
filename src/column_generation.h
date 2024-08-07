@@ -17,4 +17,11 @@ struct CGResult {
 };
 
 
-CGResult column_generation(const Instance & instance, std::vector<Route> initial_routes, double reduced_cost_threshold, int time_limit = 60, bool verbose = false);
+CGResult column_generation(
+    const Instance & instance, 
+    std::vector<Route> initial_routes, 
+    double reduced_cost_threshold, 
+    int time_limit = 60, 
+    bool verbose = false,
+    bool compute_integer_solution = true
+    );

@@ -8,7 +8,14 @@
 #include <chrono>
 
 
-CGResult column_generation(const Instance & instance, std::vector<Route> initial_routes, double reduced_cost_threshold, int time_limit, bool verbose){
+CGResult column_generation(
+    const Instance & instance, 
+    std::vector<Route> initial_routes, 
+    double reduced_cost_threshold, 
+    int time_limit, 
+    bool verbose,
+    bool compute_integer_solution
+){
     using std::cout, std::endl;
     using std::setprecision, std::fixed;
     using std::vector, std::string, std::to_string;
@@ -114,22 +121,24 @@ CGResult column_generation(const Instance & instance, std::vector<Route> initial
     cout << "End of the column generation after " << iteration << " iterations" << endl;
     cout << "Relaxed RMP objective value : " << setprecision(3) << solution.objective_value << endl;
 
-    // Solve the integer version of the problem
-    auto start_integer = chrono::steady_clock::now();
-    IntegerSolution integer_solution = integer_RMP(instance, routes);
-    auto end_integer = chrono::steady_clock::now();
-    int diff_integer = chrono::duration_cast<chrono::milliseconds>(end_integer - start_integer).count();
-
-    cout << "Integer RMP objective value : " << integer_solution.objective_value << endl;
-
-    // Print the number of routes added for each vehicle
-    cout << "Number of routes added for each vehicle : " << endl;
-    for (int i = 0; i < instance.vehicles.size(); i++){
-        cout << "v" << i << " : " << n_routes_per_v[i] << ", ";
+    IntegerSolution integer_solution;
+    int integer_time = 0;
+    if (compute_integer_solution) {
+        // Solve the integer version of the problem
+        auto start_integer = chrono::steady_clock::now();
+        integer_solution = integer_RMP(instance, routes);
+        auto end_integer = chrono::steady_clock::now();
+        integer_time = chrono::duration_cast<chrono::milliseconds>(end_integer - start_integer).count();
+        cout << "Integer RMP objective value : " << integer_solution.objective_value << endl;
     }
-    cout << endl;
 
     if (verbose){
+        // Print the number of routes added for each vehicle
+        cout << "Number of routes added for each vehicle : " << endl;
+        for (int i = 0; i < instance.vehicles.size(); i++){
+            cout << "v" << i << " : " << n_routes_per_v[i] << ", ";
+        }
+        cout << endl;
         // Print the number of times each vehicle's sub problem reached the time limit
         for (int i = 0; i < instance.vehicles.size(); i++){
             if (time_limit_reached[i] > 0) {
@@ -146,7 +155,7 @@ CGResult column_generation(const Instance & instance, std::vector<Route> initial
     result.number_of_iterations = iteration;
     result.master_time = master_time;
     result.pricing_time = pricing_time;
-    result.integer_time = diff_integer;
+    result.integer_time = integer_time;
     result.building_time = building_time;
 
     return result;

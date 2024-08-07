@@ -71,7 +71,7 @@ int main(int argc, char *argv[]){
     // Global time limit for the column generation algorithm of 60 seconds
     const int time_limit = TIME_LIMIT * 1000;
 
-    CGResult result = column_generation(instance, initial_routes, THRESHOLD, time_limit, VERBOSE);
+    CGResult result = column_generation(instance, initial_routes, THRESHOLD, time_limit, VERBOSE, false);
 
     // Extract the results from the column generation algorithm
     int master_time = result.master_time;
@@ -87,7 +87,7 @@ int main(int argc, char *argv[]){
     if (!integer_solution.is_feasible){
         cout << "-----------------------------------" << endl;
         cout << "The integer solution is not feasible" << endl;
-        return 0;
+        return 1;
     }
     
     // Print the routes in the integer solution (in detail)
