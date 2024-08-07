@@ -16,7 +16,7 @@
 #include <memory>
 
 #define TIME_LIMIT 60
-#define HEURISTIC_INIT true
+#define HEURISTIC_INIT false
 
 int main(int argc, char** argv) {
     using std::cout, std::endl;
@@ -35,6 +35,7 @@ int main(int argc, char** argv) {
     auto end_parse = chrono::steady_clock::now();
     int diff_parse = chrono::duration_cast<chrono::milliseconds>(end_parse - start_parse).count();
 
+    cout << "-----------------------------------" << endl;
     // Define a vector of routes to help the solver
     vector<Route> initial_routes;
     if (HEURISTIC_INIT){
@@ -47,6 +48,7 @@ int main(int argc, char** argv) {
     } else {
         cout << "No heuristic initialization" << endl;
     }
+    cout << "-----------------------------------" << endl;
 
 
     // Solve the problem using the compact formulation

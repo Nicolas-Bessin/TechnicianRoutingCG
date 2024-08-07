@@ -154,6 +154,9 @@ Instance parse_file(string filename, bool verbose){
     vector<json> warehouses_data = data.at("step_manager").at("warehouses");
     for (int i = 0; i < warehouses_data.size(); i++){
         Node warehouse = parse_warehouse(warehouses_data[i]);
+        // Time window for the warehouse is the whole day
+        warehouse.start_window = 0;
+        warehouse.end_window = END_DAY;
         nodes.push_back(warehouse);
         node_id_to_index[warehouse.id] = i + nb_interventions;
     }
