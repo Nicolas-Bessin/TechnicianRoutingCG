@@ -62,13 +62,10 @@ std::vector<Route> compact_solution_to_routes(const Instance& instance, const Co
                 std::cerr << "Error : next node is already in the route" << " / Next node : " << next_node << std::endl;
                 break;
             }
-            const Node& next = instance.nodes[next_node];
             // Update the travelling time & cost
-            //cout << "Current number of nodes : " << sequence.size() << endl;
-            //cout << "Current node : " << current_node << " / Next node : " << next_node << endl;
-            int travelling_time = instance.time_matrix.at(node.node_id).at(next.node_id);
+            int travelling_time = instance.time_matrix[current_node][next_node];
             total_travelling_time += travelling_time;
-            int distance = instance.distance_matrix.at(node.node_id).at(next.node_id);
+            int distance = instance.distance_matrix[current_node][next_node];
             total_cost += distance * instance.cost_per_km;
 
             current_time += travelling_time;
