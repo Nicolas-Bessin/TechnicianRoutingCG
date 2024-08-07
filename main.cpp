@@ -22,7 +22,7 @@
 #define TIME_LIMIT 60
 #define SOLVER_MODE WARM_START
 #define THRESHOLD 1e-6
-#define VERBOSE true
+#define VERBOSE false
 #define GREEDY_INIT false
 
 int main(int argc, char *argv[]){
@@ -38,7 +38,7 @@ int main(int argc, char *argv[]){
     cout << "Technician Routing Problem using Column Generation" << endl;
     cout << "-----------------------------------" << endl;
     string default_filename = "../data/instance_1_all_feasible.json";
-    Instance instance = parse_file(default_filename, VERBOSE);
+    Instance instance = parse_file(default_filename, true);
 
     // Check wether the time and distance matrices are symetric
     cout << "Distance matrix is symetric : " << is_symmetric(instance.distance_matrix) << " - Biggest gap : " << symmetry_gap(instance.distance_matrix) << endl;
@@ -71,7 +71,7 @@ int main(int argc, char *argv[]){
     // Global time limit for the column generation algorithm of 60 seconds
     const int time_limit = TIME_LIMIT * 1000;
 
-    CGResult result = column_generation(instance, initial_routes, THRESHOLD, time_limit, VERBOSE, false);
+    CGResult result = column_generation(instance, initial_routes, THRESHOLD, time_limit, 10000, false, VERBOSE);
 
     // Extract the results from the column generation algorithm
     int master_time = result.master_time;
@@ -94,7 +94,7 @@ int main(int argc, char *argv[]){
     // full_analysis(integer_solution, routes, instance);
 
     int elapsed_time = chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - start_parse).count();
-    // // Print the time it took to solve the master problem
+    // Print the time it took to solve the master problem
     cout << "-----------------------------------" << endl;
     cout << "Total time spent building the pricing problems : " << sub_building_time << " ms" << endl;
     cout << "Total time spent solving the master problem : " << master_time << " ms" << endl;
@@ -106,6 +106,19 @@ int main(int argc, char *argv[]){
     full_analysis(integer_solution, routes, instance);
 
     cout << "-----------------------------------" << endl;
+    cout << "One round of generation in the gap" << endl;
+    double gap = integer_solution.objective_value - master_solution.objective_value;
+    cout << "Gap : " << gap << endl;
+    CGResult gap_result = column_generation(instance, routes, gap, time_limit, 1, VERBOSE);
+    // Insert the new routes in the existing routes
+    
+
+    full_analysis(gap_result.integer_solution, gap_result.routes, instance);
+
+
+    return 0;
+}
+
     // cout << " Starting the compact solver using mode " << SOLVER_MODE << endl;
 
     // int remaining_time = TIME_LIMIT - elapsed_time / 1000;
@@ -157,8 +170,6 @@ int main(int argc, char *argv[]){
     // MasterSolution new_master_solution = relaxed_RMP(instance, routes);
     // cout << "Objective value of the RMP with the routes from the compact formulation added : " << new_master_solution.objective_value << endl;
 
-    return 0;
-}
 
 
     // // Convert our master solution to a compact solution
@@ -213,3 +224,24 @@ int main(int argc, char *argv[]){
     // cout << "Objective value of the new master solution : " << new_master_solution.objective_value << endl;
     // IntegerSolution new_integer_solution = integer_RMP(instance, routes);
     // cout << "Objective value of the new integer solution : " << new_integer_solution.objective_value << endl;
+
+
+
+
+    // cout << "Generating a route that can cover unassigned interventions" << endl;
+    // vector<int> covered = covered_interventions(integer_solution, routes, instance);
+    // int vehicle_id = 10;
+    // Vehicle vehicle = vehicle_mask(instance.vehicles[vehicle_id], covered);
+    // unique_ptr<Problem> problem = create_pricing_instance(instance, vehicle);
+    // update_pricing_instance(problem, vector<double>(instance.number_interventions, 0), instance, vehicle);
+    // Route new_route = solve_pricing_problem(problem, 1, instance, vehicle)[0];
+    // // Add the new route to the existing routes
+    // routes.push_back(new_route);
+    // // Re-solve the master and integer problems
+    // MasterSolution new_master_solution = relaxed_RMP(instance, routes);
+    // IntegerSolution new_integer_solution = integer_RMP(instance, routes);
+    // cout << "Objective value of the new master solution : " << new_master_solution.objective_value << endl;
+    // cout << "Objective value of the new integer solution : " << new_integer_solution.objective_value << endl;
+
+    // full_analysis(new_integer_solution, routes, instance);
+    

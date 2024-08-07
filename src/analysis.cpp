@@ -303,9 +303,9 @@ int count_used_routes_with_duplicates(const IntegerSolution& solution, const vec
 double count_route_kilometres(const Route& route, const Instance& instance) {
     double total_distance = 0;
     for (int i = 0; i < route.id_sequence.size() - 1; i++) {
-        const Node& node1 = instance.nodes[route.id_sequence[i]];
-        const Node& node2 = instance.nodes[route.id_sequence[i + 1]];
-        total_distance += metric(node1, node2, instance.distance_matrix);
+        int id1 = route.id_sequence[i];
+        int id2 = route.id_sequence[i + 1];
+        total_distance += instance.distance_matrix[id1][id2];
     }
     return total_distance;
 }
@@ -388,7 +388,7 @@ void print_route(const Route & route, const Instance & instance) {
     cout << endl;
     cout << "Travel time:  ";
     for (int i = 0; i < route.id_sequence.size() - 1; i++) {
-        cout << setprecision(1) << metric(instance.nodes[route.id_sequence[i]], instance.nodes[route.id_sequence[i + 1]], instance.time_matrix) << ", ";
+        cout << setprecision(1) << instance.time_matrix[route.id_sequence[i]][route.id_sequence[i + 1]] << ", ";
     }
     cout << " -, " << endl;
     cout << "Window end:   ";
@@ -476,7 +476,7 @@ void print_vehicles_non_covered(const IntegerSolution& solution, const std::vect
     // Print the number of non-covered interventions that can be covered by each vehicle
     cout << "Number of non covered interventions that can be covered by each non used  vehicle: " << endl;
     for (int v = 0; v < nb_vehicles; v++) {
-        if (is_used[v] == 0 || is_used[v] == 1) { 
+        if (is_used[v] == 0) { 
             cout << "v" << v << " : " << can_cover[v] <<" - ";
         }
     }

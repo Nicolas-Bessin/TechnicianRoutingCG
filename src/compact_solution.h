@@ -36,7 +36,7 @@ double evaluate_compact_solution(const CompactSolution<T>& compact_solution, con
             for (int j = 0; j < n_nodes; j++) {
                 const Node& node_i = instance.nodes[i];
                 const Node& node_j = instance.nodes[j];
-                int distance = metric(node_i, node_j, instance.distance_matrix);
+                int distance = instance.distance_matrix[i][j];
                 double coef = instance.M * node_i.duration - instance.cost_per_km * distance;
                 objective_value += compact_solution.x[i][j][v] * coef;
             }

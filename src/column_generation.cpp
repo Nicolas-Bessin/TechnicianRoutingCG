@@ -13,9 +13,10 @@ CGResult column_generation(
     std::vector<Route> initial_routes, 
     double reduced_cost_threshold, 
     int time_limit, 
-    bool verbose,
-    bool compute_integer_solution
-){
+    int max_iterations,
+    bool compute_integer_solution,
+    bool verbose
+    ){
     using std::cout, std::endl;
     using std::setprecision, std::fixed;
     using std::vector, std::string, std::to_string;
@@ -52,7 +53,7 @@ CGResult column_generation(
     // Testing out the sequential pricing problem solving
     int current_vehicle_index = 0;
 
-    while (!stop && master_time + pricing_time < time_limit){
+    while (!stop && master_time + pricing_time < time_limit && iteration < max_iterations){
         // Solve the master problem
         auto start = chrono::steady_clock::now();
         solution = relaxed_RMP(instance, routes);
