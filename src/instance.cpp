@@ -4,12 +4,14 @@
 
 Vehicle vehicle_mask(const Vehicle& vehicle, const std::vector<int>& mask){
     std::vector<int> new_interventions;
+    std::map<int, int> new_reverse_map;
     for (int intervention : vehicle.interventions){
         if (mask[intervention] == 0){
             new_interventions.push_back(intervention);
+            new_reverse_map[intervention] = new_interventions.size() - 1;
         }
     }
-    return Vehicle(vehicle.id, vehicle.technicians, vehicle.skills, new_interventions, vehicle.depot, vehicle.capacities, vehicle.cost);
+    return Vehicle{vehicle.id, vehicle.technicians, vehicle.skills, new_interventions, new_reverse_map, vehicle.depot, vehicle.capacities, vehicle.cost};
 }
 
 

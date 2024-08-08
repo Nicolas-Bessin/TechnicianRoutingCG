@@ -90,17 +90,15 @@ CGResult column_generation(
 
         for (const int& v : vehicle_order){
             const Vehicle& vehicle = instance.vehicles.at(v);
-            update_pricing_instance(pricing_problems.at(v), solution.alphas, instance, vehicle);
+            update_pricing_instance(pricing_problems.at(v), solution, instance, vehicle);
             vector<Route> best_new_routes = solve_pricing_problem(pricing_problems.at(v), 5, instance, vehicle);
             if (best_new_routes.size() == 0){
                 time_limit_reached[vehicle.id]++;
             }
             // Go through the returned routes, and add them to the master problem if they have a positive reduced cost
             for (const auto &route : best_new_routes){
-                double reduced_cost = route.reduced_cost - solution.betas[v] - vehicle.cost;
-                max_reduced_cost = std::max(max_reduced_cost, reduced_cost);
-                double computed_reduced_cost = compute_reduced_cost(route, solution.alphas, solution.betas[v], instance);
-                if (reduced_cost> reduced_cost_threshold){
+                max_reduced_cost = std::max(max_reduced_cost, route.reduced_cost);
+                if (route.reduced_cost> reduced_cost_threshold){
                     // Add the route to the master problem - and update the node to set this route as active
                     routes.push_back(route);
                     node.active_routes.insert(routes.size() - 1);

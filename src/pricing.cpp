@@ -1,4 +1,5 @@
 #include "pricing.h"
+
 #include "constants.h"
 #include "time_window_lunch.h"
 #include "../pathwyse/core/solver.h"
@@ -45,6 +46,9 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
     for (int i = 0; i < n_interventions_v; i++) {
         int true_i = vehicle.interventions[i];
         const Node& intervention_i = (instance.nodes[vehicle.interventions[i]]);
+        // Set the node cost of the intervention (used when using the pricing problem as heuristics)
+        // Otherwise, we overwrite this value when updating the pricing problem with dual values
+        objective->setNodeCost(i, -instance.M * intervention_i.duration);
         for (int j = 0; j < n_interventions_v; j++) {
             if (i == j) continue;
             int true_j = vehicle.interventions[j];
@@ -152,7 +156,11 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
 
 
 
-void update_pricing_instance(unique_ptr<Problem> & pricing_problem, const vector<double>& alphas, const Instance& instance, const Vehicle& vehicle) {
+void update_pricing_instance(
+    unique_ptr<Problem> & pricing_problem, 
+    const MasterSolution& master_solution, 
+    const Instance& instance, 
+    const Vehicle& vehicle) {
     // Get the number of nodes in the problem : equal to the number of available interventions + 2
     int n_interventions_v = vehicle.interventions.size();
     int origin = n_interventions_v;
@@ -162,9 +170,14 @@ void update_pricing_instance(unique_ptr<Problem> & pricing_problem, const vector
     // Put in the node costs : alpha_i - M * duration_i
     for (int i = 0; i < n_interventions_v; i++) {
         int true_i = vehicle.interventions[i];
-        double node_cost = alphas[true_i] - instance.M * instance.nodes[true_i].duration;
+        double node_cost = master_solution.alphas[true_i] - instance.M * instance.nodes[true_i].duration;
         objective->setNodeCost(i, node_cost);
     }
+    // Add the arcs costs where applicable from the dual values of the cuts
+    
+    // Put in the fixed costs of the vehicle
+    double fixed_cost = master_solution.betas[vehicle.id] + vehicle.cost;
+    objective->setNodeCost(origin, fixed_cost);
     return;
 }
 

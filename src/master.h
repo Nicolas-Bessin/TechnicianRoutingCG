@@ -6,6 +6,8 @@
 
 // Structure to represent a solution of the master problem
 struct MasterSolution {
+    // Is this solution feasible
+    bool is_feasible;
     // Coefficients of the variables in the master problem
     std::vector<double> coefficients;
     // Dual values associated with the interventions
@@ -18,10 +20,7 @@ struct MasterSolution {
     std::map<std::tuple<int, int, int>, double> lower_bound_duals;
     // Objective value of the master problem
     double objective_value;
-    // Is this solution feasible
-    bool is_feasible;
-    // Empty constructor
-    MasterSolution(){ is_feasible = false; }
+
 };
 
 // Solution to the integer version of the problem

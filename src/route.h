@@ -16,11 +16,11 @@ struct Route {
     // Reduced cost of the route at the time of creation
     double reduced_cost;
     // Total duration of the interventions along the route
-    double total_duration;
+    int total_duration;
     // Total travelling time of the route
-    double total_travelling_time;
+    int total_travelling_time;
     // Total waiting time of the route
-    double total_waiting_time;
+    int total_waiting_time;
     // Index of the vehicle that will perform the route
     int vehicle_id;
     // Sequence of nodes in the route (not strictly necessary for the problem but useful for analysis)
