@@ -1,8 +1,7 @@
 #pragma once
 
 #include "instance.h"
-#include "solution.h"
-#include "pricing.h"
+#include "master.h"
 #include "branch_and_price.h"
 
 #include <vector>

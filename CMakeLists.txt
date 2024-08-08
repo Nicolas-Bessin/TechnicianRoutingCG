@@ -45,13 +45,14 @@ set(
     src/preprocessing.h
     src/preprocessing.cpp
 
-    src/solution.h
-    src/solution.cpp
+    src/route.h
+    src/route.cpp
     src/analysis.h
     src/analysis.cpp
 
     src/master.h
-    src/master.cpp
+    src/RMP_solver.h
+    src/RMP_solver.cpp
     src/pricing.h
     src/pricing.cpp
     src/column_generation.h
@@ -66,6 +67,7 @@ set(
     src/solution_converter.cpp
 
     src/branch_and_price.h
+    src/branch_and_price.cpp
 
     src/heuristics.h
     src/heuristics.cpp

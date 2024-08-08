@@ -1,7 +1,7 @@
 #pragma once
 
 #include "instance.h"
-#include "solution.h"
+#include "route.h"
 #include "pricing.h"
 
 #include <vector>

@@ -1,5 +1,7 @@
 #include "column_generation.h"
-#include "master.h"
+
+#include "RMP_solver.h"
+#include "pricing.h"
 #include "analysis.h"
 
 #include <iostream>

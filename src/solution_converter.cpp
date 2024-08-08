@@ -1,5 +1,7 @@
 #include "solution_converter.h"
 
+#include <iostream>
+
 
 std::vector<Route> compact_solution_to_routes(const Instance& instance, const CompactSolution<int>& compact_solution) {
     using std::vector;

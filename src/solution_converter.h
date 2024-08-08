@@ -1,7 +1,7 @@
 #pragma once
 
 #include "instance.h"
-#include "solution.h"
+#include "master.h"
 #include "compact_solver.h"
 
 #include <vector>

@@ -1,6 +1,10 @@
-#include "solution.h"
+#include "route.h"
+
+#include "master.h"
 #include "constants.h"
+
 #include <math.h>
+#include <iostream>
 #include <algorithm>
 
 using std::min;

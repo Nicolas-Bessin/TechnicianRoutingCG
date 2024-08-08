@@ -1,6 +1,7 @@
+#include "RMP_solver.h"
+
 #include "gurobi_c++.h"
 
-#include "master.h"
 
 using std::vector;
 using std::cout, std::endl;

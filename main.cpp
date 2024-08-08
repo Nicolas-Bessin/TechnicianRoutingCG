@@ -6,6 +6,8 @@
 
 #include "src/column_generation.h"
 
+#include "src/branch_and_price.h"
+
 #include "src/analysis.h"
 
 #include "src/compact_solution.h"
@@ -72,10 +74,7 @@ int main(int argc, char *argv[]){
     const int time_limit = TIME_LIMIT * 1000;
 
     // Create a root node for the algorithm
-    BPNode root;
-    root.lower_bound = 0;
-    root.upper_bound = +INFINITY;
-
+    BPNode root = RootNode(initial_routes);
     CGResult result = column_generation(instance, root, initial_routes, THRESHOLD, time_limit, 10000, true, VERBOSE);
 
     // Extract the results from the column generation algorithm
@@ -108,7 +107,7 @@ int main(int argc, char *argv[]){
     cout << "Total elapsed time : " << elapsed_time << " ms" << endl;
 
     full_analysis(integer_solution, routes, instance);
-    cout << " True cost of the integer solution : " << compute_integer_objective(integer_solution, routes, instance) << endl;
+    cout << "True cost of the integer solution : " << compute_integer_objective(integer_solution, routes, instance) << endl;
 
     cout << "-----------------------------------" << endl;
 

@@ -1,7 +1,11 @@
 #pragma once
 
+#include "instance.h"
+#include "route.h"
+
 #include <tuple>
 #include <set>
+#include <vector>
 
 struct BPNode {
     // Node depth in the branch and price tree
@@ -15,8 +19,11 @@ struct BPNode {
     std::set<std::tuple<int, int, int>> upper_bounds;
     // Lower bounds constraints imposed on the x_ijv variables - x_ijv >= 1 for (i, j, v) in lower_bounds
     std::set<std::tuple<int, int, int>> lower_bounds;
+
 };
 
+// Create the root node of the branch and price tree from a set of initial routes
+BPNode RootNode(const std::vector<Route>& initial_routes);
 
 void branch_and_price(
     const Instance& instance, 
