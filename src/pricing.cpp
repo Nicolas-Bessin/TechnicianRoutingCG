@@ -101,8 +101,6 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
         for (int j = 0; j < n_interventions_v; j++) {
             if (i == j) continue;
             int true_j = vehicle.interventions[j];
-            // Get the two interventions referenced by the indices i and j
-            const Node& intervention_j = (instance.nodes[true_j]);
             // Get the time it takes to go from intervention i to intervention j
             int travel_time = instance.time_matrix[true_i][true_j];
             // Set the time consumption on the arc

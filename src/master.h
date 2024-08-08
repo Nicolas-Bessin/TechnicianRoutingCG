@@ -20,6 +20,25 @@ struct MasterSolution {
     std::map<std::tuple<int, int, int>, double> lower_bound_duals;
     // Objective value of the master problem
     double objective_value;
+    // Empty constructor
+    MasterSolution(){ is_feasible = false; }
+    // Constructor
+    MasterSolution(
+        std::vector<double> coefficients,
+        std::vector<double> alphas,
+        std::vector<double> betas,
+        std::map<std::tuple<int, int, int>, double> upper_bound_duals,
+        std::map<std::tuple<int, int, int>, double> lower_bound_duals,
+        double objective_value
+    ){
+        this->coefficients = coefficients;
+        this->alphas = alphas;
+        this->betas = betas;
+        this->upper_bound_duals = upper_bound_duals;
+        this->lower_bound_duals = lower_bound_duals;
+        this->objective_value = objective_value;
+        this->is_feasible = true;
+    }
 
 };
 

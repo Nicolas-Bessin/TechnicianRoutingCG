@@ -114,16 +114,7 @@ MasterSolution relaxed_RMP(const Instance& instance, const std::vector<Route>& r
         }
 
         // Return the duals by building a solution
-        MasterSolution solution;
-        solution.coefficients = coefficients;
-        solution.alphas = alphas;
-        solution.betas = betas;
-        solution.upper_bound_duals = upper_bound_duals;
-        solution.lower_bound_duals = lower_bound_duals;
-        solution.objective_value = objective_value;
-        solution.is_feasible = true;
-
-        return solution;
+        return MasterSolution{coefficients, alphas, betas, upper_bound_duals, lower_bound_duals, objective_value};
 
     } catch(GRBException e) {
         cout << "Error code = " << e.getErrorCode() << endl;
@@ -132,7 +123,7 @@ MasterSolution relaxed_RMP(const Instance& instance, const std::vector<Route>& r
         cout << "Exception during optimization" << endl;
     }
 
-    return MasterSolution();
+    return MasterSolution{};
 }
 
 
@@ -221,11 +212,7 @@ IntegerSolution integer_RMP(const Instance& instance, const std::vector<Route>& 
         }
 
         // Return the solution
-        IntegerSolution solution;
-        solution.coefficients = coefficients;
-        solution.objective_value = objective_value;
-
-        return solution;
+        return IntegerSolution{coefficients, objective_value};
 
     } catch(GRBException e) {
         cout << "Error code = " << e.getErrorCode() << endl;
@@ -233,6 +220,6 @@ IntegerSolution integer_RMP(const Instance& instance, const std::vector<Route>& 
     } catch(...) {
         cout << "Exception during optimization" << endl;
     }
-    return IntegerSolution();
+    return IntegerSolution{};
 }
     

@@ -7,16 +7,7 @@
 
 /*
     @struct Node
-    @brief Represents an intervention or a warehouse in the problem
-    @param id: unique string identifier for the node
-    @param node_id: index of the node in the time and distance matrices
-    @param is_intervention: type of the node
-    @param duration: duration of the intervention
-    @param start_window: start of the time window for the intervention
-    @param end_window: end of the time window for the intervention
-    @param is_ambiguous: can the intervention be done both in the morning or in the afternoon?
-    @param quantities: quantities of each ressource used by the intervention
-    @param required_skills: skills required to perform the intervention (left empty for warehouses)
+    @brief Represents either an intervention or a warehouse in the problem
 */
 struct Node {
     // id is a unique string identifier for the node
@@ -37,34 +28,68 @@ struct Node {
     std::map<std::string, int> quantities;
     // Skills required to perform the intervention (left empty for warehouses) (counting the number of technicians needed with each skill)
     std::map<std::string, int> required_skills;
+
+    // Empty constructor
+    Node(){}
+
+    // Constructor for an intervention
+    Node(
+        std::string id,
+        int node_id,
+        int duration,
+        int start_window,
+        int end_window,
+        bool is_ambiguous,
+        std::map<std::string, int> quantities,
+        std::map<std::string, int> required_skills
+    ) : 
+        id(id), 
+        node_id(node_id), 
+        is_intervention(true), 
+        duration(duration), 
+        start_window(start_window), 
+        end_window(end_window), 
+        is_ambiguous(is_ambiguous), 
+        quantities(quantities), 
+        required_skills(required_skills) 
+        {}
+
+    // Constructor for a warehouse
+    Node(
+        std::string id,
+        int node_id
+    ) :
+        id(id),
+        node_id(node_id),
+        is_intervention(false)
+        {}
 };
 
 /*
     @struct Technician
     @brief Represents a technician in the problem
-    @param id: unique string identifier for the technician
-    @param operationnal_base: base of the technician
-    @param skills: set of skills the technician has
-    @param capacities: capacities of the technician
 */
 struct Technician {
     std::string id;
     std::string operationnal_base;
     std::set<std::string> skills;
     std::map<std::string, int> capacities;
+
+    // Empty constructor
+    Technician(){}
+
+    // Constructor for a technician
+    Technician(std::string id, std::string operationnal_base, std::set<std::string> skills, std::map<std::string, int> capacities) :
+        id(id),
+        operationnal_base(operationnal_base),
+        skills(skills),
+        capacities(capacities)
+        {}
 };
 
 /*
     @struct Vehicle
     @brief Represents a vehicle in the problem
-    @param id: unique identifier for the vehicle
-    @param technicians: vector containing the ids of the technicians in the vehicle
-    @param skills: counts the number of technicians that have each skill in the vehicle
-    @param interventions: list of indexes of interventions that the vehicle can perform
-    @param reverse_interventions: reverse index of the interventions (from the nodes vector to the interventions vector)
-    @param depot: index of the depot in the nodes vector
-    @param capacities: capacities of the vehicle
-    @param cost: cost of using the vehicle
 */
 struct Vehicle {
     int id;
@@ -81,6 +106,30 @@ struct Vehicle {
     int depot;
     std::map<std::string, int> capacities;
     double cost;
+
+    // Empty constructor
+    Vehicle(){}
+
+    // Constructor for a vehicle
+    Vehicle(
+        int id,
+        std::vector<std::string> technicians,
+        std::map<std::string, int> skills,
+        std::vector<int> interventions,
+        std::map<int, int> reverse_interventions,
+        int depot,
+        std::map<std::string, int> capacities,
+        double cost
+    ) :
+        id(id),
+        technicians(technicians),
+        skills(skills),
+        interventions(interventions),
+        reverse_interventions(reverse_interventions),
+        depot(depot),
+        capacities(capacities),
+        cost(cost)
+        {}
 };
 
 // Generate a new vehicle from an existing one
@@ -91,17 +140,6 @@ Vehicle vehicle_mask(const Vehicle& vehicle, const std::vector<int>& mask);
 /*
     @struct Instance
     @brief Represents an instance of the problem
-    @param number_interventions: number of interventions in the instance
-    @param number_warehouses: number of warehouses in the instance
-    @param number_vehicles: number of vehicles in the instance
-    @param cost_per_km: cost per km for the vehicles
-    @param technician_cost: cost of using a technician
-    @param M: Big M used in the objective function
-    @param nodes: std::vector of interventions and warehouses
-    @param vehicles: std::vector of vehicles
-    @param capacities_labels: different capacities considered
-    @param time_matrix: time between the different nodes
-    @param distance_matrix: distance between the different nodes
 */
 struct Instance {
     int number_interventions;
@@ -121,6 +159,33 @@ struct Instance {
     std::vector<std::vector<int>> time_matrix;
     // distance between the different nodes
     std::vector<std::vector<int>> distance_matrix;
+
+    // Instance constructor
+    Instance(
+        int number_interventions,
+        int number_warehouses,
+        int number_vehicles,
+        double cost_per_km,
+        double technician_cost,
+        double M,
+        std::vector<Node> nodes,
+        std::vector<Vehicle> vehicles,
+        std::vector<std::string> capacities_labels,
+        std::vector<std::vector<int>> time_matrix,
+        std::vector<std::vector<int>> distance_matrix
+    ) :
+        number_interventions(number_interventions),
+        number_warehouses(number_warehouses),
+        number_vehicles(number_vehicles),
+        cost_per_km(cost_per_km),
+        technician_cost(technician_cost),
+        M(M),
+        nodes(nodes),
+        vehicles(vehicles),
+        capacities_labels(capacities_labels),
+        time_matrix(time_matrix),
+        distance_matrix(distance_matrix)
+        {}
 };
 
 

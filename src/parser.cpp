@@ -46,7 +46,7 @@ Node parse_intervention(json data){
         }
     }
     map<string, int> quantities = data.at("quantities");
-    return Node{id, node_id, true, duration, start_window, end_window, is_long, skills, quantities};
+    return Node{id, node_id, duration, start_window, end_window, is_long, quantities, skills};
 }
 
 
@@ -54,7 +54,7 @@ Node parse_intervention(json data){
 Node parse_warehouse(json data){
     int node_id = data.at("node_id");
     string ope_base = data.at("ope_base");
-    return Node{ope_base, node_id, false};
+    return Node{ope_base, node_id};
 }
 
 
@@ -275,6 +275,7 @@ Instance parse_file(string filename, bool verbose){
         for (int i = 0; i < nb_interventions; i++){
             if (has_skill[i][v]){
                 vehicles[v].interventions.push_back(i);
+                vehicles[v].reverse_interventions[i] = vehicles[v].interventions.size() - 1;
             }
         }
     }
