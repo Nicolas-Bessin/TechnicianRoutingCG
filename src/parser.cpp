@@ -46,7 +46,7 @@ Node parse_intervention(json data){
         }
     }
     map<string, int> quantities = data.at("quantities");
-    return Node{id, node_id, duration, start_window, end_window, is_long, quantities, skills};
+    return Node(id, node_id, duration, start_window, end_window, is_long, quantities, skills);
 }
 
 
@@ -54,7 +54,7 @@ Node parse_intervention(json data){
 Node parse_warehouse(json data){
     int node_id = data.at("node_id");
     string ope_base = data.at("ope_base");
-    return Node{ope_base, node_id};
+    return Node(ope_base, node_id);
 }
 
 
@@ -67,7 +67,7 @@ Technician parse_technician(json data){
     }
     map<string, int> capacities = data.at("capacities");
     string operationnal_base = data.at("ope_base");
-    return Technician{id, operationnal_base, skills, capacities};
+    return Technician(id, operationnal_base, skills, capacities);
 }
 
 bool can_do_intervention(const Node& intervention, const Vehicle& vehicle){
@@ -251,7 +251,7 @@ Instance parse_file(string filename, bool verbose){
         }
         // Vehicle cost is the sum of the cost of each technician in the team
         double vehicle_cost = tech_cost * team_ids.size();
-        vehicles.push_back(Vehicle{v, team_ids, skills, vector<int>{}, map<int, int>{}, depot, capacities, vehicle_cost});
+        vehicles.push_back(Vehicle(v, team_ids, skills, vector<int>(), map<int, int>(), depot, capacities, vehicle_cost));
     }
 
     // Print the number of vehicles
@@ -325,7 +325,7 @@ Instance parse_file(string filename, bool verbose){
     }
 
     // We can now build the instance object
-    return Instance{
+    return Instance(
         nb_interventions,
         nb_warehouses,
         nb_vehicles,
@@ -337,7 +337,7 @@ Instance parse_file(string filename, bool verbose){
         ressources,
         time_matrix,
         distance_matrix
-    };    
+    );    
 
 }
     
