@@ -77,6 +77,8 @@ CGResult column_generation(
         double max_reduced_cost = 0;
 
         // Explore all the vehicles in order at each iteration
+        // We formulate it this way to allow for other orders of exploration 
+        // Or not exploring all vehicles at each iteration in the future
         vector<int> vehicle_order(instance.vehicles.size());
         std::iota(vehicle_order.begin(), vehicle_order.end(), 0);
 
