@@ -65,6 +65,8 @@ set(
     src/solution_converter.h
     src/solution_converter.cpp
 
+    src/branch_and_price.h
+
     src/heuristics.h
     src/heuristics.cpp
 )

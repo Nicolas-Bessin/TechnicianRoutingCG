@@ -6,7 +6,7 @@ using std::vector;
 using std::cout, std::endl;
 using std::string;
 
-MasterSolution relaxed_RMP(const Instance& instance, const vector<Route>& routes){
+MasterSolution relaxed_RMP(const Instance& instance, const vector<Route>& routes, const BPNode& node){
     try {
         // Formulate and solve model
         // Next step is creating the master problem
@@ -17,10 +17,14 @@ MasterSolution relaxed_RMP(const Instance& instance, const vector<Route>& routes
         env.start();
         // Create the master problem model
         GRBModel master = GRBModel(env);
-        // Create the variables
+        // Create the variables - all inactive at first, upper bound is 0
         vector<GRBVar> variables;
         for(int r = 0; r < routes.size(); r++){
-            variables.push_back(master.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS));
+            variables.push_back(master.addVar(0.0, 0.0, 0.0, GRB_CONTINUOUS));
+        }
+        // Only activate the variables that are active in the node
+        for (int r : node.active_routes){
+            variables[r].set(GRB_DoubleAttr_UB, GRB_INFINITY);
         }
         // Create the intervention constraints (each intervention is visited at most once)
         vector<GRBConstr> intervention_constraints;
@@ -87,7 +91,7 @@ MasterSolution relaxed_RMP(const Instance& instance, const vector<Route>& routes
 }
 
 
-IntegerSolution integer_RMP(const Instance& instance, const vector<Route>& routes){
+IntegerSolution integer_RMP(const Instance& instance, const vector<Route>& routes, const BPNode& node){
     try {
         // Formulate and solve model
         // Next step is creating the master problem
@@ -97,10 +101,14 @@ IntegerSolution integer_RMP(const Instance& instance, const vector<Route>& route
         env.start();
         // Create the master problem model
         GRBModel master = GRBModel(env);
-        // Create the variables
+        // Create the variables, all inactive at first, upper bound is 0
         vector<GRBVar> variables;
         for(int r = 0; r < routes.size(); r++){
-            variables.push_back(master.addVar(0, GRB_INFINITY, 0, GRB_INTEGER));
+            variables.push_back(master.addVar(0, 0, 0, GRB_INTEGER));
+        }
+        // Only activate the variables that are active in the node
+        for (int r : node.active_routes){
+            variables[r].set(GRB_DoubleAttr_UB, GRB_INFINITY);
         }
         // Create the intervention constraints (each intervention is visited at most once)
         vector<GRBConstr> intervention_constraints;

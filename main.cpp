@@ -71,7 +71,12 @@ int main(int argc, char *argv[]){
     // Global time limit for the column generation algorithm of 60 seconds
     const int time_limit = TIME_LIMIT * 1000;
 
-    CGResult result = column_generation(instance, initial_routes, THRESHOLD, time_limit, 10000, false, VERBOSE);
+    // Create a root node for the algorithm
+    BPNode root;
+    root.lower_bound = 0;
+    root.upper_bound = +INFINITY;
+
+    CGResult result = column_generation(instance, root, initial_routes, THRESHOLD, time_limit, 10000, true, VERBOSE);
 
     // Extract the results from the column generation algorithm
     int master_time = result.master_time;

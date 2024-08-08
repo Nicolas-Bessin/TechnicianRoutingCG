@@ -9,8 +9,9 @@
 
 
 CGResult column_generation(
-    const Instance & instance, 
-    std::vector<Route> initial_routes, 
+    const Instance & instance,
+    const BPNode & initial_node,
+    const std::vector<Route> initial_routes, 
     double reduced_cost_threshold, 
     int time_limit, 
     int max_iterations,
@@ -35,6 +36,9 @@ CGResult column_generation(
     auto end_sub_building = chrono::steady_clock::now();
     int building_time = chrono::duration_cast<chrono::milliseconds>(end_sub_building - start_sub_building).count();
 
+    // Copy the nodes to avoid modifying the input
+    BPNode node = initial_node;
+
     // Copy the routes to avoid modifying the input
     vector<Route> routes = initial_routes;
 
@@ -56,7 +60,7 @@ CGResult column_generation(
     while (!stop && master_time + pricing_time < time_limit && iteration < max_iterations){
         // Solve the master problem
         auto start = chrono::steady_clock::now();
-        solution = relaxed_RMP(instance, routes);
+        solution = relaxed_RMP(instance, routes, node);
         auto end = chrono::steady_clock::now();
         int diff = chrono::duration_cast<chrono::milliseconds>(end - start).count();
         if (verbose) {
@@ -95,7 +99,9 @@ CGResult column_generation(
                 max_reduced_cost = std::max(max_reduced_cost, reduced_cost);
                 double computed_reduced_cost = compute_reduced_cost(route, solution.alphas, solution.betas[v], instance);
                 if (reduced_cost> reduced_cost_threshold){
+                    // Add the route to the master problem - and update the node to set this route as active
                     routes.push_back(route);
+                    node.active_routes.insert(routes.size() - 1);
                     n_added_routes++;
                     n_routes_per_v[v]++;
                 }
@@ -129,7 +135,7 @@ CGResult column_generation(
     if (compute_integer_solution) {
         // Solve the integer version of the problem
         auto start_integer = chrono::steady_clock::now();
-        integer_solution = integer_RMP(instance, routes);
+        integer_solution = integer_RMP(instance, routes, node);
         auto end_integer = chrono::steady_clock::now();
         integer_time = chrono::duration_cast<chrono::milliseconds>(end_integer - start_integer).count();
         cout << "Integer RMP objective value : " << integer_solution.objective_value << endl;
@@ -152,6 +158,7 @@ CGResult column_generation(
 
     // Build the result object
     CGResult result;
+    result.node = node;
     result.master_solution = solution;
     result.integer_solution = integer_solution;
     result.routes = routes;
