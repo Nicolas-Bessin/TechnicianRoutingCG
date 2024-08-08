@@ -5,6 +5,8 @@
 #include <string>
 #include <set>
 
+#include "constants.h"
+
 /*
     @struct Node
     @brief Represents either an intervention or a warehouse in the problem
@@ -32,6 +34,9 @@ struct Node {
     // Empty constructor
     Node(){}
 
+    // Constructor for a warehouse
+    Node(std::string id, int node_id) : id(id), node_id(node_id), is_intervention(false), duration(0), start_window(0), end_window(END_DAY) {}
+
     // Constructor for an intervention
     Node(
         std::string id,
@@ -53,16 +58,6 @@ struct Node {
         quantities(quantities), 
         required_skills(required_skills) 
         {}
-
-    // Constructor for a warehouse
-    Node(
-        std::string id,
-        int node_id
-    ) :
-        id(id),
-        node_id(node_id),
-        is_intervention(false)
-        {}
 };
 
 /*
@@ -80,11 +75,7 @@ struct Technician {
 
     // Constructor for a technician
     Technician(std::string id, std::string operationnal_base, std::set<std::string> skills, std::map<std::string, int> capacities) :
-        id(id),
-        operationnal_base(operationnal_base),
-        skills(skills),
-        capacities(capacities)
-        {}
+        id(id), operationnal_base(operationnal_base), skills(skills), capacities(capacities) {}
 };
 
 /*
