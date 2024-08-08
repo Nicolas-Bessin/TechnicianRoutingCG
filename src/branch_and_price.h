@@ -16,9 +16,9 @@ struct BPNode {
     // Active routes in the node : for r in active_routes, routes[r] is active
     std::set<int> active_routes;
     // Upper bounds constraints imposed on the x_ijv variables - x_ijv <= 0 for (i, j, v) in upper_bounds
-    std::set<std::tuple<int, int, int>> upper_bounds;
+    std::set<std::tuple<int, int, int>> upper_bound_cuts;
     // Lower bounds constraints imposed on the x_ijv variables - x_ijv >= 1 for (i, j, v) in lower_bounds
-    std::set<std::tuple<int, int, int>> lower_bounds;
+    std::set<std::tuple<int, int, int>> lower_bound_cuts;
 
 };
 

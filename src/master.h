@@ -1,6 +1,8 @@
 #pragma once
 
 #include <vector>
+#include <tuple>
+#include <map>
 
 // Structure to represent a solution of the master problem
 struct MasterSolution {
@@ -10,20 +12,16 @@ struct MasterSolution {
     std::vector<double> alphas;
     // Dual values associated with the vehicles
     std::vector<double> betas;
+    // Dual values associated with the upper bound cuts
+    std::map<std::tuple<int, int, int>, double> upper_bound_duals;
+    // Dual values associated with the lower bound cuts
+    std::map<std::tuple<int, int, int>, double> lower_bound_duals;
     // Objective value of the master problem
     double objective_value;
     // Is this solution feasible
     bool is_feasible;
     // Empty constructor
     MasterSolution(){ is_feasible = false; }
-    // Constructor
-    MasterSolution(std::vector<double> coefficients, std::vector<double> alphas, std::vector<double> betas, double objective_value){
-        this->coefficients = coefficients;
-        this->alphas = alphas;
-        this->betas = betas;
-        this->objective_value = objective_value;
-        this->is_feasible = true;
-    }
 };
 
 // Solution to the integer version of the problem

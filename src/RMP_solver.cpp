@@ -1,13 +1,14 @@
 #include "RMP_solver.h"
 
 #include "gurobi_c++.h"
+#include <vector>
+#include <map>
+#include <tuple>
 
-
-using std::vector;
-using std::cout, std::endl;
-using std::string;
-
-MasterSolution relaxed_RMP(const Instance& instance, const vector<Route>& routes, const BPNode& node){
+MasterSolution relaxed_RMP(const Instance& instance, const std::vector<Route>& routes, const BPNode& node){
+    using std::vector, std::map, std::tuple;
+    using std::cout, std::endl;
+    using std::string;
     try {
         // Formulate and solve model
         // Next step is creating the master problem
@@ -47,6 +48,29 @@ MasterSolution relaxed_RMP(const Instance& instance, const vector<Route>& routes
             }
             vehicle_constraints.push_back(master.addConstr(expr <= 1));
         }
+        // Add the upper bound cuts on the x_ijv variables (from the compact formulation)
+        // Given the fact that x_ijv are binaries, an upper bound cut is x_ijv <= 0
+        map<tuple<int, int, int>, GRBConstr> upper_bound_cuts;
+        for (const auto& [i, j, v] : node.upper_bound_cuts){
+            GRBLinExpr expr = 0;
+            for (int r = 0; r < routes.size(); r++){
+                if (routes[r].route_edges[i][j] == 1 && routes[r].vehicle_id == v){
+                    expr += variables[r];
+                }
+            }
+            upper_bound_cuts[{i, j, v}] = master.addConstr(expr <= 0);
+        }
+        // Same for the lower bound cuts
+        map<tuple<int, int, int>, GRBConstr> lower_bound_cuts;
+        for (const auto& [i, j, v] : node.lower_bound_cuts){
+            GRBLinExpr expr = 0;
+            for (int r = 0; r < routes.size(); r++){
+                if (routes[r].route_edges[i][j] == 1 && routes[r].vehicle_id == v){
+                    expr += variables[r];
+                }
+            }
+            lower_bound_cuts[{i, j, v}] = master.addConstr(expr >= 1);
+        }
 
         // Finally, we set the objective function
         GRBLinExpr obj = 0;
@@ -78,8 +102,28 @@ MasterSolution relaxed_RMP(const Instance& instance, const vector<Route>& routes
             betas.push_back(constraint.get(GRB_DoubleAttr_Pi));
         }
 
+        // Get the duals of the upper bound cuts
+        map<tuple<int, int, int>, double> upper_bound_duals;
+        for (const auto& [ijv, cut] : upper_bound_cuts){
+            upper_bound_duals[ijv] = cut.get(GRB_DoubleAttr_Pi);
+        }
+        // Get the duals of the lower bound cuts
+        map<tuple<int, int, int>, double> lower_bound_duals;
+        for (const auto& [ijv, cut] : lower_bound_cuts){
+            lower_bound_duals[ijv] = cut.get(GRB_DoubleAttr_Pi);
+        }
+
         // Return the duals by building a solution
-        return MasterSolution(coefficients, alphas, betas, objective_value);
+        MasterSolution solution;
+        solution.coefficients = coefficients;
+        solution.alphas = alphas;
+        solution.betas = betas;
+        solution.upper_bound_duals = upper_bound_duals;
+        solution.lower_bound_duals = lower_bound_duals;
+        solution.objective_value = objective_value;
+        solution.is_feasible = true;
+
+        return solution;
 
     } catch(GRBException e) {
         cout << "Error code = " << e.getErrorCode() << endl;
@@ -92,7 +136,9 @@ MasterSolution relaxed_RMP(const Instance& instance, const vector<Route>& routes
 }
 
 
-IntegerSolution integer_RMP(const Instance& instance, const vector<Route>& routes, const BPNode& node){
+IntegerSolution integer_RMP(const Instance& instance, const std::vector<Route>& routes, const BPNode& node){
+    using std::vector, std::map, std::tuple;
+    using std::cout, std::endl;
     try {
         // Formulate and solve model
         // Next step is creating the master problem
@@ -131,22 +177,29 @@ IntegerSolution integer_RMP(const Instance& instance, const vector<Route>& route
             }
             vehicle_constraints.push_back(master.addConstr(expr <= 1));
         }
-
-        // Test : impose using more than 15 vehicles
-        GRBLinExpr expr = 0;
-        for (int r = 0; r < routes.size(); r++){
-            expr += variables[r];
-        }
-        //master.addConstr(expr >= 14);
-
-        // Test : impose covering more than 75 interventions
-        GRBLinExpr expr2 = 0;
-        for (int i = 0; i < instance.number_interventions; i++){
+        // Add the upper bound cuts on the x_ijv variables (from the compact formulation)
+        // Given the fact that x_ijv are binaries, an upper bound cut is x_ijv <= 0
+        map<tuple<int, int, int>, GRBConstr> upper_bound_cuts;
+        for (const auto& [i, j, v] : node.upper_bound_cuts){
+            GRBLinExpr expr = 0;
             for (int r = 0; r < routes.size(); r++){
-                expr2 += routes[r].is_in_route[i] * variables[r];
+                if (routes[r].route_edges[i][j] == 1 && routes[r].vehicle_id == v){
+                    expr += variables[r];
+                }
             }
+            upper_bound_cuts[{i, j, v}] = master.addConstr(expr <= 0);
         }
-        //master.addConstr(expr2 >= 75);
+        // Same for the lower bound cuts
+        map<tuple<int, int, int>, GRBConstr> lower_bound_cuts;
+        for (const auto& [i, j, v] : node.lower_bound_cuts){
+            GRBLinExpr expr = 0;
+            for (int r = 0; r < routes.size(); r++){
+                if (routes[r].route_edges[i][j] == 1 && routes[r].vehicle_id == v){
+                    expr += variables[r];
+                }
+            }
+            lower_bound_cuts[{i, j, v}] = master.addConstr(expr >= 1);
+        }
 
         // Finally, we set the objective function
         GRBLinExpr obj = 0;
@@ -168,7 +221,11 @@ IntegerSolution integer_RMP(const Instance& instance, const vector<Route>& route
         }
 
         // Return the solution
-        return IntegerSolution(coefficients, objective_value);
+        IntegerSolution solution;
+        solution.coefficients = coefficients;
+        solution.objective_value = objective_value;
+
+        return solution;
 
     } catch(GRBException e) {
         cout << "Error code = " << e.getErrorCode() << endl;
