@@ -103,8 +103,10 @@ int main(int argc, char *argv[]){
     cout << "Total elapsed time : " << elapsed_time << " ms" << endl;
 
     full_analysis(integer_solution, routes, instance);
+    cout << " True cost of the integer solution : " << compute_integer_objective(integer_solution, routes, instance) << endl;
 
     cout << "-----------------------------------" << endl;
+
 
 
     return 0;
