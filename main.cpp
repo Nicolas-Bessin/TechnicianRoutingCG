@@ -21,7 +21,7 @@
 #include <iomanip>
 #include <chrono>
 
-#define TIME_LIMIT 60
+#define TIME_LIMIT 120
 #define SOLVER_MODE IMPOSE_ROUTING
 #define THRESHOLD 1e-6
 #define VERBOSE true
@@ -39,7 +39,7 @@ int main(int argc, char *argv[]){
     auto start_parse = chrono::steady_clock::now();
     cout << "Technician Routing Problem using Column Generation" << endl;
     cout << "-----------------------------------" << endl;
-    string default_filename = "../data/instance_1_all_feasible.json";
+    string default_filename = "../data/agency1_05-12-2022_anonymized.json";
     Instance instance = parse_file(default_filename, true);
 
     // Check wether the time and distance matrices are symetric
@@ -110,7 +110,7 @@ int main(int argc, char *argv[]){
     cout << "True cost of the integer solution : " << compute_integer_objective(integer_solution, routes, instance) << endl;
 
     cout << "-----------------------------------" << endl;
-
+    print_used_routes(integer_solution, routes, instance);
 
 
     return 0;

@@ -127,14 +127,14 @@ MasterSolution relaxed_RMP(const Instance& instance, const std::vector<Route>& r
 }
 
 
-IntegerSolution integer_RMP(const Instance& instance, const std::vector<Route>& routes, const BPNode& node){
+IntegerSolution integer_RMP(const Instance& instance, const std::vector<Route>& routes, const BPNode& node, bool verbose){
     using std::vector, std::map, std::tuple;
     using std::cout, std::endl;
     try {
         // Formulate and solve model
         // Next step is creating the master problem
         GRBEnv env = GRBEnv(true);
-        env.set(GRB_IntParam_OutputFlag, 0);
+        env.set(GRB_IntParam_OutputFlag, verbose);
         // Start the environment
         env.start();
         // Create the master problem model

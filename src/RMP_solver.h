@@ -20,4 +20,4 @@ MasterSolution relaxed_RMP(const Instance& instance, const std::vector<Route>& r
     @param node : the node for which we want to solve the integer master problem (contains information on active routes)
     @return the solution to the integer master problem
 */
-IntegerSolution integer_RMP(const Instance& instance, const std::vector<Route>& routes, const BPNode& node);
+IntegerSolution integer_RMP(const Instance& instance, const std::vector<Route>& routes, const BPNode& node, bool verbose = false);

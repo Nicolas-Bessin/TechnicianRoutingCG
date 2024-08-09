@@ -52,6 +52,8 @@ CGResult column_generation(
     int iteration = 0;
     bool stop = false;
     MasterSolution solution;
+    // We stop if we don't improve the objective value
+    double previous_solution_objective = -1; 
     // Testing out the sequential pricing problem solving
     int current_vehicle_index = 0;
 
@@ -117,10 +119,15 @@ CGResult column_generation(
             cout << " - Max reduced cost : " << setprecision(15) << max_reduced_cost << "\n";
             cout << "Iteration " << iteration << " - Objective value : " << solution.objective_value << "\n";
         }
+        // If the objective did not change, we stop the algorithm
+        if (solution.objective_value == previous_solution_objective){
+            stop = true;
+        }
         // If no route was added, we stop the algorithm
         if (n_added_routes == 0){
             stop = true;
         }
+        previous_solution_objective = solution.objective_value;
         iteration++;
     }
 
@@ -143,7 +150,7 @@ CGResult column_generation(
     if (compute_integer_solution) {
         // Solve the integer version of the problem
         auto start_integer = chrono::steady_clock::now();
-        integer_solution = integer_RMP(instance, routes, node);
+        integer_solution = integer_RMP(instance, routes, node, verbose);
         auto end_integer = chrono::steady_clock::now();
         integer_time = chrono::duration_cast<chrono::milliseconds>(end_integer - start_integer).count();
         cout << "Integer RMP objective value : " << integer_solution.objective_value << endl;
