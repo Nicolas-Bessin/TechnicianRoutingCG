@@ -260,17 +260,18 @@ vector<Route> solve_pricing_problem(unique_ptr<Problem> & problem, int pool_size
         start_times[true_last] = current_time;
 
         // Create the Route object
-        Route new_route(instance.nodes.size());
-        new_route.vehicle_id = vehicle.id;
-        new_route.total_cost = total_cost;
-        new_route.reduced_cost = reduced_cost;
-        new_route.total_duration = total_duration;
-        new_route.total_travelling_time = total_travelling_time;
-        new_route.total_waiting_time = total_waiting_time;
-        new_route.id_sequence = id_sequence;
-        new_route.is_in_route = is_in_route;
-        new_route.start_times = start_times;
-        new_route.route_edges = route_edges;
+        Route new_route = Route{
+            vehicle.id,
+            total_cost,
+            reduced_cost,
+            total_duration,
+            total_travelling_time,
+            total_waiting_time,
+            id_sequence,
+            is_in_route,
+            start_times,
+            route_edges
+        };
         
         routes.push_back(new_route);
     }

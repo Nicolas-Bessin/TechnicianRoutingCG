@@ -19,7 +19,8 @@ struct CompactSolution{
     CompactSolution() : objective_value(0.0), x(), y(), u() {}
 
     // Constructor with sizes
-    CompactSolution(int n_nodes, int n_interventions, int n_vehicles) : objective_value(0.0), x(n_nodes, std::vector<std::vector<T>>(n_nodes, std::vector<T>(n_vehicles))), y(n_vehicles), u(n_interventions) {}
+    CompactSolution(int n_nodes, int n_interventions, int n_vehicles) : 
+        objective_value(0.0), x(n_nodes, std::vector<std::vector<T>>(n_nodes, std::vector<T>(n_vehicles))), y(n_vehicles), u(n_interventions) {}
 };
 
 
