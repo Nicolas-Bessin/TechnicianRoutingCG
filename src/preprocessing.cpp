@@ -15,7 +15,7 @@ void preprocess_interventions(Instance &instance, bool verbose){
     for (int i = 0; i < number_interventions; i++){
         Node& intervention = instance.nodes[i];
         // Is the intervention a long intervention?
-        if (intervention.duration > LONG_INTERVENTION){
+        if (intervention.duration >= LONG_INTERVENTION){
             nb_non_ambiguous++;
             intervention.is_ambiguous = false;
             continue;
