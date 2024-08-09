@@ -157,16 +157,17 @@ CGResult column_generation(
     }
 
     // Build the result object
-    CGResult result;
-    result.node = node;
-    result.master_solution = solution;
-    result.integer_solution = integer_solution;
-    result.routes = routes;
-    result.number_of_iterations = iteration;
-    result.master_time = master_time;
-    result.pricing_time = pricing_time;
-    result.integer_time = integer_time;
-    result.building_time = building_time;
+    CGResult result = CGResult{
+        node,
+        solution,
+        integer_solution,
+        routes,
+        iteration,
+        master_time,
+        pricing_time,
+        integer_time,
+        building_time
+    };
 
     return result;
 }

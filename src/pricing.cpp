@@ -172,6 +172,27 @@ void update_pricing_instance(
         objective->setNodeCost(i, node_cost);
     }
     // Add the arcs costs where applicable from the dual values of the cuts
+    for (const auto& [ijv, value] : master_solution.upper_bound_duals) {
+        int true_i = std::get<0>(ijv);
+        int true_j = std::get<1>(ijv);
+        int v = std::get<2>(ijv);
+        if (v != vehicle.id) continue;
+        int i = vehicle.reverse_interventions.at(true_i);
+        int j = vehicle.reverse_interventions.at(true_j);
+        double arc_cost = value + instance.cost_per_km * instance.distance_matrix[true_i][true_j];
+        objective->setArcCost(i, j, arc_cost);
+    }
+    // Same thing with the lower bound duals
+    for (const auto& [ijv, value] : master_solution.lower_bound_duals) {
+        int true_i = std::get<0>(ijv);
+        int true_j = std::get<1>(ijv);
+        int v = std::get<2>(ijv);
+        if (v != vehicle.id) continue;
+        int i = vehicle.reverse_interventions.at(true_i);
+        int j = vehicle.reverse_interventions.at(true_j);
+        double arc_cost = -value + instance.cost_per_km * instance.distance_matrix[true_i][true_j];
+        objective->setArcCost(i, j, arc_cost);
+    }
     
     // Put in the fixed costs of the vehicle
     double fixed_cost = master_solution.betas[vehicle.id] + vehicle.cost;
