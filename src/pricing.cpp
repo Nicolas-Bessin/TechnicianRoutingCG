@@ -1,4 +1,5 @@
 #include "pricing.h"
+
 #include "constants.h"
 #include "time_window_lunch.h"
 #include "../pathwyse/core/solver.h"
@@ -45,6 +46,9 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
     for (int i = 0; i < n_interventions_v; i++) {
         int true_i = vehicle.interventions[i];
         const Node& intervention_i = (instance.nodes[vehicle.interventions[i]]);
+        // Set the node cost of the intervention (used when using the pricing problem as heuristics)
+        // Otherwise, we overwrite this value when updating the pricing problem with dual values
+        objective->setNodeCost(i, -instance.M * intervention_i.duration);
         for (int j = 0; j < n_interventions_v; j++) {
             if (i == j) continue;
             int true_j = vehicle.interventions[j];
@@ -97,8 +101,6 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
         for (int j = 0; j < n_interventions_v; j++) {
             if (i == j) continue;
             int true_j = vehicle.interventions[j];
-            // Get the two interventions referenced by the indices i and j
-            const Node& intervention_j = (instance.nodes[true_j]);
             // Get the time it takes to go from intervention i to intervention j
             int travel_time = instance.time_matrix[true_i][true_j];
             // Set the time consumption on the arc
@@ -152,7 +154,11 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
 
 
 
-void update_pricing_instance(unique_ptr<Problem> & pricing_problem, const vector<double>& alphas, const Instance& instance, const Vehicle& vehicle) {
+void update_pricing_instance(
+    unique_ptr<Problem> & pricing_problem, 
+    const MasterSolution& master_solution, 
+    const Instance& instance, 
+    const Vehicle& vehicle) {
     // Get the number of nodes in the problem : equal to the number of available interventions + 2
     int n_interventions_v = vehicle.interventions.size();
     int origin = n_interventions_v;
@@ -162,9 +168,14 @@ void update_pricing_instance(unique_ptr<Problem> & pricing_problem, const vector
     // Put in the node costs : alpha_i - M * duration_i
     for (int i = 0; i < n_interventions_v; i++) {
         int true_i = vehicle.interventions[i];
-        double node_cost = alphas[true_i] - instance.M * instance.nodes[true_i].duration;
+        double node_cost = master_solution.alphas[true_i] - instance.M * instance.nodes[true_i].duration;
         objective->setNodeCost(i, node_cost);
     }
+    // Add the arcs costs where applicable from the dual values of the cuts
+    
+    // Put in the fixed costs of the vehicle
+    double fixed_cost = master_solution.betas[vehicle.id] + vehicle.cost;
+    objective->setNodeCost(origin, fixed_cost);
     return;
 }
 
@@ -249,17 +260,18 @@ vector<Route> solve_pricing_problem(unique_ptr<Problem> & problem, int pool_size
         start_times[true_last] = current_time;
 
         // Create the Route object
-        Route new_route(instance.nodes.size());
-        new_route.vehicle_id = vehicle.id;
-        new_route.total_cost = total_cost;
-        new_route.reduced_cost = reduced_cost;
-        new_route.total_duration = total_duration;
-        new_route.total_travelling_time = total_travelling_time;
-        new_route.total_waiting_time = total_waiting_time;
-        new_route.id_sequence = id_sequence;
-        new_route.is_in_route = is_in_route;
-        new_route.start_times = start_times;
-        new_route.route_edges = route_edges;
+        Route new_route = Route{
+            vehicle.id,
+            total_cost,
+            reduced_cost,
+            total_duration,
+            total_travelling_time,
+            total_waiting_time,
+            id_sequence,
+            is_in_route,
+            start_times,
+            route_edges
+        };
         
         routes.push_back(new_route);
     }

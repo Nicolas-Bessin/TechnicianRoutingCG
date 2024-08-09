@@ -11,18 +11,18 @@
 
 // Class Route : represents a sequence of nodes, starting at the warehouse, going through interventions and ending at the warehouse
 struct Route {
+    // Index of the vehicle that will perform the route
+    int vehicle_id;
     // Total cost of the route
     double total_cost;
     // Reduced cost of the route at the time of creation
     double reduced_cost;
     // Total duration of the interventions along the route
-    double total_duration;
+    int total_duration;
     // Total travelling time of the route
-    double total_travelling_time;
+    int total_travelling_time;
     // Total waiting time of the route
-    double total_waiting_time;
-    // Index of the vehicle that will perform the route
-    int vehicle_id;
+    int total_waiting_time;
     // Sequence of nodes in the route (not strictly necessary for the problem but useful for analysis)
     std::vector<int> id_sequence;
     // List of nodes in the route (1 if the node is in the route, 0 otherwise)
@@ -32,18 +32,30 @@ struct Route {
     // Matrix of the travel path
     std::vector<std::vector<int>> route_edges;
     // Empty constructor
-    Route(int n_nodes) {
-        total_cost = 0;
-        reduced_cost = 0;
-        total_duration = 0;
-        total_travelling_time = 0;
-        total_waiting_time = 0;
-        vehicle_id = -1;
-        id_sequence = std::vector<int>();
-        is_in_route = std::vector<int>(n_nodes, 0);
-        start_times = std::vector<double>(n_nodes, 0);
-        route_edges = std::vector<std::vector<int>>(n_nodes, std::vector<int>(n_nodes, 0));
-    }
+    Route(int n_nodes) : is_in_route(n_nodes), start_times(n_nodes), route_edges(n_nodes, std::vector<int>(n_nodes, 0)) {}
+    // Constructor
+    Route(
+        int vehicle_id,
+        double total_cost,
+        double reduced_cost,
+        int total_duration,
+        int total_travelling_time,
+        int total_waiting_time,
+        std::vector<int> id_sequence,
+        std::vector<int> is_in_route,
+        std::vector<double> start_times,
+        std::vector<std::vector<int>> route_edges
+    ) : 
+        vehicle_id(vehicle_id),
+        total_cost(total_cost),
+        reduced_cost(reduced_cost),
+        total_duration(total_duration),
+        total_travelling_time(total_travelling_time),
+        total_waiting_time(total_waiting_time),
+        id_sequence(id_sequence),
+        is_in_route(is_in_route),
+        start_times(start_times),
+        route_edges(route_edges) {}
 
 };
 

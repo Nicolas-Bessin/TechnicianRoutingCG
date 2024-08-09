@@ -24,7 +24,7 @@
 #define TIME_LIMIT 60
 #define SOLVER_MODE IMPOSE_ROUTING
 #define THRESHOLD 1e-6
-#define VERBOSE false
+#define VERBOSE true
 #define GREEDY_INIT false
 
 int main(int argc, char *argv[]){
@@ -40,7 +40,7 @@ int main(int argc, char *argv[]){
     cout << "Technician Routing Problem using Column Generation" << endl;
     cout << "-----------------------------------" << endl;
     string default_filename = "../data/instance_1_all_feasible.json";
-    Instance instance = parse_file(default_filename, VERBOSE);
+    Instance instance = parse_file(default_filename, true);
 
     // Check wether the time and distance matrices are symetric
     cout << "Distance matrix is symetric : " << is_symmetric(instance.distance_matrix) << " - Biggest gap : " << symmetry_gap(instance.distance_matrix) << endl;
