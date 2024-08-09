@@ -87,3 +87,8 @@ target_link_libraries(TRP_cg PUBLIC technician_routing_lib)
 add_executable(TRP_compact main_compact.cpp)
 # Link against the core library
 target_link_libraries(TRP_compact PUBLIC technician_routing_lib)
+
+# Create the branch & price executable
+add_executable(TRP_BP main_bp.cpp)
+# Link against the core library
+target_link_libraries(TRP_BP PUBLIC technician_routing_lib) 

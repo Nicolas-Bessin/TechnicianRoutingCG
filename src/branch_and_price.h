@@ -10,8 +10,10 @@
 struct BPNode {
     // Node depth in the branch and price tree
     int depth;
-    // Node upper bound
+    // Node upper bound - best value we could get from this node
     double upper_bound;
+    // Node lower bound - best overall solution we have found so far
+    double lower_bound;
     // Active routes in the node : for r in active_routes, routes[r] is active
     std::set<int> active_routes;
     // Upper bounds constraints imposed on the x_ijv variables - x_ijv <= 0 for (i, j, v) in upper_bounds
@@ -29,7 +31,5 @@ void branch_and_price(
     const std::vector<Route>& initial_routes,
     double reduced_cost_threshold,
     int time_limit_per_node = 60,
-    int max_depth = 10,
-    bool compute_integer_solution = true,
-    bool verbose = true
+    int max_depth = 10
     );

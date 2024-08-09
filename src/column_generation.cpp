@@ -12,8 +12,8 @@
 
 CGResult column_generation(
     const Instance & instance,
-    const BPNode & initial_node,
-    const std::vector<Route> initial_routes, 
+    BPNode & node,
+    std::vector<Route> & routes, 
     double reduced_cost_threshold, 
     int time_limit, 
     int max_iterations,
@@ -38,14 +38,10 @@ CGResult column_generation(
     auto end_sub_building = chrono::steady_clock::now();
     int building_time = chrono::duration_cast<chrono::milliseconds>(end_sub_building - start_sub_building).count();
 
-    // Copy the nodes to avoid modifying the input
-    BPNode node = initial_node;
-
-    // Copy the routes to avoid modifying the input
-    vector<Route> routes = initial_routes;
-
     int master_time = 0;
     int pricing_time = 0;
+
+    int time_limit_ms = time_limit * 1000;
 
     // Count the number of time each vehicle's sub problem reached the time limit
     vector<int> time_limit_reached(instance.vehicles.size(), 0);
@@ -59,12 +55,17 @@ CGResult column_generation(
     // Testing out the sequential pricing problem solving
     int current_vehicle_index = 0;
 
-    while (!stop && master_time + pricing_time < time_limit && iteration < max_iterations){
+    while (!stop && master_time + pricing_time < time_limit_ms && iteration < max_iterations){
         // Solve the master problem
         auto start = chrono::steady_clock::now();
         solution = relaxed_RMP(instance, routes, node);
         auto end = chrono::steady_clock::now();
         int diff = chrono::duration_cast<chrono::milliseconds>(end - start).count();
+        // At this point, if the solution is not feasible, it it because the cuts give a non feasible problem
+        // We can stop the algorithm
+        if (!solution.is_feasible){
+            return CGResult{};
+        }
         if (verbose) {
             cout << "Master problem solved in " << diff << " ms \n";
             cout << "Number of interventions covered : " << setprecision(2) << count_covered_interventions(solution, routes, instance);
@@ -132,8 +133,12 @@ CGResult column_generation(
 
     // Update the node's upper bound
     node.upper_bound = solution.objective_value;
+    // If the upper bound is lower than the lower bound, it isn't worth computing the integer solution
+    if (node.upper_bound < node.lower_bound){
+        compute_integer_solution = false;
+    }
 
-    IntegerSolution integer_solution;
+    IntegerSolution integer_solution = IntegerSolution{};
     int integer_time = 0;
     if (compute_integer_solution) {
         // Solve the integer version of the problem

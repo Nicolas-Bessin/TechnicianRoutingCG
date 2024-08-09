@@ -48,7 +48,7 @@ struct IntegerSolution {
     // Is this solution feasible
     bool is_feasible;
     // Empty constructor
-    IntegerSolution() : is_feasible(false) {}
+    IntegerSolution() : is_feasible(false), objective_value(-1.) {}
     // Constructor
     IntegerSolution(std::vector<int> coefficients, double objective_value) : 
         coefficients(coefficients), objective_value(objective_value), is_feasible(true) {}

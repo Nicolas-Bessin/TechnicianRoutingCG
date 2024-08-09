@@ -54,17 +54,17 @@ int main(int argc, char *argv[]){
     cout << "Total time spent parsing the instance : " << diff_parse << " ms" << endl;
 
     cout << "-----------------------------------" << endl;
-    vector<Route> initial_routes;
+    vector<Route> routes;
     if (GREEDY_INIT) {
         cout << "Initializing the routes with a greedy heuristic" << endl;
-        initial_routes = greedy_heuristic(instance);
-        IntegerSolution greedy_solution = IntegerSolution(vector<int>(initial_routes.size(), 1), 0);
-        greedy_solution.objective_value = compute_integer_objective(greedy_solution, initial_routes, instance);
+        routes = greedy_heuristic(instance);
+        IntegerSolution greedy_solution = IntegerSolution(vector<int>(routes.size(), 1), 0);
+        greedy_solution.objective_value = compute_integer_objective(greedy_solution, routes, instance);
         cout << "Objective value of the greedy heuristic : " << greedy_solution.objective_value << endl;
     } else {
         cout << "Initializing the routes with an empty route" << endl;
-        initial_routes = vector<Route>();
-        initial_routes.push_back(Route(instance.nodes.size()));
+        routes = vector<Route>();
+        routes.push_back(Route(instance.nodes.size()));
     }
 
     cout << "-----------------------------------" << endl;
@@ -74,15 +74,15 @@ int main(int argc, char *argv[]){
     const int time_limit = TIME_LIMIT * 1000;
 
     // Create a root node for the algorithm
-    BPNode root = RootNode(initial_routes);
-    CGResult result = column_generation(instance, root, initial_routes, THRESHOLD, time_limit, 10000, true, VERBOSE);
+    BPNode root = RootNode(routes);
+    CGResult result = column_generation(instance, root, routes, THRESHOLD, time_limit, 10000, true, VERBOSE);
 
     // Extract the results from the column generation algorithm
     int master_time = result.master_time;
     int pricing_time = result.pricing_time;
     int integer_time = result.integer_time;
     int sub_building_time = result.building_time;
-    vector<Route> routes = result.routes;
+
     MasterSolution master_solution = result.master_solution;
     IntegerSolution integer_solution = result.integer_solution;
     

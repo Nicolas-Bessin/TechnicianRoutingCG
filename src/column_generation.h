@@ -7,10 +7,8 @@
 #include <vector>
 
 struct CGResult {
-    BPNode node;
     MasterSolution master_solution;
     IntegerSolution integer_solution;
-    std::vector<Route> routes;
     int number_of_iterations;
     int master_time;
     int pricing_time;
@@ -30,10 +28,8 @@ struct CGResult {
         int integer_time,
         int building_time
     ) : 
-        node(node),
         master_solution(master_solution),
         integer_solution(integer_solution),
-        routes(routes),
         number_of_iterations(number_of_iterations),
         master_time(master_time),
         pricing_time(pricing_time),
@@ -55,8 +51,8 @@ struct CGResult {
     an integer solution to the problem.
 
     @param instance The instance of the problem to solve.
-    @param node The current node in the B&P tree
-    @param initial_routes The routes before this round of column generation
+    @param node The current node in the B&P tree (is modified when adding routes)
+    @param routes The routes before this round of column generation (is modified when adding routes)
     @param reduced_cost_threshold Only accepts columns with reduced cost over this threshold
     @param time_limit The time limit for the column generation algorithm (in seconds)
     @param max_iterations The maximum number of iterations for the column generation algorithm
@@ -67,8 +63,8 @@ struct CGResult {
 */
 CGResult column_generation(
     const Instance & instance,
-    const BPNode & node,
-    const std::vector<Route> initial_routes,
+    BPNode & node,
+    std::vector<Route> & initial_routes,
     double reduced_cost_threshold,
     int time_limit = 60, // (in seconds)
     int max_iterations = 1000,
