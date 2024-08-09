@@ -42,13 +42,35 @@ struct CGResult {
     {}
 };
 
+/*
+    Solve the column generation problem for the given instance and initial node
+    using the given initial routes and reduced cost threshold.
 
+    The column generation algorithm will stop when the reduced cost of the best
+    column is greater than the reduced_cost_threshold or when the time limit is reached.
+
+    The algorithm will also stop if the number of iterations exceeds max_iterations.
+
+    If compute_integer_solution is set to true, the algorithm will also try to compute
+    an integer solution to the problem.
+
+    @param instance The instance of the problem to solve.
+    @param node The current node in the B&P tree
+    @param initial_routes The routes before this round of column generation
+    @param reduced_cost_threshold Only accepts columns with reduced cost over this threshold
+    @param time_limit The time limit for the column generation algorithm (in seconds)
+    @param max_iterations The maximum number of iterations for the column generation algorithm
+    @param compute_integer_solution If set to true, compute an Integer solution at the end
+    @param verbose If set to true, prints information at each iteration
+
+    Returns a CGResult object containing the results of the column generation algorithm.
+*/
 CGResult column_generation(
     const Instance & instance,
-    const BPNode & initial_node,
+    const BPNode & node,
     const std::vector<Route> initial_routes,
     double reduced_cost_threshold,
-    int time_limit = 60,
+    int time_limit = 60, // (in seconds)
     int max_iterations = 1000,
     bool compute_integer_solution = true,
     bool verbose = false

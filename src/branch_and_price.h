@@ -10,9 +10,8 @@
 struct BPNode {
     // Node depth in the branch and price tree
     int depth;
-    // Node upper bound and lower bound
+    // Node upper bound
     double upper_bound;
-    double lower_bound;
     // Active routes in the node : for r in active_routes, routes[r] is active
     std::set<int> active_routes;
     // Upper bounds constraints imposed on the x_ijv variables - x_ijv <= 0 for (i, j, v) in upper_bounds

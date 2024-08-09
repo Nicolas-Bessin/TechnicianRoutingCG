@@ -130,6 +130,9 @@ CGResult column_generation(
     cout << "End of the column generation after " << iteration << " iterations" << endl;
     cout << "Relaxed RMP objective value : " << setprecision(3) << solution.objective_value << endl;
 
+    // Update the node's upper bound
+    node.upper_bound = solution.objective_value;
+
     IntegerSolution integer_solution;
     int integer_time = 0;
     if (compute_integer_solution) {
