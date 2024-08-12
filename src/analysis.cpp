@@ -360,7 +360,7 @@ double compute_integer_objective(const IntegerSolution& solution, const vector<R
 
 void print_route(const Route & route, const Instance & instance) {
     using std::cout, std::endl;
-    using std::setprecision, std::fixed;
+    using std::setprecision, std::fixed, std::setw;
 
     // Print the vehicle id
     cout << "Vehicle id: " << route.vehicle_id << " - Tour length: " << route.id_sequence.size() << endl;
@@ -396,27 +396,27 @@ void print_route(const Route & route, const Instance & instance) {
     // Print the start of time window, real start time, Duration, travel to next and end of time window
     cout << "Window start: ";
     for (int i = 0; i < route.id_sequence.size(); i++) {
-        cout << instance.nodes[route.id_sequence[i]].start_window << ", ";
+        cout << setw(4) << instance.nodes[route.id_sequence[i]].start_window << ", ";
     }
     cout << endl;
     cout << "Start time:   ";
     for (int i = 0; i < route.id_sequence.size(); i++) {
-        cout << route.start_times[route.id_sequence[i]] << ", ";
+        cout << setw(4) << route.start_times[route.id_sequence[i]] << ", ";
     }
     cout << endl;
     cout << "Duration:     ";
     for (int i = 0; i < route.id_sequence.size(); i++) {
-        cout << instance.nodes[route.id_sequence[i]].duration << ", ";
+        cout << setw(4) << instance.nodes[route.id_sequence[i]].duration << ", ";
     }
     cout << endl;
     cout << "Travel time:  ";
     for (int i = 0; i < route.id_sequence.size() - 1; i++) {
-        cout << instance.time_matrix[route.id_sequence[i]][route.id_sequence[i + 1]] << ", ";
+        cout << setw(4) << instance.time_matrix[route.id_sequence[i]][route.id_sequence[i + 1]] << ", ";
     }
-    cout << " -, " << endl;
+    cout << setw(4) << " -, " << endl;
     cout << "Window end:   ";
     for (int i = 0; i < route.id_sequence.size(); i++) {
-        cout << instance.nodes[route.id_sequence[i]].end_window << ", ";
+        cout << setw(4) << instance.nodes[route.id_sequence[i]].end_window << ", ";
     }
     cout << endl;
 
