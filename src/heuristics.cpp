@@ -129,3 +129,8 @@ std::vector<Route> greedy_heuristic_alphas(const Instance& instance) {
 
     return routes;
 }
+
+
+std::vector<Route> greedy_heuristic_bpnode(const Instance& instance, const BPNode& node){
+    
+}

@@ -8,13 +8,21 @@
 #include <vector>
 #include <memory>
 
+#include <set>
+#include <tuple>
+
 
 // Defines the pricing problem for a given vehicle.
 // Does not have the updated dual values for the node costs.
 // This is used in the initialization of each pricing sub problem
 //   @param instance: the instance of the problem
 //   @param vehicle: the vehicle that will perform the routes
-std::unique_ptr<Problem> create_pricing_instance(const Instance &instance, const Vehicle &vehicle);
+std::unique_ptr<Problem> create_pricing_instance(
+    const Instance &instance, 
+    const Vehicle &vehicle,
+    const std::set<std::tuple<int, int, int>> &forbidden_edges = {},
+    const std::set<std::tuple<int, int, int>> &required_edges = {}
+    );
 
 
 // Update a pricing problem with the dual values given by the master problem

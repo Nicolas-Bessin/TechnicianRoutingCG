@@ -150,7 +150,7 @@ CGResult column_generation(
     if (compute_integer_solution) {
         // Solve the integer version of the problem
         auto start_integer = chrono::steady_clock::now();
-        integer_solution = integer_RMP(instance, routes, node, verbose);
+        integer_solution = integer_RMP(instance, routes, node, false);
         auto end_integer = chrono::steady_clock::now();
         integer_time = chrono::duration_cast<chrono::milliseconds>(end_integer - start_integer).count();
         cout << "Integer RMP objective value : " << integer_solution.objective_value << endl;

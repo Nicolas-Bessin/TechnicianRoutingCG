@@ -14,7 +14,12 @@ using std::vector, std::list, std::string;
 using std::unique_ptr;
 
 
-unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehicle& vehicle) {
+unique_ptr<Problem> create_pricing_instance(
+    const Instance& instance, 
+    const Vehicle& vehicle,
+    const std::set<std::tuple<int, int, int>>& forbidden_edges,
+    const std::set<std::tuple<int, int, int>>& required_edges
+    ) {
     // in hopes of mitigating the issue of the costs & objctive values only being integers in pathwyse
     
     // Get the number of nodes in the problem : equal to the number of available interventions + 2
@@ -38,6 +43,57 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
     // Initialize the problem
     problem->initProblem();
 
+    // First step is to define the underlying graph while taking into account the forbidden and required edges
+    // We do not add the arcs that are forbidden
+    // And if arc (i, j) is required, we only add this particular arc
+    // Begin with the arcs that go from the warehouse to the interventions
+    // If there is a required edge, we only add this edge
+    bool required_first_edge = false;
+    for (const auto& [i_, j_, v_] : required_edges) {
+        if (i_ == vehicle.depot) {
+            required_first_edge = true;
+            int reverse_j;
+            if (j_ == vehicle.depot) reverse_j = destination;
+            else reverse_j = vehicle.reverse_interventions.at(j_);
+            problem->setNetworkArc(origin, reverse_j);
+            break;
+        }
+    }
+    for (int i = 0; i < n_interventions_v ; i++) {
+        // First, is there a required edge starting from i ?
+        bool required_edge = false;
+        for (const auto& [i_, j_, v_] : required_edges) {
+            if (i_ == vehicle.interventions[i]) {
+                required_edge = true;
+                int reverse_j;
+                if (j_ == vehicle.depot) reverse_j = destination;
+                else reverse_j = vehicle.reverse_interventions.at(j_);
+                problem->setNetworkArc(i, reverse_j);
+                break;
+            }
+        }
+        if (required_edge) continue;
+        // If not, we add the arcs that are not forbidden
+        // First, we add the arcs that go to other interventions
+        for (int j = 0; j < n_interventions_v; j++) {
+            if (i == j) continue;
+            // Check if the arc is forbidden
+            bool forbidden = forbidden_edges.contains(std::make_tuple(vehicle.interventions[i], vehicle.interventions[j], vehicle.id));
+            if (forbidden) continue;
+            // If not, we add the arc
+            problem->setNetworkArc(i, j);
+        }
+        // Then, we add the arc that goes to the destination
+        if (!forbidden_edges.contains(std::make_tuple(vehicle.interventions[i], vehicle.depot, vehicle.id))) {
+            problem->setNetworkArc(i, destination);
+        }
+        // If there wasn't a required edge from the depot, we add the arc from the depot to the intervention
+        // Provided it is not forbidden
+        if (!required_first_edge && !forbidden_edges.contains(std::make_tuple(vehicle.depot, vehicle.interventions[i], vehicle.id))) {
+            problem->setNetworkArc(origin, i);
+        }
+    }
+
     // Initialize the objective function
     DefaultCost* objective = new DefaultCost();
     objective->initData(false, n_interventions_v + 2);
@@ -52,8 +108,6 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
         for (int j = 0; j < n_interventions_v; j++) {
             if (i == j) continue;
             int true_j = vehicle.interventions[j];
-            // First step is adding an arc to the underlying network
-            problem->setNetworkArc(i, j);
             // Get the intervention referenced by the index j
             const Node& intervention_j = instance.nodes[vehicle.interventions[j]];
             // Get the distance between the two interventions
@@ -62,13 +116,11 @@ unique_ptr<Problem> create_pricing_instance(const Instance& instance, const Vehi
             objective->setArcCost(i, j, arc_cost);
         }
         // Outgoing arcs from the warehouse
-        problem->setNetworkArc(origin, i);
         int distance_out = instance.distance_matrix[vehicle.depot][true_i];
         // Set the arc cost
         objective->setArcCost(origin, i, instance.cost_per_km * distance_out);
         // Incoming arcs to the warehouse
-        problem->setNetworkArc(i, destination);
-        // Distance is probably the same as the outgoing distance but eh we never know
+        // Distance is not the same as the outgoing distance
         int distance_in = instance.distance_matrix[true_i][vehicle.depot];
         // Here we only consider the cost of travelng, the node costs have already been set
         objective->setArcCost(i, destination, instance.cost_per_km * distance_in);
