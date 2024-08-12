@@ -62,6 +62,8 @@ int main(int argc, char *argv[]){
     BPNode root = RootNode(routes);
     IntegerSolution integer_solution = integer_RMP(instance, routes, root);
 
+    print_used_routes(integer_solution, routes, instance);
+
     full_analysis(integer_solution, routes, instance);
 
     cout << "True cost of the integer solution : " << setprecision(10) <<  compute_integer_objective(integer_solution, routes, instance) << endl;
@@ -76,6 +78,8 @@ int main(int argc, char *argv[]){
     BPNode regenerated_root = RootNode(regenerated_routes);
     IntegerSolution regenerated_solution = integer_RMP(instance, regenerated_routes, regenerated_root);
 
+    print_used_routes(regenerated_solution, regenerated_routes, instance);
+    
     full_analysis(regenerated_solution, regenerated_routes, instance);
 
     // cout << "-----------------------------------" << endl;

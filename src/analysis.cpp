@@ -372,6 +372,7 @@ void print_route(const Route & route, const Instance & instance) {
     
     // Print the tvehicle cost, travelling cost and total cost
     double travel_distance = count_route_kilometres(route, instance);
+    cout << setprecision(1) << fixed;
     cout << "Vehicle cost: " << instance.vehicles[route.vehicle_id].cost << " ";
     cout << "Travelling cost: " << travel_distance * instance.cost_per_km << " ";
     cout << "Total cost: " << route.total_cost << endl;
