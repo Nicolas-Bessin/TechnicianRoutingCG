@@ -26,7 +26,7 @@ std::vector<Route> compact_solution_to_routes(const Instance& instance, const Co
         double total_waiting_time = 0;
         vector<int> sequence;
         vector<int> is_in_route = vector<int>(n_nodes, 0);
-        vector<double> start_times = vector<double>(n_nodes, 0);
+        vector<int> start_times = vector<int>(n_nodes, 0);
         vector<vector<int>> route_edges = vector<vector<int>>(n_nodes, vector<int>(n_nodes, 0));
         // Go through the route
         bool reached_depot = false;
@@ -45,7 +45,7 @@ std::vector<Route> compact_solution_to_routes(const Instance& instance, const Co
                 start_times[current_node] = compact_solution.u[current_node];
             }
             // Update the counters : waiting time is max between current start time and time elapsed until now
-            total_waiting_time += std::max(0.0, start_times[current_node] - current_time);
+            total_waiting_time += std::max(0, start_times[current_node] - current_time);
             current_time = start_times[current_node] + node.duration;
             total_duration += node.duration;
             // Find the next node

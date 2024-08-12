@@ -183,3 +183,5 @@ struct Instance {
 bool is_symmetric(const std::vector<std::vector<int>>& matrix);
 
 int symmetry_gap(const std::vector<std::vector<int>>& matrix);
+
+bool can_do_intervention(const Node& intervention, const Vehicle& vehicle);

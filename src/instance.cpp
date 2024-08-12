@@ -43,3 +43,18 @@ int symmetry_gap(const std::vector<std::vector<int>>& matrix) {
     }
     return biggest_diff;
 }
+
+bool can_do_intervention(const Node& intervention, const Vehicle& vehicle){
+    // Check that the vehicle has the skills to do the intervention
+    for (const auto &[skill, quantity] : intervention.required_skills){
+        // If the skill is not in the vehicle, the vehicle cannot do the intervention
+        if (vehicle.skills.find(skill) == vehicle.skills.end()){
+            return false;
+        }
+        // If the vehicle does not have enough technicians with the skill, the vehicle cannot do the intervention
+        if (vehicle.skills.at(skill) < quantity){
+            return false;
+        }
+    }
+    return true;
+}

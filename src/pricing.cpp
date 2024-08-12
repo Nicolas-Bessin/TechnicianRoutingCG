@@ -237,7 +237,7 @@ vector<Route> solve_pricing_problem(unique_ptr<Problem> & problem, int pool_size
         double total_waiting_time = 0;
         vector<int> id_sequence;
         vector<int> is_in_route(instance.nodes.size(), 0);
-        vector<double> start_times(instance.nodes.size(), 0);
+        vector<int> start_times(instance.nodes.size(), 0);
         vector<vector<int>> route_edges(instance.nodes.size(), vector<int>(instance.nodes.size(), 0));
         
         // Keep track of the time ellapsed

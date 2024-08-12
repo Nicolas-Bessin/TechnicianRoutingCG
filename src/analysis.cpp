@@ -527,6 +527,7 @@ void full_analysis(const IntegerSolution& integer_solution, const vector<Route>&
         const Route& route = routes.at(i);
         if (integer_solution.coefficients[i] > 0 && !is_route_feasible(route, instance)){
             cout << "Route " << i << " is not feasible" << endl;
+            cout << "-----" << endl;
             all_feasible = false;
         }
     }

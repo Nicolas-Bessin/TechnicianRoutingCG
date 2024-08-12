@@ -28,12 +28,12 @@ struct Route {
     // List of nodes in the route (1 if the node is in the route, 0 otherwise)
     std::vector<int> is_in_route;
     // Start time of these interventions
-    std::vector<double> start_times;
+    std::vector<int> start_times;
     // Matrix of the travel path
     std::vector<std::vector<int>> route_edges;
     // Empty constructor
     Route(int n_nodes) : is_in_route(n_nodes), start_times(n_nodes), route_edges(n_nodes, std::vector<int>(n_nodes, 0)) {}
-    // Constructor
+    // Constructor with automatic building of the route_edges matrix
     Route(
         int vehicle_id,
         double total_cost,
@@ -43,7 +43,19 @@ struct Route {
         int total_waiting_time,
         std::vector<int> id_sequence,
         std::vector<int> is_in_route,
-        std::vector<double> start_times,
+        std::vector<int> start_times
+    ); 
+    // Constructor with all the attributes
+    Route(
+        int vehicle_id,
+        double total_cost,
+        double reduced_cost,
+        int total_duration,
+        int total_travelling_time,
+        int total_waiting_time,
+        std::vector<int> id_sequence,
+        std::vector<int> is_in_route,
+        std::vector<int> start_times,
         std::vector<std::vector<int>> route_edges
     ) : 
         vehicle_id(vehicle_id),
@@ -67,11 +79,6 @@ struct Route {
 // - the same start times
 bool operator==(const Route& lhs, const Route& rhs);
 
-
-// To be able to define a set of routes:
-bool operator<(const Route& lhs, const Route& rhs);
-
-
 // Computes the reduced cost of a route given the dual values of the constraints
 double compute_reduced_cost(const Route& route, const std::vector<double>& alphas, double beta, const Instance& instance);
 
@@ -84,3 +91,6 @@ std::vector<std::pair<int, int>> imposed_routings_from_routes(const std::vector<
 
 // Builds a new vector of routes containing only the routes that are used in the integer solution
 std::vector<Route> keep_used_routes(const std::vector<Route>& routes, const IntegerSolution& integer_solution);
+
+// Parse a vector of routes from a file
+std::vector<Route> parse_routes_from_file(const std::string& filename, const Instance& instance);

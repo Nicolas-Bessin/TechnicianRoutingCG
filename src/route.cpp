@@ -4,27 +4,44 @@
 #include "constants.h"
 
 #include <math.h>
+#include <fstream>
 #include <iostream>
 #include <algorithm>
 
-using std::min;
+#include "../nlohmann/json.hpp"
 
-// Check wether two consecutive master solutions are equal (i.e whether their non zero coefficients are the same)
-bool operator==(const MasterSolution& lhs, const MasterSolution& rhs){
-    // Check the objective value
-    if (fabs(lhs.objective_value - rhs.objective_value) > 0.0001){
-        return false;
-    }
-    // Check the length of the coefficients
-    // Check the coefficients themselves
-    int size = min(lhs.coefficients.size(), rhs.coefficients.size());
-    for (int i = 0; i < size; i++){
-        if (lhs.coefficients[i] != rhs.coefficients[i]){
-            return false;
+
+Route::Route(
+        int vehicle_id,
+        double total_cost,
+        double reduced_cost,
+        int total_duration,
+        int total_travelling_time,
+        int total_waiting_time,
+        std::vector<int> id_sequence,
+        std::vector<int> is_in_route,
+        std::vector<int> start_times
+    ) : 
+    vehicle_id(vehicle_id),
+    total_cost(total_cost),
+    reduced_cost(reduced_cost),
+    total_duration(total_duration),
+    total_travelling_time(total_travelling_time),
+    total_waiting_time(total_waiting_time),
+    id_sequence(id_sequence),
+    is_in_route(is_in_route),
+    start_times(start_times)
+    {
+        // Initialize the route_edges matrix
+        int n_nodes = is_in_route.size();
+        route_edges = std::vector<std::vector<int>>(n_nodes, std::vector<int>(n_nodes, 0));
+        for (int i = 0; i < id_sequence.size() - 1; i++) {
+            route_edges[id_sequence[i]][id_sequence[i + 1]] = 1;
         }
     }
-    return true;
-}
+
+
+using std::min;
 
 // Checks if two routes are equal
 // That is, if they have :
@@ -55,46 +72,6 @@ bool operator==(const Route& lhs, const Route& rhs){
 
     return true;
 }
-
-
-bool operator<(const Route& lhs, const Route& rhs){
-    // Check the vehicle_id
-    if (lhs.vehicle_id < rhs.vehicle_id){
-        return true;
-    }
-    if (lhs.vehicle_id > rhs.vehicle_id){
-        return false;
-    }
-    //Check the length of the id_sequence
-    if (lhs.id_sequence.size() < rhs.id_sequence.size()){
-        return true;
-    }
-    if (lhs.id_sequence.size() > rhs.id_sequence.size()){
-        return false;
-    }
-    // Check the sequences themselves
-    for (int i = 0; i < lhs.id_sequence.size(); i++){
-        if (lhs.id_sequence[i] < rhs.id_sequence[i]){
-            return true;
-        }
-        if (lhs.id_sequence[i] > rhs.id_sequence[i]){
-            return false;
-        }
-    }
-    // Check the start times
-    for (int i = 0; i < lhs.start_times.size(); i++){
-        if (lhs.start_times[i] < rhs.start_times[i]){
-            return true;
-        }
-        if (lhs.start_times[i] > rhs.start_times[i]){
-            return false;
-        }
-    }
-    // If we reach this point, the two routes are equal
-    return false;
-}
-
-
 
 double compute_reduced_cost(const Route& route, const std::vector<double>& alphas, double beta, const Instance& instance) {
     const Vehicle& vehicle = instance.vehicles[route.vehicle_id];
@@ -163,9 +140,15 @@ bool is_route_feasible(const Route& route, const Instance& instance) {
     map<string, int> consummed_capacities;
     // Go through every consecutive intervention in the route
     for (int i = 0; i < route_length - 1; i++) {
-        // Check that the time window is respected
         int intervention_id = route.id_sequence.at(i);
-        const Node& intervention = instance.nodes.at(route.id_sequence.at(i));
+        const Node& intervention = instance.nodes.at(intervention_id);
+        // Check that the skills are respected
+        bool can_do = can_do_intervention(intervention, vehicle);
+        if (!can_do) {
+            cout << "Vehicle " << vehicle_id << " cannot do intervention " << intervention_id << endl;
+            return false;
+        }
+        // Check that the time window is respected
         double duration = intervention.duration;
         // Check that the start time is the current time 
         // (for the first node which is the depot, the start time will hold the arrival time at the end of the day)
@@ -254,5 +237,88 @@ std::vector<Route> keep_used_routes(const std::vector<Route>& routes, const Inte
         used_routes.push_back(routes[r]);
     }
     return used_routes;
+}
+
+
+Route parse_route(const nlohmann::json & data, const Instance& instance) {
+    using std::vector;
+    int vehicle_id = data.at("vehicle_id");
+    vector<int> sequence_julia = data.at("sequence");
+    vector<int> start_times_data = data.at("start_times");
+    // Build the real route object
+    int n_nodes = instance.nodes.size();
+    int n_vehicles = instance.vehicles.size();
+    int true_vehicle_id = (vehicle_id - 1 + 3) % n_vehicles;
+    vector<int> id_sequence = vector<int>();
+    vector<int> is_in_route = vector<int>(n_nodes, 0);
+    vector<int> start_times = vector<int>(n_nodes, 0);
+    vector<vector<int>> route_edges = vector<vector<int>>(n_nodes, vector<int>(n_nodes, 0));
+    // Initialize the sequence with the depot
+    id_sequence.push_back(instance.vehicles[true_vehicle_id].depot);
+    is_in_route[instance.vehicles[true_vehicle_id].depot] = 1;
+    start_times[instance.vehicles[true_vehicle_id].depot] = 0;
+    int duration = 0;
+    // Go through the sequence and the start times in order of increasing start time
+    // (In the json object, the sequence is ordered by increasing node index)
+    vector<int> order = std::vector<int>(sequence_julia.size());
+    std::iota(order.begin(), order.end(), 0);
+    std::sort(order.begin(), order.end(), [&](int i, int j) { return start_times_data[i] < start_times_data[j]; });
+    // Now we go through the sequence in the order of increasing start time
+    for (int i : order) {
+        int node_id = sequence_julia[i] - 1;
+        id_sequence.push_back(node_id);
+        is_in_route[node_id] = 1;
+        start_times[node_id] = start_times_data[i];
+        duration += instance.nodes[node_id].duration;
+    }
+    // Finally, also add the depot at the end
+    id_sequence.push_back(instance.vehicles[true_vehicle_id].depot);
+    // Build the route_edges matrix & compute the total cost
+    double total_cost = instance.vehicles[true_vehicle_id].cost;
+    for (int i = 0; i < id_sequence.size() - 1; i++) {
+        total_cost += instance.distance_matrix[id_sequence[i]][id_sequence[i + 1]] * instance.cost_per_km;
+        route_edges[id_sequence[i]][id_sequence[i + 1]] = 1;
+    }
+
+    return Route{
+        true_vehicle_id,
+        total_cost,
+        -1.0,
+        duration,
+        -1,
+        -1,
+        id_sequence,
+        is_in_route,
+        start_times,
+        route_edges
+    };
+}
+
+
+std::vector<Route> parse_routes_from_file(const std::string& filename, const Instance& instance) {
+    using std::vector;
+    using nlohmann::json;
+    using std::cout, std::endl;
+
+    // Read the file
+    std::ifstream f(filename);
+    json data = json::parse(f);
+    f.close();
+    // Print the meta-data
+    cout << "-----------------------------------" << endl;
+    cout << "Reading routes from file " << filename << endl;
+    cout << "Number of routes: " << data.at("nb_vehicles") << endl;
+    cout << "Expected objective value: " << data.at("objective") << endl;
+    cout << "Total intervention duration: " << data.at("duration") << endl;
+    cout << "Number of covered interventions: " << data.at("nb_interventions") << endl;
+    // We now parse the routes themselves
+    vector<Route> routes = vector<Route>();
+    vector<json> routes_data = data.at("routes");
+    for (const json& route_data : routes_data) {
+        Route route = parse_route(route_data, instance);
+        routes.push_back(route);
+    }       
+
+    return routes;
 }
 
