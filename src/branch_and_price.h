@@ -33,3 +33,7 @@ void branch_and_price(
     int time_limit_per_node = 60,
     int max_depth = 10
     );
+
+
+// Convert a vector of routes to the set of required edges it contains
+std::set<std::tuple<int, int, int>> routes_to_required_edges(const std::vector<Route>& routes);

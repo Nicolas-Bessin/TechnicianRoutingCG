@@ -142,3 +142,18 @@ void branch_and_price(
 
         return;
 }
+
+
+std::set<std::tuple<int, int, int>> routes_to_required_edges(const std::vector<Route>& routes){
+    std::set<std::tuple<int, int, int>> required_edges;
+    for (const Route& route : routes){
+        for (int i = 0; i < route.route_edges.size(); i++){
+            for (int j = 0; j < route.route_edges.size(); j++){
+                if (route.route_edges[i][j] == 1){
+                    required_edges.insert(std::make_tuple(i, j, route.vehicle_id));
+                }
+            }
+        }
+    }
+    return required_edges;
+}

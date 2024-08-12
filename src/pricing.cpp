@@ -50,11 +50,20 @@ unique_ptr<Problem> create_pricing_instance(
     // If there is a required edge, we only add this edge
     bool required_first_edge = false;
     for (const auto& [i_, j_, v_] : required_edges) {
+        // Skip every edge not related to this vehicle
+        if (v_ != vehicle.id) continue;
         if (i_ == vehicle.depot) {
             required_first_edge = true;
             int reverse_j;
-            if (j_ == vehicle.depot) reverse_j = destination;
-            else reverse_j = vehicle.reverse_interventions.at(j_);
+            if (j_ == vehicle.depot) {
+                reverse_j = destination;
+            } else {
+                if (!vehicle.reverse_interventions.contains(j_)) {
+                    cout << "Vehicle " << vehicle.id << " can not do intervention " << j_ << endl;
+                    break;
+                }
+                reverse_j = vehicle.reverse_interventions.at(j_);
+            }
             problem->setNetworkArc(origin, reverse_j);
             break;
         }
@@ -63,11 +72,19 @@ unique_ptr<Problem> create_pricing_instance(
         // First, is there a required edge starting from i ?
         bool required_edge = false;
         for (const auto& [i_, j_, v_] : required_edges) {
+            if (v_ != vehicle.id) continue;
             if (i_ == vehicle.interventions[i]) {
                 required_edge = true;
                 int reverse_j;
-                if (j_ == vehicle.depot) reverse_j = destination;
-                else reverse_j = vehicle.reverse_interventions.at(j_);
+                if (j_ == vehicle.depot) {
+                    reverse_j = destination;
+                } else {
+                    if (!vehicle.reverse_interventions.contains(j_)) {
+                        cout << "Vehicle " << vehicle.id << " can not do intervention " << j_ << endl;
+                        break;
+                    }
+                    reverse_j = vehicle.reverse_interventions.at(j_);
+                }
                 problem->setNetworkArc(i, reverse_j);
                 break;
             }

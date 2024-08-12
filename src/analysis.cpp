@@ -224,6 +224,21 @@ void print_used_route_durations(const IntegerSolution& solution, const std::vect
     cout << endl;
 }
 
+// Prints the objective coefficients of the used routes
+void print_used_route_obj_coeffs(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance) {
+    using std::cout, std::endl;
+    cout << "Route objective coefficients: ";
+    for (int r = 0; r < routes.size(); r++) {
+        if (solution.coefficients[r] > 0) {
+            double coef = instance.M * routes[r].total_duration;
+            coef -= instance.cost_per_km * count_route_kilometres(routes[r], instance);
+            coef -= instance.vehicles[routes[r].vehicle_id].cost;
+            cout << std::setprecision(1) << std::fixed << "v" << routes[r].vehicle_id << " : " << coef << ", ";
+        }
+    }
+    cout << endl;
+}
+
 
 int count_coverable_interventions(const IntegerSolution& solution, const vector<Route>& routes, const Instance& instance) {
     int nb_routes = routes.size();
@@ -355,7 +370,6 @@ void print_route(const Route & route, const Instance & instance) {
     }
     cout << endl;
     
-    setprecision(4);
     // Print the tvehicle cost, travelling cost and total cost
     double travel_distance = count_route_kilometres(route, instance);
     cout << "Vehicle cost: " << instance.vehicles[route.vehicle_id].cost << " ";
@@ -551,6 +565,7 @@ void full_analysis(const IntegerSolution& integer_solution, const vector<Route>&
     cout << "Total time : " << total_time << " minutes - Average per route : " << total_time / count_used_vehicles(integer_solution, routes, instance) << " minutes" << endl;
     cout << "Shortest route time : " << shortest_time << " minutes - Longest route time : " << longest_time << " minutes" << endl;
     print_used_route_durations(integer_solution, routes);
+    print_used_route_obj_coeffs(integer_solution, routes, instance);
     print_non_covered_interventions(integer_solution, routes, instance, false);
     print_vehicles_non_covered(integer_solution, routes, instance);
 
