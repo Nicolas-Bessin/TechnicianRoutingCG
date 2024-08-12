@@ -133,7 +133,6 @@ bool is_route_feasible(const Route& route, const Instance& instance) {
         cout << "Route does not end at the depot" << endl;
         return false;
     }
-
     // We now go through the route step by step to check the time windows and the capacities
     int route_length = route.id_sequence.size();
     int current_time = 0;
@@ -169,7 +168,7 @@ bool is_route_feasible(const Route& route, const Instance& instance) {
             return false;
         }
         if (current_time + duration > intervention.end_window) {
-            cout << "Intervention " << intervention_id << " ends too late : ";
+            cout << std::setprecision(4) << "Intervention " << intervention_id << " ends too late : ";
             cout << current_time + duration << " > " << intervention.end_window << endl;
             return false;
         }
@@ -241,14 +240,26 @@ std::vector<Route> keep_used_routes(const std::vector<Route>& routes, const Inte
 
 
 Route parse_route(const nlohmann::json & data, const Instance& instance) {
-    using std::vector;
+    using std::vector, std::string;
     int vehicle_id = data.at("vehicle_id");
     vector<int> sequence_julia = data.at("sequence");
     vector<int> start_times_data = data.at("start_times");
     // Build the real route object
     int n_nodes = instance.nodes.size();
     int n_vehicles = instance.vehicles.size();
-    int true_vehicle_id = (vehicle_id - 1 + 3) % n_vehicles;
+    // Find the corresponding vehicle id in the instance
+    // We have to find the vehicle whose technicians are the same as those in the json object
+    int true_vehicle_id = -1;
+    vector<string> technicians = data.at("technicians");
+    for (int i = 0; i < n_vehicles; i++) {
+        if (instance.vehicles[i].technicians == technicians) {
+            true_vehicle_id = i;
+            break;
+        }
+    }
+    if (true_vehicle_id == -1) {
+        throw std::invalid_argument("Vehicle not found in the instance");
+    }
     vector<int> id_sequence = vector<int>();
     vector<int> is_in_route = vector<int>(n_nodes, 0);
     vector<int> start_times = vector<int>(n_nodes, 0);

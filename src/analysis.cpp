@@ -355,6 +355,7 @@ void print_route(const Route & route, const Instance & instance) {
     }
     cout << endl;
     
+    setprecision(4);
     // Print the tvehicle cost, travelling cost and total cost
     double travel_distance = count_route_kilometres(route, instance);
     cout << "Vehicle cost: " << instance.vehicles[route.vehicle_id].cost << " ";
@@ -380,27 +381,27 @@ void print_route(const Route & route, const Instance & instance) {
     // Print the start of time window, real start time, Duration, travel to next and end of time window
     cout << "Window start: ";
     for (int i = 0; i < route.id_sequence.size(); i++) {
-        cout << setprecision(1) << instance.nodes[route.id_sequence[i]].start_window << ", ";
+        cout << instance.nodes[route.id_sequence[i]].start_window << ", ";
     }
     cout << endl;
     cout << "Start time:   ";
     for (int i = 0; i < route.id_sequence.size(); i++) {
-        cout << setprecision(0) << route.start_times[route.id_sequence[i]] << ", ";
+        cout << route.start_times[route.id_sequence[i]] << ", ";
     }
     cout << endl;
     cout << "Duration:     ";
     for (int i = 0; i < route.id_sequence.size(); i++) {
-        cout << setprecision(1) << instance.nodes[route.id_sequence[i]].duration << ", ";
+        cout << instance.nodes[route.id_sequence[i]].duration << ", ";
     }
     cout << endl;
     cout << "Travel time:  ";
     for (int i = 0; i < route.id_sequence.size() - 1; i++) {
-        cout << setprecision(1) << instance.time_matrix[route.id_sequence[i]][route.id_sequence[i + 1]] << ", ";
+        cout << instance.time_matrix[route.id_sequence[i]][route.id_sequence[i + 1]] << ", ";
     }
     cout << " -, " << endl;
     cout << "Window end:   ";
     for (int i = 0; i < route.id_sequence.size(); i++) {
-        cout << setprecision(1) << instance.nodes[route.id_sequence[i]].end_window << ", ";
+        cout << instance.nodes[route.id_sequence[i]].end_window << ", ";
     }
     cout << endl;
 

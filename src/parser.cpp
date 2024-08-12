@@ -220,8 +220,8 @@ Instance parse_file(string filename, bool verbose){
                 cout << "Warning : technicians in the same team must have the same operationnal base - team " << v << endl;
                 cout << "Technician " << id << " has operationnal base " << technicians[id].operationnal_base << endl;
                 cout << "Technician " << team_ids[0] << " has operationnal base " << technicians[team_ids[0]].operationnal_base << endl;
-                //operationnal_base = "ope_base5";
-                //cout << "HARD-CODING the operationnal base to " << operationnal_base << endl;
+                operationnal_base = "ope_base5";
+                cout << "HARD-CODING the operationnal base to " << operationnal_base << endl;
             }
         }
         // Get the depot node
