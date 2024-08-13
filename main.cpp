@@ -179,7 +179,7 @@ int main(int argc, char *argv[]){
     cout << "Reduced cost for vehicle 14 (computed): " << reduced_cost << endl;
 
     // Print the route itself
-    print_route(new_route_14_normal, instance);
+    print_route(new_route_14_normal, instance, master_solution);
 
     cout << "-----------------------------------" << endl;
     int N_EDGES = 1;
@@ -203,7 +203,29 @@ int main(int argc, char *argv[]){
     cout << "Reduced cost for vehicle 14 (computed): " << reduced_cost_impose << endl;
 
     // Print the route itself
-    print_route(new_route_14_impose, instance);
+    print_route(new_route_14_impose, instance, master_solution);
+
+    cout << "-----------------------------------" << endl;
+    cout << "Generating a new route for vehicle 14 given the final dual - forbidding the first " << N_EDGES << " edges of bad route for v14" <<  endl;
+    // Create a set of edges containing the first N_EDGES of the bad route for vehicle 14
+    set<tuple<int, int, int>> edges_14_forbid;
+    for (int i = 0; i < N_EDGES; i++){
+        int edge_i = new_routes_normal[0].id_sequence.at(i);
+        int edge_j = new_routes_normal[0].id_sequence.at(i + 1);
+        edges_14_forbid.insert(std::make_tuple(edge_i, edge_j, 14));
+    }
+    // Generate a route for vehicle 14
+    unique_ptr<Problem> pricing_problem_forbid = create_pricing_instance(instance, instance.vehicles[14], edges_14_forbid, empty_edges);
+    update_pricing_instance(pricing_problem_forbid, master_solution, instance, instance.vehicles[14]);
+    vector<Route> new_routes_forbid = solve_pricing_problem(pricing_problem_forbid, 1, instance, instance.vehicles[14]);
+    Route new_route_14_forbid = new_routes_forbid[0];
+    // Print its reduced cost
+    double reduced_cost_forbid= compute_reduced_cost(new_route_14_forbid, master_solution.alphas, master_solution.betas[14], instance);
+    cout << "Reduced cost for vehicle 14: " << new_route_14_forbid.reduced_cost << endl;
+    cout << "Reduced cost for vehicle 14 (computed): " << reduced_cost_forbid<< endl;
+
+    // Print the route itself
+    print_route(new_route_14_forbid, instance, master_solution);
 
     
 

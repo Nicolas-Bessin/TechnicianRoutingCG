@@ -69,7 +69,12 @@ unique_ptr<Problem> create_pricing_instance(
         }
     }
     for (int i = 0; i < n_interventions_v ; i++) {
-        // First, is there a required edge starting from i ?
+        // If there wasn't a required edge from the depot, we add the arc from the depot to the intervention
+        // Provided it is not forbidden
+        if (!required_first_edge && !forbidden_edges.contains(std::make_tuple(vehicle.depot, vehicle.interventions[i], vehicle.id))) {
+            problem->setNetworkArc(origin, i);
+        }
+        // Then, is there a required edge starting from i ?
         bool required_edge = false;
         for (const auto& [i_, j_, v_] : required_edges) {
             if (v_ != vehicle.id) continue;
@@ -96,18 +101,11 @@ unique_ptr<Problem> create_pricing_instance(
             if (i == j) continue;
             // Check if the arc is forbidden
             bool forbidden = forbidden_edges.contains(std::make_tuple(vehicle.interventions[i], vehicle.interventions[j], vehicle.id));
-            if (forbidden) continue;
-            // If not, we add the arc
-            problem->setNetworkArc(i, j);
+            if (!forbidden) problem->setNetworkArc(i, j);
         }
         // Then, we add the arc that goes to the destination
         if (!forbidden_edges.contains(std::make_tuple(vehicle.interventions[i], vehicle.depot, vehicle.id))) {
             problem->setNetworkArc(i, destination);
-        }
-        // If there wasn't a required edge from the depot, we add the arc from the depot to the intervention
-        // Provided it is not forbidden
-        if (!required_first_edge && !forbidden_edges.contains(std::make_tuple(vehicle.depot, vehicle.interventions[i], vehicle.id))) {
-            problem->setNetworkArc(origin, i);
         }
     }
 

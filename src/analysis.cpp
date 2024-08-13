@@ -357,8 +357,44 @@ double compute_integer_objective(const IntegerSolution& solution, const vector<R
     return value;
 }
 
+/*
+    Returns the accumulated reduced cost until this node in the sequence of nodes for a route
+*/
+vector<double> accumulated_reduced_cost(const Route& route, const MasterSolution& solution, const Instance& instance) {
+    const Vehicle& vehicle = instance.vehicles[route.vehicle_id];
+    // Initialize the accumulated cost vector as an empty vector
+    vector<double> accumulated_costs = {};
+    // Take into account the vehicle's fixed cost and the beta value
+    double current_cost = - vehicle.cost - solution.betas[route.vehicle_id];
 
-void print_route(const Route & route, const Instance & instance) {
+    // Then go through the sequence of nodes and accumulate the reduced cost
+    for (int i = 0; i < route.id_sequence.size(); i++) {
+        int true_i = route.id_sequence[i];
+        if (true_i != vehicle.depot) {
+            current_cost -= solution.alphas[true_i];
+            current_cost += instance.nodes[true_i].duration * instance.M;
+        }
+        // We count the accumulated reduced cost until this node - so we add it after adding the alpha from the current node
+        accumulated_costs.push_back(current_cost);
+        // If there is a next node, we add the corresponding travel cost
+        if (i < route.id_sequence.size() - 1) {
+            int true_j = route.id_sequence[i + 1];
+            current_cost -= instance.cost_per_km * instance.distance_matrix[true_i][true_j];
+            // If applicable, also add the duals from the cuts of the BP tree
+            std::tuple<int, int, int> edge = {true_i, true_j, route.vehicle_id};
+            if (solution.lower_bound_duals.contains(edge)) {
+                current_cost -= solution.lower_bound_duals.at(edge);
+            }
+            if (solution.upper_bound_duals.contains(edge)) {
+                current_cost += solution.upper_bound_duals.at(edge);
+            }
+        }
+    }
+    return accumulated_costs;
+}
+
+
+void print_route(const Route & route, const Instance & instance, const MasterSolution& solution) {
     using std::cout, std::endl;
     using std::setprecision, std::fixed, std::setw;
 
@@ -382,46 +418,60 @@ void print_route(const Route & route, const Instance & instance) {
     cout << "Total duration: " << route.total_duration << " ";
     cout << "Total travelling time: " << route.total_travelling_time << " ";
     cout << "Total waiting time: " << route.total_waiting_time << endl;
+    // Set the column width in the tab
+    int col_width = 4;
+    if (solution.is_feasible) {
+        col_width = 6;
+    }
     // Print the sequence of nodes
-    cout << "Sequence: ";
+    cout << "Sequence:     |";
     for (int i = 0; i < route.id_sequence.size(); i++) {
-        cout << route.id_sequence[i] << ", ";
+        cout << setw(col_width) << route.id_sequence[i] << ", ";
     }
     cout << endl;
     // cout << "Sequence (node_id): ";
     // for (int i = 0; i < route.id_sequence.size(); i++) {
     //     cout << instance.nodes[route.id_sequence[i]].node_id << ", ";
     // }
-    cout << endl;
+    cout << "--------------+--------------------------------------------------------------------------" << endl;
     // Print the start of time window, real start time, Duration, travel to next and end of time window
-    cout << "Window start: ";
+    cout << "Window start: |";
     for (int i = 0; i < route.id_sequence.size(); i++) {
-        cout << setw(4) << instance.nodes[route.id_sequence[i]].start_window << ", ";
+        cout << setw(col_width) << instance.nodes[route.id_sequence[i]].start_window << ", ";
     }
     cout << endl;
-    cout << "Start time:   ";
+    cout << "Start time:   |";
     for (int i = 0; i < route.id_sequence.size(); i++) {
-        cout << setw(4) << route.start_times[route.id_sequence[i]] << ", ";
+        cout << setw(col_width) << route.start_times[route.id_sequence[i]] << ", ";
     }
     cout << endl;
-    cout << "Duration:     ";
+    cout << "Duration:     |";
     for (int i = 0; i < route.id_sequence.size(); i++) {
-        cout << setw(4) << instance.nodes[route.id_sequence[i]].duration << ", ";
+        cout << setw(col_width) << instance.nodes[route.id_sequence[i]].duration << ", ";
     }
     cout << endl;
-    cout << "Travel time:  ";
+    cout << "Travel time:  |";
     for (int i = 0; i < route.id_sequence.size() - 1; i++) {
-        cout << setw(4) << instance.time_matrix[route.id_sequence[i]][route.id_sequence[i + 1]] << ", ";
+        cout << setw(col_width) << instance.time_matrix[route.id_sequence[i]][route.id_sequence[i + 1]] << ", ";
     }
-    cout << setw(4) << " -, " << endl;
-    cout << "Travel length:";
+    cout << setw(col_width) << " -, " << endl;
+    cout << "Travel length:|";
     for (int i = 0; i < route.id_sequence.size() - 1; i++) {
-        cout << setw(4) << instance.distance_matrix[route.id_sequence[i]][route.id_sequence[i + 1]] << ", ";
+        cout << setw(col_width) << instance.distance_matrix[route.id_sequence[i]][route.id_sequence[i + 1]] << ", ";
     }
-    cout << setw(4) << " -, " << endl;
-    cout << "Window end:   ";
+    cout << setw(col_width) << " -, " << endl;
+    // Only print the RC information if a MasterSolution is provided
+    if (solution.is_feasible) {
+        cout << "Accu RC       |";
+        vector<double> accu_rc = accumulated_reduced_cost(route, solution, instance);
+        for (int i = 0; i < accu_rc.size(); i++) {
+            cout << setw(col_width) << accu_rc[i] << ", ";
+        }
+        cout << endl;
+    }
+    cout << "Window end:   |";
     for (int i = 0; i < route.id_sequence.size(); i++) {
-        cout << setw(4) << instance.nodes[route.id_sequence[i]].end_window << ", ";
+        cout << setw(col_width) << instance.nodes[route.id_sequence[i]].end_window << ", ";
     }
     cout << endl;
 

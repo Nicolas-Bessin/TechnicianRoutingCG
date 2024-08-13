@@ -55,7 +55,7 @@ double count_kilometres_travelled(const IntegerSolution& solution, const std::ve
 double compute_integer_objective(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
 
 // Prints a route to the console
-void print_route(const Route& route, const Instance& instance);
+void print_route(const Route& route, const Instance& instance, const MasterSolution& solution = MasterSolution());
 
 // Print the used routes in a solution
 void print_used_routes(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
