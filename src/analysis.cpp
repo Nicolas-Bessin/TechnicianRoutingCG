@@ -414,6 +414,11 @@ void print_route(const Route & route, const Instance & instance) {
         cout << setw(4) << instance.time_matrix[route.id_sequence[i]][route.id_sequence[i + 1]] << ", ";
     }
     cout << setw(4) << " -, " << endl;
+    cout << "Travel length:";
+    for (int i = 0; i < route.id_sequence.size() - 1; i++) {
+        cout << setw(4) << instance.distance_matrix[route.id_sequence[i]][route.id_sequence[i + 1]] << ", ";
+    }
+    cout << setw(4) << " -, " << endl;
     cout << "Window end:   ";
     for (int i = 0; i < route.id_sequence.size(); i++) {
         cout << setw(4) << instance.nodes[route.id_sequence[i]].end_window << ", ";
