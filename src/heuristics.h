@@ -19,3 +19,16 @@ std::vector<Route> greedy_heuristic(
     const std::set<std::tuple<int, int, int>>& forbidden_edges = std::set<std::tuple<int, int, int>>{},
     const std::set<std::tuple<int, int, int>>& required_edges = std::set<std::tuple<int, int, int>>{}
     );
+
+
+/*
+    Greedy heuristic to generate a set of routes that cover as much interventions as possible.
+    Takes into account the current MasterSolution (and thus its dual values) to generate the routes.
+*/
+std::vector<Route> greedy_heuristic_duals(
+    const Instance& instance, 
+    const MasterSolution& master_solution,
+    std::vector<int> vehicle_order = std::vector<int>{},
+    const std::set<std::tuple<int, int, int>>& forbidden_edges = std::set<std::tuple<int, int, int>>{},
+    const std::set<std::tuple<int, int, int>>& required_edges = std::set<std::tuple<int, int, int>>{}
+    );

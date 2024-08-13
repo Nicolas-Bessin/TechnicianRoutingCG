@@ -26,7 +26,7 @@ MasterSolution relaxed_RMP(const Instance& instance, const std::vector<Route>& r
         }
         // Only activate the variables that are active in the node
         for (int r : node.active_routes){
-            variables[r].set(GRB_DoubleAttr_UB, GRB_INFINITY);
+            variables[r].set(GRB_DoubleAttr_UB, 1.0);
         }
         // Create the intervention constraints (each intervention is visited at most once)
         vector<GRBConstr> intervention_constraints;

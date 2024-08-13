@@ -82,6 +82,6 @@ bool CustomTimeWindow::isFeasible(int current_value, int current_node, double bo
 
     // In truth, we do not need to check if the lunch constraint is respected
     // Because the extend function already takes care of making sure it is
-    return is_respected;
+    return true;
 }
 

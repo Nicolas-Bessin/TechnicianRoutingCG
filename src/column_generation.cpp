@@ -93,8 +93,9 @@ CGResult column_generation(
 
         for (const int& v : vehicle_order){
             const Vehicle& vehicle = instance.vehicles.at(v);
-            update_pricing_instance(pricing_problems.at(v), solution, instance, vehicle);
-            vector<Route> best_new_routes = solve_pricing_problem(pricing_problems.at(v), 5, instance, vehicle);
+            unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, vehicle);
+            update_pricing_instance(pricing_problem, solution, instance, vehicle);
+            vector<Route> best_new_routes = solve_pricing_problem(pricing_problem, 5, instance, vehicle);
             if (best_new_routes.size() == 0){
                 time_limit_reached[vehicle.id]++;
             }
