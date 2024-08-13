@@ -16,6 +16,6 @@
 std::vector<Route> greedy_heuristic(
     const Instance& instance, 
     std::vector<int> vehicle_order = std::vector<int>{},
-    const std::set<std::tuple<int, int, int>>& forbidden_edges = {},
-    const std::set<std::tuple<int, int, int>>& required_edges = {}
+    const std::set<std::tuple<int, int, int>>& forbidden_edges = std::set<std::tuple<int, int, int>>{},
+    const std::set<std::tuple<int, int, int>>& required_edges = std::set<std::tuple<int, int, int>>{}
     );

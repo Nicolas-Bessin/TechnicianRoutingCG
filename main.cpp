@@ -25,7 +25,7 @@
 #define TIME_LIMIT 120
 #define SOLVER_MODE IMPOSE_ROUTING
 #define THRESHOLD 1e-6
-#define VERBOSE true
+#define VERBOSE false
 #define GREEDY_INIT false
 
 int main(int argc, char *argv[]){
@@ -55,91 +55,93 @@ int main(int argc, char *argv[]){
 
     cout << "Total time spent parsing the instance : " << diff_parse << " ms" << endl;
 
-    vector<Route> routes = parse_routes_from_file("../routes/best_small.json", instance);
-
-    cout << "-----------------------------------" << endl;
-    // Get an integer solution from the routes
-    BPNode root = RootNode(routes);
-    IntegerSolution integer_solution = integer_RMP(instance, routes, root);
-
-    print_used_routes(integer_solution, routes, instance);
-
-    full_analysis(integer_solution, routes, instance);
-
-    cout << "True cost of the integer solution : " << setprecision(10) <<  compute_integer_objective(integer_solution, routes, instance) << endl;
-
-    cout << "-----------------------------------" << endl;
-    // Convert those routes to a set a required edges
-    set<tuple<int, int, int>> required_edges = routes_to_required_edges(routes);
-    set<tuple<int, int, int>> forbidden_edges = set<tuple<int, int, int>>();
-    vector<int> order = {14, 3, 8, 7, 19, 6, 10, 0, 1, 2};
-
-    vector<Route> regenerated_routes = greedy_heuristic(instance, order, forbidden_edges, required_edges);
-    BPNode regenerated_root = RootNode(regenerated_routes);
-    IntegerSolution regenerated_solution = integer_RMP(instance, regenerated_routes, regenerated_root);
-
-    print_used_routes(regenerated_solution, regenerated_routes, instance);
-    
-    full_analysis(regenerated_solution, regenerated_routes, instance);
+    // vector<Route> routes = parse_routes_from_file("../routes/best_small.json", instance);
 
     // cout << "-----------------------------------" << endl;
-    // vector<Route> routes;
-    // if (GREEDY_INIT) {
-    //     cout << "Initializing the routes with a greedy heuristic" << endl;
-    //     routes = greedy_heuristic(instance);
-    //     IntegerSolution greedy_solution = IntegerSolution(vector<int>(routes.size(), 1), 0);
-    //     greedy_solution.objective_value = compute_integer_objective(greedy_solution, routes, instance);
-    //     cout << "Objective value of the greedy heuristic : " << greedy_solution.objective_value << endl;
-    // } else {
-    //     cout << "Initializing the routes with an empty route" << endl;
-    //     routes = vector<Route>();
-    //     routes.push_back(Route(instance.nodes.size()));
-    // }
-
-    // cout << "-----------------------------------" << endl;
-    // cout << "Starting the column generation algorithm" << endl;
-
-    // // Global time limit for the column generation algorithm of 60 seconds
-    // const int time_limit = TIME_LIMIT * 1000;
-
-    // // Create a root node for the algorithm
+    // // Get an integer solution from the routes
     // BPNode root = RootNode(routes);
-    // CGResult result = column_generation(instance, root, routes, THRESHOLD, time_limit, 10000, true, VERBOSE);
+    // IntegerSolution integer_solution = integer_RMP(instance, routes, root);
+    // MasterSolution master_solution = relaxed_RMP(instance, routes, root);
 
-    // // Extract the results from the column generation algorithm
-    // int master_time = result.master_time;
-    // int pricing_time = result.pricing_time;
-    // int integer_time = result.integer_time;
-    // int sub_building_time = result.building_time;
-
-    // MasterSolution master_solution = result.master_solution;
-    // IntegerSolution integer_solution = result.integer_solution;
-
-
-    // // If the integer solution is not feasible, we can't do much
-    // if (!integer_solution.is_feasible){
-    //     cout << "-----------------------------------" << endl;
-    //     cout << "The integer solution is not feasible" << endl;
-    //     return 1;
-    // }
-
-    // // Print the routes in the integer solution (in detail)
-    // // full_analysis(integer_solution, routes, instance);
-
-    // int elapsed_time = chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - start_parse).count();
-    // // Print the time it took to solve the master problem
-    // cout << "-----------------------------------" << endl;
-    // cout << "Total time spent building the pricing problems : " << sub_building_time << " ms" << endl;
-    // cout << "Total time spent solving the master problem : " << master_time << " ms" << endl;
-    // cout << "Total time spent solving the pricing problems : " << pricing_time << " ms - Average : " << pricing_time / result.number_of_iterations << " ms" << endl;
-    // cout << "Total time spent solving the integer problem : " << integer_time << " ms" << endl;
-    // cout << "Total elapsed time : " << elapsed_time << " ms" << endl;
+    // print_used_routes(integer_solution, routes, instance);
 
     // full_analysis(integer_solution, routes, instance);
-    // cout << "True cost of the integer solution : " << compute_integer_objective(integer_solution, routes, instance) << endl;
+
+    // cout << "True cost of the integer solution : " << setprecision(10) <<  compute_integer_objective(integer_solution, routes, instance) << endl;
+    // cout << "True cost of the master solution : " << setprecision(10) <<  master_solution.objective_value << endl;
 
     // cout << "-----------------------------------" << endl;
-    // //print_used_routes(integer_solution, routes, instance);
+    // // Convert those routes to a set a required edges
+    // set<tuple<int, int, int>> required_edges = routes_to_required_edges(routes);
+    // set<tuple<int, int, int>> forbidden_edges = set<tuple<int, int, int>>();
+    // vector<int> order = {14, 3, 8, 7, 19, 6, 10, 0, 1, 2};
+
+    // vector<Route> regenerated_routes = greedy_heuristic(instance, order, forbidden_edges, required_edges);
+    // BPNode regenerated_root = RootNode(regenerated_routes);
+    // IntegerSolution regenerated_solution = integer_RMP(instance, regenerated_routes, regenerated_root);
+
+    // print_used_routes(regenerated_solution, regenerated_routes, instance);
+
+    // full_analysis(regenerated_solution, regenerated_routes, instance);
+
+    cout << "-----------------------------------" << endl;
+    vector<Route> routes;
+    if (GREEDY_INIT) {
+        cout << "Initializing the routes with a greedy heuristic" << endl;
+        routes = greedy_heuristic(instance);
+        IntegerSolution greedy_solution = IntegerSolution(vector<int>(routes.size(), 1), 0);
+        greedy_solution.objective_value = compute_integer_objective(greedy_solution, routes, instance);
+        cout << "Objective value of the greedy heuristic : " << greedy_solution.objective_value << endl;
+    } else {
+        cout << "Initializing the routes with an empty route" << endl;
+        routes = vector<Route>();
+        routes.push_back(Route(instance.nodes.size()));
+    }
+
+    cout << "-----------------------------------" << endl;
+    cout << "Starting the column generation algorithm" << endl;
+
+    // Global time limit for the column generation algorithm of 60 seconds
+    const int time_limit = TIME_LIMIT * 1000;
+
+    // Create a root node for the algorithm
+    BPNode root = RootNode(routes);
+    CGResult result = column_generation(instance, root, routes, THRESHOLD, time_limit, 10000, true, VERBOSE);
+
+    // Extract the results from the column generation algorithm
+    int master_time = result.master_time;
+    int pricing_time = result.pricing_time;
+    int integer_time = result.integer_time;
+    int sub_building_time = result.building_time;
+
+    MasterSolution master_solution = result.master_solution;
+    IntegerSolution integer_solution = result.integer_solution;
+
+
+    // If the integer solution is not feasible, we can't do much
+    if (!integer_solution.is_feasible){
+        cout << "-----------------------------------" << endl;
+        cout << "The integer solution is not feasible" << endl;
+        return 1;
+    }
+
+    // Print the routes in the integer solution (in detail)
+    // full_analysis(integer_solution, routes, instance);
+
+    int elapsed_time = chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - start_parse).count();
+    // Print the time it took to solve the master problem
+    cout << "-----------------------------------" << endl;
+    cout << "Total time spent building the pricing problems : " << sub_building_time << " ms" << endl;
+    cout << "Total time spent solving the master problem : " << master_time << " ms" << endl;
+    cout << "Total time spent solving the pricing problems : " << pricing_time << " ms - Average : " << pricing_time / result.number_of_iterations << " ms" << endl;
+    cout << "Total time spent solving the integer problem : " << integer_time << " ms" << endl;
+    cout << "Total elapsed time : " << elapsed_time << " ms" << endl;
+
+    full_analysis(integer_solution, routes, instance);
+    cout << "True cost of the integer solution : " << compute_integer_objective(integer_solution, routes, instance) << endl;
+
+    cout << "-----------------------------------" << endl;
+    // print_used_routes(integer_solution, routes, instance);
 
 
     return 0;

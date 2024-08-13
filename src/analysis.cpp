@@ -218,7 +218,7 @@ void print_used_route_durations(const IntegerSolution& solution, const std::vect
     for (int r = 0; r < routes.size(); r++) {
         if (solution.coefficients[r] > 0) {
             int route_time = routes[r].total_duration + routes[r].total_waiting_time + routes[r].total_travelling_time;
-            cout << "v" << routes[r].vehicle_id << " : " << route_time << ", ";
+            cout << std::setw(7) << "v" << routes[r].vehicle_id << " : " << route_time << ", ";
         }
     }
     cout << endl;
@@ -233,7 +233,7 @@ void print_used_route_obj_coeffs(const IntegerSolution& solution, const std::vec
             double coef = instance.M * routes[r].total_duration;
             coef -= instance.cost_per_km * count_route_kilometres(routes[r], instance);
             coef -= instance.vehicles[routes[r].vehicle_id].cost;
-            cout << std::setprecision(1) << std::fixed << "v" << routes[r].vehicle_id << " : " << coef << ", ";
+            cout << std::setw(2) << std::setprecision(1) << std::fixed << "v" << routes[r].vehicle_id << " : " << coef << ", ";
         }
     }
     cout << endl;
