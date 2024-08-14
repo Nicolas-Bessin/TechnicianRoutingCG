@@ -60,7 +60,8 @@ CGResult column_generation(
     // We begin with the acyclic pricing which is so much faster
     // We switch to the cyclic pricing when we don't add any routes
     bool using_cyclic_pricing = false;
-    int n_ressources_dominance = 0;
+    // Initially, while using the acyclic pricing, we can use all the resources for the dominance test
+    int n_ressources_dominance = instance.capacities_labels.size() + 1;
 
     while (!stop && master_time + pricing_time < time_limit_ms && iteration < max_iterations){
         // Solve the master problem
@@ -129,6 +130,8 @@ CGResult column_generation(
         // If we added no routes but are not using the cyclic pricing yet, we switch to it
         if (n_added_routes == 0 && switch_to_cyclic_pricing && !using_cyclic_pricing){
             using_cyclic_pricing = true;
+            // Reset the number of resources used for the dominance test
+            n_ressources_dominance = 0;
             if (verbose){
                 cout << "-----------------------------------" << endl;
                 cout << "Switching to cyclic pricing" << endl;
