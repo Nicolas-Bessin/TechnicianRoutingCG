@@ -418,6 +418,9 @@ void print_route(const Route & route, const Instance & instance, const MasterSol
     cout << "Total duration: " << route.total_duration << " ";
     cout << "Total travelling time: " << route.total_travelling_time << " ";
     cout << "Total waiting time: " << route.total_waiting_time << endl;
+    // Print the objective coefficient of the route
+    double coef = instance.M * route.total_duration - route.total_cost;
+    cout << "Objective coefficient: " << coef << endl;
     // Set the column width in the tab
     int col_width = 4;
     if (solution.is_feasible) {

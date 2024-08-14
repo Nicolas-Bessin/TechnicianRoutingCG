@@ -68,6 +68,7 @@ CGResult column_generation(
     double reduced_cost_threshold,
     int time_limit = 60, // (in seconds)
     int max_iterations = 1000,
+    bool switch_to_cyclic_pricing = false,
     bool compute_integer_solution = true,
     bool verbose = false
     );

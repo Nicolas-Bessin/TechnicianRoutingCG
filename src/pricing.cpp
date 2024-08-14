@@ -17,6 +17,7 @@ using std::unique_ptr;
 unique_ptr<Problem> create_pricing_instance(
     const Instance& instance, 
     const Vehicle& vehicle,
+    bool use_cyclic_pricing,
     const std::set<std::tuple<int, int, int>>& forbidden_edges,
     const std::set<std::tuple<int, int, int>>& required_edges
     ) {
@@ -36,7 +37,7 @@ unique_ptr<Problem> create_pricing_instance(
         origin,
         destination,
         0,
-        false,
+        use_cyclic_pricing,
         false,
         true
     );

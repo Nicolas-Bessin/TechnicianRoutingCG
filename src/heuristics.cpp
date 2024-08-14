@@ -35,7 +35,7 @@ std::vector<Route> greedy_heuristic(
         // Transform the current vehicle to only consider the interventions that are not yet covered
         const Vehicle& v = vehicle_mask(vehicle, covered);
         // Create a pricing problem for the vehicle
-        unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, v, forbidden_edges, required_edges);
+        unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, v, true, forbidden_edges, required_edges);
         // Solve the pricing problem
         vector<Route> new_routes = solve_pricing_problem(pricing_problem, 1, instance, v);
         // If no route was found, continue to the next vehicle
@@ -67,6 +67,7 @@ std::vector<Route> greedy_heuristic(
 std::vector<Route> greedy_heuristic_duals(
     const Instance& instance, 
     const MasterSolution& master_solution,
+    bool use_cyclic_pricing,
     std::vector<int> vehicle_order,
     const std::set<std::tuple<int, int, int>>& forbidden_edges,
     const std::set<std::tuple<int, int, int>>& required_edges
@@ -96,7 +97,7 @@ std::vector<Route> greedy_heuristic_duals(
         // Transform the current vehicle to only consider the interventions that are not yet covered
         const Vehicle& v = vehicle_mask(vehicle, covered);
         // Create a pricing problem for the vehicle
-        unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, v, forbidden_edges, required_edges);
+        unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, v, use_cyclic_pricing, forbidden_edges, required_edges);
         update_pricing_instance(pricing_problem, master_solution, instance, v);
         // Solve the pricing problem
         vector<Route> new_routes = solve_pricing_problem(pricing_problem, 1, instance, v);

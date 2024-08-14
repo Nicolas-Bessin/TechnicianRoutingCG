@@ -28,6 +28,7 @@ std::vector<Route> greedy_heuristic(
 std::vector<Route> greedy_heuristic_duals(
     const Instance& instance, 
     const MasterSolution& master_solution,
+    bool use_cyclic_pricing = false,
     std::vector<int> vehicle_order = std::vector<int>{},
     const std::set<std::tuple<int, int, int>>& forbidden_edges = std::set<std::tuple<int, int, int>>{},
     const std::set<std::tuple<int, int, int>>& required_edges = std::set<std::tuple<int, int, int>>{}

@@ -92,7 +92,7 @@ void branch_and_price(
             depth = std::max(depth, current_node.depth);
 
             // Solve this node
-            CGResult result = column_generation(instance, current_node, routes, reduced_cost_threshold, time_limit_per_node, 100, true, false);
+            CGResult result = column_generation(instance, current_node, routes, reduced_cost_threshold, time_limit_per_node, 100, false, true, false);
 
             // If the returned relaxed solution is tagged as non feasible, it means the cuts introduced to this node are non feasible
             if (!result.master_solution.is_feasible) {

@@ -17,6 +17,7 @@ CGResult column_generation(
     double reduced_cost_threshold, 
     int time_limit, 
     int max_iterations,
+    bool switch_to_cyclic_pricing,
     bool compute_integer_solution,
     bool verbose
     ){
@@ -56,6 +57,9 @@ CGResult column_generation(
     double previous_solution_objective = -1; 
     // Testing out the sequential pricing problem solving
     int current_vehicle_index = 0;
+    // We begin with the acyclic pricing which is so much faster
+    // We switch to the cyclic pricing when we don't add any routes
+    bool using_cyclic_pricing = false;
 
     while (!stop && master_time + pricing_time < time_limit_ms && iteration < max_iterations){
         // Solve the master problem
@@ -93,7 +97,7 @@ CGResult column_generation(
 
         for (const int& v : vehicle_order){
             const Vehicle& vehicle = instance.vehicles.at(v);
-            unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, vehicle);
+            unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, vehicle, using_cyclic_pricing);
             update_pricing_instance(pricing_problem, solution, instance, vehicle);
             vector<Route> best_new_routes = solve_pricing_problem(pricing_problem, 5, instance, vehicle);
             if (best_new_routes.size() == 0){
@@ -119,6 +123,16 @@ CGResult column_generation(
             cout << "Pricing sub problems solved in " << diff_pricing << " ms - Added " << n_added_routes << " routes";
             cout << " - Max reduced cost : " << setprecision(15) << max_reduced_cost << "\n";
             cout << "Iteration " << iteration << " - Objective value : " << solution.objective_value << "\n";
+        }
+        // If we added no routes but are not using the cyclic pricing yet, we switch to it
+        if (n_added_routes == 0 && switch_to_cyclic_pricing){
+            using_cyclic_pricing = true;
+            if (verbose){
+                cout << "-----------------------------------" << endl;
+                cout << "Switching to cyclic pricing" << endl;
+            }
+            // Go to the next iteration (skip the stop condition checks)
+            continue;
         }
         // If the objective did not change, we stop the algorithm
         if (solution.objective_value == previous_solution_objective){

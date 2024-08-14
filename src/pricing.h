@@ -20,6 +20,7 @@
 std::unique_ptr<Problem> create_pricing_instance(
     const Instance &instance, 
     const Vehicle &vehicle,
+    bool use_cyclic_pricing = false,
     const std::set<std::tuple<int, int, int>> &forbidden_edges = {},
     const std::set<std::tuple<int, int, int>> &required_edges = {}
     );
