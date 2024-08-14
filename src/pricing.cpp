@@ -148,7 +148,7 @@ unique_ptr<Problem> create_pricing_instance(
     // Create a vector of resources for the problem
     vector<Resource<int>*> resources;
 
-// Add the time window ressource to the problem as the critical ressource
+    // Add the time window ressource to the problem as the critical ressource
     CustomTimeWindow* time_window = new CustomTimeWindow(n_interventions_v + 2);
     time_window->initData(false, n_interventions_v + 2);
     time_window->setName("Time Window + Lunch");
@@ -276,7 +276,12 @@ vector<Route> solve_pricing_problem(unique_ptr<Problem> & problem, int pool_size
     int origin = problem->getOrigin();
     int destination = problem->getDestination();
     // We now want to solve the problem
-    Solver solver = Solver("../pathwyse.set");
+    // We give the solver a different set of parameters depending on the problem
+    string params = "../pathwyse.set";
+    if (problem->isGraphCyclic()) {
+        params = "../pathwyse_cyclic.set";
+    }
+    Solver solver = Solver(params);
     solver.setCustomProblem(*problem, true);
     solver.setupAlgorithms();
     solver.solve();

@@ -125,7 +125,7 @@ CGResult column_generation(
             cout << "Iteration " << iteration << " - Objective value : " << solution.objective_value << "\n";
         }
         // If we added no routes but are not using the cyclic pricing yet, we switch to it
-        if (n_added_routes == 0 && switch_to_cyclic_pricing){
+        if (solution.objective_value > 1.9e5 && switch_to_cyclic_pricing && !using_cyclic_pricing){
             using_cyclic_pricing = true;
             if (verbose){
                 cout << "-----------------------------------" << endl;
