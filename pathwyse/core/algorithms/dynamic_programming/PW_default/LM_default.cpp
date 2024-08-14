@@ -481,8 +481,9 @@ bool LMDefault::dominates(LabelAdv* l1, LabelAdv* l2) const {
 
     if(l1->getObjective() > l2->getObjective())
         return false;
-    // l1->getSnapshot().size()
-    for(int id = 0; id < 0; id++)
+    int n_res = l1->getSnapshot().size();
+    int n_check = std::min(n_res, n_resourse_dom);
+    for(int id = 0; id < n_check; id++)
         if(l1->getSnapshot(id) > l2->getSnapshot(id))
             return false;
 

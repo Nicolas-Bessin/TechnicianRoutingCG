@@ -60,6 +60,7 @@ CGResult column_generation(
     // We begin with the acyclic pricing which is so much faster
     // We switch to the cyclic pricing when we don't add any routes
     bool using_cyclic_pricing = false;
+    int n_ressources_dominance = 0;
 
     while (!stop && master_time + pricing_time < time_limit_ms && iteration < max_iterations){
         // Solve the master problem
@@ -99,7 +100,7 @@ CGResult column_generation(
             const Vehicle& vehicle = instance.vehicles.at(v);
             unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, vehicle, using_cyclic_pricing);
             update_pricing_instance(pricing_problem, solution, instance, vehicle);
-            vector<Route> best_new_routes = solve_pricing_problem(pricing_problem, 5, instance, vehicle);
+            vector<Route> best_new_routes = solve_pricing_problem(pricing_problem, instance, vehicle, n_ressources_dominance);
             if (best_new_routes.size() == 0){
                 time_limit_reached[vehicle.id]++;
             }
@@ -124,12 +125,26 @@ CGResult column_generation(
             cout << " - Max reduced cost : " << setprecision(15) << max_reduced_cost << "\n";
             cout << "Iteration " << iteration << " - Objective value : " << solution.objective_value << "\n";
         }
+        // ----------------- Stop conditions -----------------
         // If we added no routes but are not using the cyclic pricing yet, we switch to it
         if (solution.objective_value > 1.9e5 && switch_to_cyclic_pricing && !using_cyclic_pricing){
             using_cyclic_pricing = true;
             if (verbose){
                 cout << "-----------------------------------" << endl;
                 cout << "Switching to cyclic pricing" << endl;
+            }
+            // Go to the next iteration (skip the stop condition checks)
+            continue;
+        }
+        // If we reached the end, and we were not using all the resources for the dominance test
+        // We increase the number of resources used
+        int total_n_ressources = instance.capacities_labels.size() + 1;
+        if (n_added_routes == 0 && using_cyclic_pricing && n_ressources_dominance < total_n_ressources){
+            n_ressources_dominance++;
+            if (verbose){
+                cout << "-----------------------------------" << endl;
+                cout << "Increasing the number of resources used for the dominance test";
+                cout << " - Now using " << n_ressources_dominance << " resources" << endl;
             }
             // Go to the next iteration (skip the stop condition checks)
             continue;

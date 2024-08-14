@@ -21,6 +21,9 @@ public:
     void resetIteration();
     void resetAlgorithm(int reset_level);
 
+    // Set the number of resources to use in the dominance test by the label manager
+    void setNResourceDomLM(int n) {label_manager->setNResourceDom(n);}
+
     //Solve
     void solve() override;
     void labeling(bool forward = true, bool backward = true);
