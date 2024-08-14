@@ -269,18 +269,26 @@ Route parse_route(const nlohmann::json & data, const Instance& instance) {
     is_in_route[instance.vehicles[true_vehicle_id].depot] = 1;
     start_times[instance.vehicles[true_vehicle_id].depot] = 0;
     int duration = 0;
-    // Go through the sequence and the start times in order of increasing start time
-    // (In the json object, the sequence is ordered by increasing node index)
+
     vector<int> order = std::vector<int>(sequence_julia.size());
     std::iota(order.begin(), order.end(), 0);
-    std::sort(order.begin(), order.end(), [&](int i, int j) { return start_times_data[i] < start_times_data[j]; });
-    // Now we go through the sequence in the order of increasing start time
+    if (start_times_data.size() == sequence_julia.size()) {
+        // Go through the sequence and the start times in order of increasing start time
+        // (In the json object, the sequence is ordered by increasing node index)
+        std::sort(order.begin(), order.end(), [&](int i, int j) { return start_times_data[i] < start_times_data[j]; });
+    }
+
+    // Now we go through the sequence in the order
     for (int i : order) {
         int node_id = sequence_julia[i] - 1;
         id_sequence.push_back(node_id);
         is_in_route[node_id] = 1;
-        start_times[node_id] = start_times_data[i];
-        duration += instance.nodes[node_id].duration;
+        if (start_times_data.size() == 0) {
+            start_times[node_id] = -1;
+        } else {
+            start_times[node_id] = start_times_data.at(i);
+        }
+        duration += instance.nodes.at(node_id).duration;
     }
     // Finally, also add the depot at the end
     id_sequence.push_back(instance.vehicles[true_vehicle_id].depot);
@@ -318,10 +326,10 @@ std::vector<Route> parse_routes_from_file(const std::string& filename, const Ins
     // Print the meta-data
     cout << "-----------------------------------" << endl;
     cout << "Reading routes from file " << filename << endl;
-    cout << "Number of routes: " << data.at("nb_vehicles") << endl;
-    cout << "Expected objective value: " << data.at("objective") << endl;
-    cout << "Total intervention duration: " << data.at("duration") << endl;
-    cout << "Number of covered interventions: " << data.at("nb_interventions") << endl;
+    // cout << "Number of routes: " << data.at("nb_vehicles") << endl;
+    // cout << "Expected objective value: " << data.at("objective") << endl;
+    // cout << "Total intervention duration: " << data.at("duration") << endl;
+    // cout << "Number of covered interventions: " << data.at("nb_interventions") << endl;
     // We now parse the routes themselves
     vector<Route> routes = vector<Route>();
     vector<json> routes_data = data.at("routes");

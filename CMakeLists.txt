@@ -92,3 +92,8 @@ target_link_libraries(TRP_compact PUBLIC technician_routing_lib)
 add_executable(TRP_BP main_bp.cpp)
 # Link against the core library
 target_link_libraries(TRP_BP PUBLIC technician_routing_lib) 
+
+# Create an executable to test out predifined solutions
+add_executable(TRP_test_solutions main_route_testing.cpp)
+# Link against the core library
+target_link_libraries(TRP_test_solutions PUBLIC technician_routing_lib)

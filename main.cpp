@@ -319,28 +319,6 @@ int main(int argc, char *argv[]){
     // cout << "Objective value of the new integer solution : " << new_integer_solution.objective_value << endl;
 
 
-
-
-    // cout << "Generating a route that can cover unassigned interventions" << endl;
-    // vector<int> covered = covered_interventions(integer_solution, routes, instance);
-    // int vehicle_id = 10;
-    // Vehicle vehicle = vehicle_mask(instance.vehicles[vehicle_id], covered);
-    // unique_ptr<Problem> problem = create_pricing_instance(instance, vehicle);
-    // update_pricing_instance(problem, vector<double>(instance.number_interventions, 0), instance, vehicle);
-    // Route new_route = solve_pricing_problem(problem, 1, instance, vehicle)[0];
-    // // Add the new route to the existing routes
-    // routes.push_back(new_route);
-    // // Re-solve the master and integer problems
-    // MasterSolution new_master_solution = relaxed_RMP(instance, routes);
-    // IntegerSolution new_integer_solution = integer_RMP(instance, routes);
-    // cout << "Objective value of the new master solution : " << new_master_solution.objective_value << endl;
-    // cout << "Objective value of the new integer solution : " << new_integer_solution.objective_value << endl;
-
-    // full_analysis(new_integer_solution, routes, instance);
-    
-
-
-
     // cout << "One round of generation in the gap" << endl;
     // double gap = integer_solution.objective_value - master_solution.objective_value;
     // cout << "Gap : " << gap << endl;
