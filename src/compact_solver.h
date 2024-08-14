@@ -1,7 +1,8 @@
 #pragma once
 
 #include "instance.h"
-#include "solution.h"
+#include "master.h"
+#include "route.h"
 #include "compact_solution.h"
 
 #include <vector>

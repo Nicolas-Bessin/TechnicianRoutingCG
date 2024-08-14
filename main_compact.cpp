@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
     // Parse the instance from a JSON file
     auto start_parse = chrono::steady_clock::now();
     cout << "Technician Routing Problem using the compact formulation" << endl;
-    string default_filename = "../data/instance_1_all_feasible.json";
+    string default_filename = "../data/agency1_05-12-2022_anonymized.json";
     Instance instance = parse_file(default_filename, false);
 
     preprocess_interventions(instance);

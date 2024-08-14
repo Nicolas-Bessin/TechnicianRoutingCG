@@ -1,5 +1,7 @@
 #include "column_generation.h"
-#include "master.h"
+
+#include "RMP_solver.h"
+#include "pricing.h"
 #include "analysis.h"
 
 #include <iostream>
@@ -9,11 +11,13 @@
 
 
 CGResult column_generation(
-    const Instance & instance, 
-    std::vector<Route> initial_routes, 
+    const Instance & instance,
+    BPNode & node,
+    std::vector<Route> & routes, 
     double reduced_cost_threshold, 
     int time_limit, 
     int max_iterations,
+    bool switch_to_cyclic_pricing,
     bool compute_integer_solution,
     bool verbose
     ){
@@ -35,11 +39,10 @@ CGResult column_generation(
     auto end_sub_building = chrono::steady_clock::now();
     int building_time = chrono::duration_cast<chrono::milliseconds>(end_sub_building - start_sub_building).count();
 
-    // Copy the routes to avoid modifying the input
-    vector<Route> routes = initial_routes;
-
     int master_time = 0;
     int pricing_time = 0;
+
+    int time_limit_ms = time_limit * 1000;
 
     // Count the number of time each vehicle's sub problem reached the time limit
     vector<int> time_limit_reached(instance.vehicles.size(), 0);
@@ -50,15 +53,25 @@ CGResult column_generation(
     int iteration = 0;
     bool stop = false;
     MasterSolution solution;
+    // We stop if we don't improve the objective value
+    double previous_solution_objective = -1; 
     // Testing out the sequential pricing problem solving
     int current_vehicle_index = 0;
+    // We begin with the acyclic pricing which is so much faster
+    // We switch to the cyclic pricing when we don't add any routes
+    bool using_cyclic_pricing = false;
 
-    while (!stop && master_time + pricing_time < time_limit && iteration < max_iterations){
+    while (!stop && master_time + pricing_time < time_limit_ms && iteration < max_iterations){
         // Solve the master problem
         auto start = chrono::steady_clock::now();
-        solution = relaxed_RMP(instance, routes);
+        solution = relaxed_RMP(instance, routes, node);
         auto end = chrono::steady_clock::now();
         int diff = chrono::duration_cast<chrono::milliseconds>(end - start).count();
+        // At this point, if the solution is not feasible, it it because the cuts give a non feasible problem
+        // We can stop the algorithm
+        if (!solution.is_feasible){
+            return CGResult{};
+        }
         if (verbose) {
             cout << "Master problem solved in " << diff << " ms \n";
             cout << "Number of interventions covered : " << setprecision(2) << count_covered_interventions(solution, routes, instance);
@@ -84,18 +97,19 @@ CGResult column_generation(
 
         for (const int& v : vehicle_order){
             const Vehicle& vehicle = instance.vehicles.at(v);
-            update_pricing_instance(pricing_problems.at(v), solution.alphas, instance, vehicle);
-            vector<Route> best_new_routes = solve_pricing_problem(pricing_problems.at(v), 5, instance, vehicle);
+            unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, vehicle, using_cyclic_pricing);
+            update_pricing_instance(pricing_problem, solution, instance, vehicle);
+            vector<Route> best_new_routes = solve_pricing_problem(pricing_problem, 5, instance, vehicle);
             if (best_new_routes.size() == 0){
                 time_limit_reached[vehicle.id]++;
             }
             // Go through the returned routes, and add them to the master problem if they have a positive reduced cost
             for (const auto &route : best_new_routes){
-                double reduced_cost = route.reduced_cost - solution.betas[v] - vehicle.cost;
-                max_reduced_cost = std::max(max_reduced_cost, reduced_cost);
-                double computed_reduced_cost = compute_reduced_cost(route, solution.alphas, solution.betas[v], instance);
-                if (reduced_cost> reduced_cost_threshold){
+                max_reduced_cost = std::max(max_reduced_cost, route.reduced_cost);
+                if (route.reduced_cost> reduced_cost_threshold){
+                    // Add the route to the master problem - and update the node to set this route as active
                     routes.push_back(route);
+                    node.active_routes.insert(routes.size() - 1);
                     n_added_routes++;
                     n_routes_per_v[v]++;
                 }
@@ -110,10 +124,25 @@ CGResult column_generation(
             cout << " - Max reduced cost : " << setprecision(15) << max_reduced_cost << "\n";
             cout << "Iteration " << iteration << " - Objective value : " << solution.objective_value << "\n";
         }
+        // If we added no routes but are not using the cyclic pricing yet, we switch to it
+        if (solution.objective_value > 1.9e5 && switch_to_cyclic_pricing && !using_cyclic_pricing){
+            using_cyclic_pricing = true;
+            if (verbose){
+                cout << "-----------------------------------" << endl;
+                cout << "Switching to cyclic pricing" << endl;
+            }
+            // Go to the next iteration (skip the stop condition checks)
+            continue;
+        }
+        // If the objective did not change, we stop the algorithm
+        if (solution.objective_value == previous_solution_objective){
+            stop = true;
+        }
         // If no route was added, we stop the algorithm
         if (n_added_routes == 0){
             stop = true;
         }
+        previous_solution_objective = solution.objective_value;
         iteration++;
     }
 
@@ -124,12 +153,19 @@ CGResult column_generation(
     cout << "End of the column generation after " << iteration << " iterations" << endl;
     cout << "Relaxed RMP objective value : " << setprecision(3) << solution.objective_value << endl;
 
-    IntegerSolution integer_solution;
+    // Update the node's upper bound
+    node.upper_bound = solution.objective_value;
+    // If the upper bound is lower than the lower bound, it isn't worth computing the integer solution
+    if (node.upper_bound < node.lower_bound){
+        compute_integer_solution = false;
+    }
+
+    IntegerSolution integer_solution = IntegerSolution{};
     int integer_time = 0;
     if (compute_integer_solution) {
         // Solve the integer version of the problem
         auto start_integer = chrono::steady_clock::now();
-        integer_solution = integer_RMP(instance, routes);
+        integer_solution = integer_RMP(instance, routes, node, false);
         auto end_integer = chrono::steady_clock::now();
         integer_time = chrono::duration_cast<chrono::milliseconds>(end_integer - start_integer).count();
         cout << "Integer RMP objective value : " << integer_solution.objective_value << endl;
@@ -151,15 +187,17 @@ CGResult column_generation(
     }
 
     // Build the result object
-    CGResult result;
-    result.master_solution = solution;
-    result.integer_solution = integer_solution;
-    result.routes = routes;
-    result.number_of_iterations = iteration;
-    result.master_time = master_time;
-    result.pricing_time = pricing_time;
-    result.integer_time = integer_time;
-    result.building_time = building_time;
+    CGResult result = CGResult{
+        node,
+        solution,
+        integer_solution,
+        routes,
+        iteration,
+        master_time,
+        pricing_time,
+        integer_time,
+        building_time
+    };
 
     return result;
 }

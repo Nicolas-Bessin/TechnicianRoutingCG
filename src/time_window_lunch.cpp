@@ -35,10 +35,12 @@ int CustomTimeWindow::extend(int current_value, int i, int j, bool direction) {
     if(direction) {
         current_time += data->getNodeCost(i) + data->getArcCost(i, j);
         // If we arrive too early, we wait until the time window opens
-        current_time = std::max(current_time, node_lower_bound[j]); //fw: arrival time at j
+        if (current_time < node_lower_bound[j]) {
+            current_time = node_lower_bound[j];
+        }
         // If we the time of arrival leaves us no possibility of completing the intervention before lunch
         // And we could complete it after : we wait until the lunch break is over
-        bool is_lunch_break = current_time + data->getNodeCost(j) > MID_DAY && current_time < MID_DAY;
+        bool is_lunch_break = current_time + data->getNodeCost(j) > MID_DAY && current_time <= MID_DAY;
         if(has_lunch_constraint[j] && is_lunch_break) {
             current_time = MID_DAY;
         }
@@ -76,8 +78,10 @@ bool CustomTimeWindow::isFeasible(int current_value, int current_node, double bo
     // Let's check if the lunch constraint is respected
     if(!has_lunch_constraint[current_node]) return true;
 
-    bool is_respected = current_value + data->getNodeCost(current_node) <= MID_DAY || current_value > MID_DAY;
+    bool is_respected = current_value + data->getNodeCost(current_node) <= MID_DAY || current_value >= MID_DAY;
 
-    return is_respected;
+    // In truth, we do not need to check if the lunch constraint is respected
+    // Because the extend function already takes care of making sure it is
+    return true;
 }
 

@@ -2,9 +2,12 @@
 #include "src/preprocessing.h"
 
 #include "src/master.h"
+#include "src/RMP_solver.h"
 #include "src/pricing.h"
 
 #include "src/column_generation.h"
+
+#include "src/branch_and_price.h"
 
 #include "src/analysis.h"
 
@@ -19,17 +22,21 @@
 #include <iomanip>
 #include <chrono>
 
-#define TIME_LIMIT 60
+#define TIME_LIMIT 1200
 #define SOLVER_MODE IMPOSE_ROUTING
 #define THRESHOLD 1e-6
-#define VERBOSE false
+#define VERBOSE true
 #define GREEDY_INIT false
+#define CYCLIC_PRICING true
+#define MAX_ITER 10000
+#define COMPUTE_INTEGER_SOL true
 
 int main(int argc, char *argv[]){
 
     using std::cout, std::endl;
     using std::setprecision, std::fixed;
     using std::vector, std::string, std::to_string, std::pair;
+    using std::tuple, std::set;
     using std::unique_ptr;
     namespace chrono = std::chrono;
 
@@ -37,12 +44,14 @@ int main(int argc, char *argv[]){
     auto start_parse = chrono::steady_clock::now();
     cout << "Technician Routing Problem using Column Generation" << endl;
     cout << "-----------------------------------" << endl;
-    string default_filename = "../data/instance_1_all_feasible.json";
-    Instance instance = parse_file(default_filename, VERBOSE);
+    string default_filename = "../data/agency1_19-01-2023_anonymized.json";
+    Instance instance = parse_file(default_filename, true);
 
     // Check wether the time and distance matrices are symetric
-    cout << "Distance matrix is symetric : " << is_symmetric(instance.distance_matrix) << " - Biggest gap : " << symmetry_gap(instance.distance_matrix) << endl;
-    cout << "Time matrix is symetric : " << is_symmetric(instance.time_matrix) << " - Biggest gap : " << symmetry_gap(instance.time_matrix) << endl;
+    cout << "Distance matrix is symetric : " << is_symmetric(instance.distance_matrix);
+    cout << " - Biggest gap : " << symmetry_gap(instance.distance_matrix) << endl;
+    cout << "Time matrix is symetric : " << is_symmetric(instance.time_matrix);
+    cout << " - Biggest gap : " << symmetry_gap(instance.time_matrix) << endl;
 
     preprocess_interventions(instance);
 
@@ -52,36 +61,36 @@ int main(int argc, char *argv[]){
     cout << "Total time spent parsing the instance : " << diff_parse << " ms" << endl;
 
     cout << "-----------------------------------" << endl;
-    vector<Route> initial_routes;
+    vector<Route> routes;
     if (GREEDY_INIT) {
         cout << "Initializing the routes with a greedy heuristic" << endl;
-        initial_routes = greedy_heuristic(instance);
-        IntegerSolution greedy_solution = IntegerSolution(vector<int>(initial_routes.size(), 1), 0);
-        greedy_solution.objective_value = compute_integer_objective(greedy_solution, initial_routes, instance);
+        routes = greedy_heuristic(instance);
+        IntegerSolution greedy_solution = IntegerSolution(vector<int>(routes.size(), 1), 0);
+        greedy_solution.objective_value = compute_integer_objective(greedy_solution, routes, instance);
         cout << "Objective value of the greedy heuristic : " << greedy_solution.objective_value << endl;
     } else {
         cout << "Initializing the routes with an empty route" << endl;
-        initial_routes = vector<Route>();
-        initial_routes.push_back(Route(instance.nodes.size()));
+        routes = vector<Route>();
+        routes.push_back(Route(instance.nodes.size()));
     }
 
     cout << "-----------------------------------" << endl;
     cout << "Starting the column generation algorithm" << endl;
 
-    // Global time limit for the column generation algorithm of 60 seconds
-    const int time_limit = TIME_LIMIT * 1000;
 
-    CGResult result = column_generation(instance, initial_routes, THRESHOLD, time_limit, 10000, false, VERBOSE);
+    // Create a root node for the algorithm
+    BPNode root = RootNode(routes);
+    CGResult result = column_generation(instance, root, routes, THRESHOLD, TIME_LIMIT, MAX_ITER, CYCLIC_PRICING, COMPUTE_INTEGER_SOL, VERBOSE);
 
     // Extract the results from the column generation algorithm
     int master_time = result.master_time;
     int pricing_time = result.pricing_time;
     int integer_time = result.integer_time;
     int sub_building_time = result.building_time;
-    vector<Route> routes = result.routes;
+
     MasterSolution master_solution = result.master_solution;
     IntegerSolution integer_solution = result.integer_solution;
-    
+
 
     // If the integer solution is not feasible, we can't do much
     if (!integer_solution.is_feasible){
@@ -89,7 +98,7 @@ int main(int argc, char *argv[]){
         cout << "The integer solution is not feasible" << endl;
         return 1;
     }
-    
+
     // Print the routes in the integer solution (in detail)
     // full_analysis(integer_solution, routes, instance);
 
@@ -103,11 +112,96 @@ int main(int argc, char *argv[]){
     cout << "Total elapsed time : " << elapsed_time << " ms" << endl;
 
     full_analysis(integer_solution, routes, instance);
-    cout << " True cost of the integer solution : " << compute_integer_objective(integer_solution, routes, instance) << endl;
+    cout << "True cost of the integer solution : " << compute_integer_objective(integer_solution, routes, instance) << endl;
 
     cout << "-----------------------------------" << endl;
+    // print_used_routes(integer_solution, routes, instance);
 
+    vector<Route> best_routes = parse_routes_from_file("../routes/best_small.json", instance);
+    // Compute the reduced cost of the best routes with respect to the master solution
+    for (const Route &route : best_routes){
+        double reduced_cost = compute_reduced_cost(route, master_solution.alphas, master_solution.betas[route.vehicle_id], instance);
+        cout << "Reduced cost of the best route " << route.vehicle_id << " : " << reduced_cost << endl;
+    }
+    cout << "-----------------------------------" << endl;
+    // Convert those routes to a set a required edges
+    set<tuple<int, int, int>> required_edges = routes_to_required_edges(best_routes);
+    set<tuple<int, int, int>> forbidden_edges = set<tuple<int, int, int>>();
+    vector<int> order = {14, 3, 8, 7, 19, 6, 10, 0, 1, 2};
 
+    vector<Route> regenerated_routes = greedy_heuristic_duals(instance, master_solution, CYCLIC_PRICING, order, forbidden_edges, required_edges);
+    BPNode regenerated_root = RootNode(regenerated_routes);
+    IntegerSolution regenerated_solution = integer_RMP(instance, regenerated_routes, regenerated_root);
+
+    // Print the reduced costs of the regenerated routes
+    for (const Route &route : regenerated_routes){
+        double reduced_cost = compute_reduced_cost(route, master_solution.alphas, master_solution.betas[route.vehicle_id], instance);
+        cout << "Route v" << route.vehicle_id << " - computed RC : " << reduced_cost;
+        cout << " - returned RC : " << route.reduced_cost << endl;
+    }
+
+    cout << "-----------------------------------" << endl;
+    cout << "Generating a new route for vehicle 14 given the final dual - without using the known best routes" << endl;
+    // Generate a route for vehicle 14
+    unique_ptr<Problem> pricing_problem_normal = create_pricing_instance(instance, instance.vehicles[14], CYCLIC_PRICING);
+    update_pricing_instance(pricing_problem_normal, master_solution, instance, instance.vehicles[14]);
+    vector<Route> new_routes_normal = solve_pricing_problem(pricing_problem_normal, 1, instance, instance.vehicles[14]);
+    Route new_route_14_normal = new_routes_normal[0];
+    // Print its reduced cost
+    double reduced_cost = compute_reduced_cost(new_route_14_normal, master_solution.alphas, master_solution.betas[14], instance);
+    cout << "Reduced cost for vehicle 14: " << new_route_14_normal.reduced_cost << endl;
+    cout << "Reduced cost for vehicle 14 (computed): " << reduced_cost << endl;
+
+    // Print the route itself
+    print_route(new_route_14_normal, instance, master_solution);
+
+    cout << "-----------------------------------" << endl;
+    int N_EDGES = 1;
+    cout << "Generating a new route for vehicle 14 given the final dual - imposing the first " << N_EDGES << " edges of best route for v14" <<  endl;
+    // Create a set of edges containing the first N_EDGES of the best route for vehicle 14
+    set<tuple<int, int, int>> edges_14;
+    for (int i = 0; i < N_EDGES; i++){
+        int edge_i = regenerated_routes[0].id_sequence.at(i);
+        int edge_j = regenerated_routes[0].id_sequence.at(i + 1);
+        edges_14.insert(std::make_tuple(edge_i, edge_j, 14));
+    }
+    set<tuple<int, int, int>> empty_edges = set<tuple<int, int, int>>();
+    // Generate a route for vehicle 14
+    unique_ptr<Problem> pricing_problem_impose = create_pricing_instance(instance, instance.vehicles[14], CYCLIC_PRICING, empty_edges, edges_14);
+    update_pricing_instance(pricing_problem_impose, master_solution, instance, instance.vehicles[14]);
+    vector<Route> new_routes_impose = solve_pricing_problem(pricing_problem_impose, 1, instance, instance.vehicles[14]);
+    Route new_route_14_impose = new_routes_impose[0];
+    // Print its reduced cost
+    double reduced_cost_impose = compute_reduced_cost(new_route_14_impose, master_solution.alphas, master_solution.betas[14], instance);
+    cout << "Reduced cost for vehicle 14: " << new_route_14_impose.reduced_cost << endl;
+    cout << "Reduced cost for vehicle 14 (computed): " << reduced_cost_impose << endl;
+
+    // Print the route itself
+    print_route(new_route_14_impose, instance, master_solution);
+
+    cout << "-----------------------------------" << endl;
+    cout << "Generating a new route for vehicle 14 given the final dual - forbidding the first " << N_EDGES << " edges of bad route for v14" <<  endl;
+    // Create a set of edges containing the first N_EDGES of the bad route for vehicle 14
+    set<tuple<int, int, int>> edges_14_forbid;
+    for (int i = 0; i < N_EDGES; i++){
+        int edge_i = new_routes_normal[0].id_sequence.at(i);
+        int edge_j = new_routes_normal[0].id_sequence.at(i + 1);
+        edges_14_forbid.insert(std::make_tuple(edge_i, edge_j, 14));
+    }
+    // Generate a route for vehicle 14
+    unique_ptr<Problem> pricing_problem_forbid = create_pricing_instance(instance, instance.vehicles[14], CYCLIC_PRICING, edges_14_forbid, empty_edges);
+    update_pricing_instance(pricing_problem_forbid, master_solution, instance, instance.vehicles[14]);
+    vector<Route> new_routes_forbid = solve_pricing_problem(pricing_problem_forbid, 1, instance, instance.vehicles[14]);
+    Route new_route_14_forbid = new_routes_forbid[0];
+    // Print its reduced cost
+    double reduced_cost_forbid= compute_reduced_cost(new_route_14_forbid, master_solution.alphas, master_solution.betas[14], instance);
+    cout << "Reduced cost for vehicle 14: " << new_route_14_forbid.reduced_cost << endl;
+    cout << "Reduced cost for vehicle 14 (computed): " << reduced_cost_forbid<< endl;
+
+    // Print the route itself
+    print_route(new_route_14_forbid, instance, master_solution);
+
+    
 
     return 0;
 }
@@ -197,28 +291,6 @@ int main(int argc, char *argv[]){
     // cout << "Objective value of the new master solution : " << new_master_solution.objective_value << endl;
     // IntegerSolution new_integer_solution = integer_RMP(instance, routes);
     // cout << "Objective value of the new integer solution : " << new_integer_solution.objective_value << endl;
-
-
-
-
-    // cout << "Generating a route that can cover unassigned interventions" << endl;
-    // vector<int> covered = covered_interventions(integer_solution, routes, instance);
-    // int vehicle_id = 10;
-    // Vehicle vehicle = vehicle_mask(instance.vehicles[vehicle_id], covered);
-    // unique_ptr<Problem> problem = create_pricing_instance(instance, vehicle);
-    // update_pricing_instance(problem, vector<double>(instance.number_interventions, 0), instance, vehicle);
-    // Route new_route = solve_pricing_problem(problem, 1, instance, vehicle)[0];
-    // // Add the new route to the existing routes
-    // routes.push_back(new_route);
-    // // Re-solve the master and integer problems
-    // MasterSolution new_master_solution = relaxed_RMP(instance, routes);
-    // IntegerSolution new_integer_solution = integer_RMP(instance, routes);
-    // cout << "Objective value of the new master solution : " << new_master_solution.objective_value << endl;
-    // cout << "Objective value of the new integer solution : " << new_integer_solution.objective_value << endl;
-
-    // full_analysis(new_integer_solution, routes, instance);
-    
-
 
 
     // cout << "One round of generation in the gap" << endl;

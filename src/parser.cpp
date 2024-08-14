@@ -46,7 +46,7 @@ Node parse_intervention(json data){
         }
     }
     map<string, int> quantities = data.at("quantities");
-    return Node(id, node_id, duration, start_window, end_window, is_long, skills, quantities);
+    return Node(id, node_id, duration, start_window, end_window, is_long, quantities, skills);
 }
 
 
@@ -67,23 +67,9 @@ Technician parse_technician(json data){
     }
     map<string, int> capacities = data.at("capacities");
     string operationnal_base = data.at("ope_base");
-    return Technician(id, skills, capacities, operationnal_base);
+    return Technician(id, operationnal_base, skills, capacities);
 }
 
-bool can_do_intervention(const Node& intervention, const Vehicle& vehicle){
-    // Check that the vehicle has the skills to do the intervention
-    for (const auto &[skill, quantity] : intervention.required_skills){
-        // If the skill is not in the vehicle, the vehicle cannot do the intervention
-        if (vehicle.skills.find(skill) == vehicle.skills.end()){
-            return false;
-        }
-        // If the vehicle does not have enough technicians with the skill, the vehicle cannot do the intervention
-        if (vehicle.skills.at(skill) < quantity){
-            return false;
-        }
-    }
-    return true;
-}
 
 
 // Parse a JSON file to return a Instance object
@@ -215,7 +201,7 @@ Instance parse_file(string filename, bool verbose){
     }
 
     // We now construct one vehicle per team
-    vector<Vehicle> vehicles = vector<Vehicle>();
+    vector<Vehicle> vehicles = vector<Vehicle>{};
     for (int v = 0; v < tech_id_per_team.size(); v++){
         // Collect the technicians in the team
         vector<string> team_ids = tech_id_per_team[v];
@@ -227,8 +213,6 @@ Instance parse_file(string filename, bool verbose){
                 skills[skill] += 1;
             }
         }
-        // We will build the list of interventions for the vehicle later
-        vector<int> interventions = vector<int>();
         // Check that every technician in the team has the same operationnal base
         string operationnal_base = technicians[team_ids[0]].operationnal_base;
         for (const string& id : team_ids){
@@ -253,7 +237,7 @@ Instance parse_file(string filename, bool verbose){
         }
         // Vehicle cost is the sum of the cost of each technician in the team
         double vehicle_cost = tech_cost * team_ids.size();
-        vehicles.push_back(Vehicle(v, team_ids, skills, interventions, depot, capacities, vehicle_cost));
+        vehicles.push_back(Vehicle(v, team_ids, skills, vector<int>(), map<int, int>(), depot, capacities, vehicle_cost));
     }
 
     // Print the number of vehicles
@@ -272,31 +256,16 @@ Instance parse_file(string filename, bool verbose){
         }
     }
 
-    // We can now count the number of vehicles that can do each intervention
-    for (int i = 0; i < nb_interventions; i++){
-        int nb_vehicles_for_intervention = 0;
-        for (int v = 0; v < nb_vehicles; v++){
-            if (has_skill[i][v]){
-                nb_vehicles_for_intervention++;
-            }
-        }
-        // Update this count in the corresponding intervention
-        nodes[i].nb_vehicles = nb_vehicles_for_intervention;
-    }
-
     // And we can add references to the interventions that each vehicle can do
     for (int v = 0; v < nb_vehicles; v++){
         for (int i = 0; i < nb_interventions; i++){
             if (has_skill[i][v]){
                 vehicles[v].interventions.push_back(i);
+                vehicles[v].reverse_interventions[i] = vehicles[v].interventions.size() - 1;
             }
         }
     }
 
-    // Also count the number of vehicle in each depot
-    for (int i = 0; i < nb_vehicles; i++){
-        nodes[vehicles[i].depot].nb_vehicles++;
-    }
     // Finally, compute the big M for the objective function
     // M is computed using : M = (END_DAY - min(durations .> 0)) * maxspeed * cost_per_km / gcd(durations)
     // We first put all the durations in a vector
@@ -349,7 +318,6 @@ Instance parse_file(string filename, bool verbose){
         cost_per_km,
         tech_cost,
         M,
-        node_id_to_index,
         nodes,
         vehicles,
         ressources,

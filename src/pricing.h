@@ -1,9 +1,15 @@
 #pragma once
 
 #include "../pathwyse/core/data/problem.h"
-#include "solution.h"
+#include "instance.h"
+#include "route.h"
+#include "master.h"
+
 #include <vector>
 #include <memory>
+
+#include <set>
+#include <tuple>
 
 
 // Defines the pricing problem for a given vehicle.
@@ -11,11 +17,17 @@
 // This is used in the initialization of each pricing sub problem
 //   @param instance: the instance of the problem
 //   @param vehicle: the vehicle that will perform the routes
-std::unique_ptr<Problem> create_pricing_instance(const Instance &instance, const Vehicle &vehicle);
+std::unique_ptr<Problem> create_pricing_instance(
+    const Instance &instance, 
+    const Vehicle &vehicle,
+    bool use_cyclic_pricing = false,
+    const std::set<std::tuple<int, int, int>> &forbidden_edges = {},
+    const std::set<std::tuple<int, int, int>> &required_edges = {}
+    );
 
 
 // Update a pricing problem with the dual values given by the master problem
-void update_pricing_instance(std::unique_ptr<Problem> & pricing_problem, const std::vector<double> &alphas, const Instance &instance, const Vehicle &vehicle);
+void update_pricing_instance(std::unique_ptr<Problem> & pricing_problem, const MasterSolution& master_solution, const Instance &instance, const Vehicle &vehicle);
 
 
 /* Solves a pre-defined pricing problem and return a std::vector of routes that are feasible (of maximal reduced cost)

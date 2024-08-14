@@ -4,12 +4,14 @@
 
 Vehicle vehicle_mask(const Vehicle& vehicle, const std::vector<int>& mask){
     std::vector<int> new_interventions;
+    std::map<int, int> new_reverse_map;
     for (int intervention : vehicle.interventions){
         if (mask[intervention] == 0){
             new_interventions.push_back(intervention);
+            new_reverse_map[intervention] = new_interventions.size() - 1;
         }
     }
-    return Vehicle(vehicle.id, vehicle.technicians, vehicle.skills, new_interventions, vehicle.depot, vehicle.capacities, vehicle.cost);
+    return Vehicle{vehicle.id, vehicle.technicians, vehicle.skills, new_interventions, new_reverse_map, vehicle.depot, vehicle.capacities, vehicle.cost};
 }
 
 
@@ -40,4 +42,19 @@ int symmetry_gap(const std::vector<std::vector<int>>& matrix) {
         }
     }
     return biggest_diff;
+}
+
+bool can_do_intervention(const Node& intervention, const Vehicle& vehicle){
+    // Check that the vehicle has the skills to do the intervention
+    for (const auto &[skill, quantity] : intervention.required_skills){
+        // If the skill is not in the vehicle, the vehicle cannot do the intervention
+        if (vehicle.skills.find(skill) == vehicle.skills.end()){
+            return false;
+        }
+        // If the vehicle does not have enough technicians with the skill, the vehicle cannot do the intervention
+        if (vehicle.skills.at(skill) < quantity){
+            return false;
+        }
+    }
+    return true;
 }

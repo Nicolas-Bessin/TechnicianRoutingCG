@@ -45,13 +45,14 @@ set(
     src/preprocessing.h
     src/preprocessing.cpp
 
-    src/solution.h
-    src/solution.cpp
+    src/route.h
+    src/route.cpp
     src/analysis.h
     src/analysis.cpp
 
     src/master.h
-    src/master.cpp
+    src/RMP_solver.h
+    src/RMP_solver.cpp
     src/pricing.h
     src/pricing.cpp
     src/column_generation.h
@@ -64,6 +65,9 @@ set(
     src/compact_solver.cpp
     src/solution_converter.h
     src/solution_converter.cpp
+
+    src/branch_and_price.h
+    src/branch_and_price.cpp
 
     src/heuristics.h
     src/heuristics.cpp
@@ -83,3 +87,13 @@ target_link_libraries(TRP_cg PUBLIC technician_routing_lib)
 add_executable(TRP_compact main_compact.cpp)
 # Link against the core library
 target_link_libraries(TRP_compact PUBLIC technician_routing_lib)
+
+# Create the branch & price executable
+add_executable(TRP_BP main_bp.cpp)
+# Link against the core library
+target_link_libraries(TRP_BP PUBLIC technician_routing_lib) 
+
+# Create an executable to test out predifined solutions
+add_executable(TRP_test_solutions main_route_testing.cpp)
+# Link against the core library
+target_link_libraries(TRP_test_solutions PUBLIC technician_routing_lib)
