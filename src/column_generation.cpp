@@ -127,31 +127,29 @@ CGResult column_generation(
         }
         // ----------------- Stop conditions -----------------
         // If we added no routes but are not using the cyclic pricing yet, we switch to it
-        if (solution.objective_value > 1.9e5 && switch_to_cyclic_pricing && !using_cyclic_pricing){
+        if (n_added_routes == 0 && switch_to_cyclic_pricing && !using_cyclic_pricing){
             using_cyclic_pricing = true;
             if (verbose){
                 cout << "-----------------------------------" << endl;
                 cout << "Switching to cyclic pricing" << endl;
+                cout << " - Current time : " << master_time + pricing_time << " ms" << endl;
             }
             // Go to the next iteration (skip the stop condition checks)
             continue;
         }
         // If we reached the end, and we were not using all the resources for the dominance test
         // We increase the number of resources used
-        int total_n_ressources = instance.capacities_labels.size() + 1;
+        int total_n_ressources = instance.capacities_labels.size();
         if (n_added_routes == 0 && using_cyclic_pricing && n_ressources_dominance < total_n_ressources){
             n_ressources_dominance++;
             if (verbose){
                 cout << "-----------------------------------" << endl;
                 cout << "Increasing the number of resources used for the dominance test";
                 cout << " - Now using " << n_ressources_dominance << " resources" << endl;
+                cout << "Current time : " << master_time + pricing_time << " ms" << endl;
             }
             // Go to the next iteration (skip the stop condition checks)
             continue;
-        }
-        // If the objective did not change, we stop the algorithm
-        if (solution.objective_value == previous_solution_objective){
-            stop = true;
         }
         // If no route was added, we stop the algorithm
         if (n_added_routes == 0){
