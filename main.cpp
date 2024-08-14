@@ -145,7 +145,7 @@ int main(int argc, char *argv[]){
     // Generate a route for vehicle 14
     unique_ptr<Problem> pricing_problem_normal = create_pricing_instance(instance, instance.vehicles[14], CYCLIC_PRICING);
     update_pricing_instance(pricing_problem_normal, master_solution, instance, instance.vehicles[14]);
-    vector<Route> new_routes_normal = solve_pricing_problem(pricing_problem_normal, 1, instance, instance.vehicles[14]);
+    vector<Route> new_routes_normal = solve_pricing_problem(pricing_problem_normal, instance, instance.vehicles[14]);
     Route new_route_14_normal = new_routes_normal[0];
     // Print its reduced cost
     double reduced_cost = compute_reduced_cost(new_route_14_normal, master_solution.alphas, master_solution.betas[14], instance);
@@ -169,7 +169,7 @@ int main(int argc, char *argv[]){
     // Generate a route for vehicle 14
     unique_ptr<Problem> pricing_problem_impose = create_pricing_instance(instance, instance.vehicles[14], CYCLIC_PRICING, empty_edges, edges_14);
     update_pricing_instance(pricing_problem_impose, master_solution, instance, instance.vehicles[14]);
-    vector<Route> new_routes_impose = solve_pricing_problem(pricing_problem_impose, 1, instance, instance.vehicles[14]);
+    vector<Route> new_routes_impose = solve_pricing_problem(pricing_problem_impose, instance, instance.vehicles[14]);
     Route new_route_14_impose = new_routes_impose[0];
     // Print its reduced cost
     double reduced_cost_impose = compute_reduced_cost(new_route_14_impose, master_solution.alphas, master_solution.betas[14], instance);
@@ -191,7 +191,7 @@ int main(int argc, char *argv[]){
     // Generate a route for vehicle 14
     unique_ptr<Problem> pricing_problem_forbid = create_pricing_instance(instance, instance.vehicles[14], CYCLIC_PRICING, edges_14_forbid, empty_edges);
     update_pricing_instance(pricing_problem_forbid, master_solution, instance, instance.vehicles[14]);
-    vector<Route> new_routes_forbid = solve_pricing_problem(pricing_problem_forbid, 1, instance, instance.vehicles[14]);
+    vector<Route> new_routes_forbid = solve_pricing_problem(pricing_problem_forbid, instance, instance.vehicles[14]);
     Route new_route_14_forbid = new_routes_forbid[0];
     // Print its reduced cost
     double reduced_cost_forbid= compute_reduced_cost(new_route_14_forbid, master_solution.alphas, master_solution.betas[14], instance);

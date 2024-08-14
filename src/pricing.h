@@ -27,15 +27,25 @@ std::unique_ptr<Problem> create_pricing_instance(
 
 
 // Update a pricing problem with the dual values given by the master problem
-void update_pricing_instance(std::unique_ptr<Problem> & pricing_problem, const MasterSolution& master_solution, const Instance &instance, const Vehicle &vehicle);
+void update_pricing_instance(
+    std::unique_ptr<Problem> & pricing_problem, 
+    const MasterSolution& master_solution, 
+    const Instance &instance, 
+    const Vehicle &vehicle
+    );
 
 
 /* Solves a pre-defined pricing problem and return a std::vector of routes that are feasible (of maximal reduced cost)
     @param pricing_problem: the pricing problem to solve
-    @param pool_size: the maximum number of routes to return
+    @param n_res_dom : the number of resources to use in the dominance test (default -1 : use all resources)
     @param instance: the instance of the problem
     @param vehicle: the vehicle that will perform the routes
 */
-std::vector<Route> solve_pricing_problem(std::unique_ptr<Problem> & pricing_problem, int pool_size, const Instance &instance, const Vehicle &vehicle);
+std::vector<Route> solve_pricing_problem(
+    std::unique_ptr<Problem> & pricing_problem,
+    const Instance &instance, 
+    const Vehicle &vehicle,
+    int n_res_dom = -1
+    );
 
 

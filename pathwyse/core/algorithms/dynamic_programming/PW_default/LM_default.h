@@ -21,6 +21,9 @@ public:
     void initLM();
     void readConfiguration();
 
+    // Set the number of resources to use in the dominance test
+    void setNResourceDom(int n) { n_resourse_dom = n; }
+
     void resetLM();
 
     //Support methods
@@ -127,6 +130,10 @@ protected:
 
     int ndominated_fw, ndominated_bw;
     int nclosed_fw, nclosed_bw;
+
+    // Number of resources to use in the dominance test
+    // 0 = Only check the cost, 1 = Check the cost and the first resource, ...
+    int n_resourse_dom;
 
     //direction, index in the storage
     std::pair<bool, int> od_label;
