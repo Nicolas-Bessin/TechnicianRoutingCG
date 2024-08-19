@@ -52,7 +52,10 @@ void branch_and_price(
     const std::vector<Route>& initial_routes,
     double reduced_cost_threshold,
     int time_limit_per_node,
-    int max_depth
+    int max_cg_iter,
+    int max_depth,
+    bool cyclic_pricing,
+    bool verbose
     ){
         using std::queue, std::vector;
         using std::cout, std::endl;
@@ -91,8 +94,16 @@ void branch_and_price(
             nodes_explored += 1;
             depth = std::max(depth, current_node.depth);
 
+            // For the root node, do not set a time limit (we set it to 1000 times the normal time limit)
+            int time_limit;
+            if (current_node.depth == 0) {
+                time_limit = time_limit_per_node * 1000;
+            } else {
+                time_limit = time_limit_per_node;
+            }
+
             // Solve this node
-            CGResult result = column_generation(instance, current_node, routes, reduced_cost_threshold, time_limit_per_node, 100, false, true, false);
+            CGResult result = column_generation(instance, current_node, routes, reduced_cost_threshold, time_limit, max_cg_iter, cyclic_pricing, true, false);
 
             // If the returned relaxed solution is tagged as non feasible, it means the cuts introduced to this node are non feasible
             if (!result.master_solution.is_feasible) {

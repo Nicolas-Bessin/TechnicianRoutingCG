@@ -22,6 +22,10 @@
 #define THRESHOLD 1e-6
 #define VERBOSE true
 #define GREEDY_INIT false
+#define CYCLIC_PRICING true
+#define MAX_ITER 10000
+#define MAX_DEPTH 10
+#define COMPUTE_INTEGER_SOL true
 
 
 int main(int argc, char *argv[]){
@@ -71,8 +75,11 @@ int main(int argc, char *argv[]){
         routes,
         THRESHOLD,
         TIME_LIMIT,
-        10
-    );
+        MAX_ITER,
+        MAX_DEPTH,
+        CYCLIC_PRICING,
+        VERBOSE
+        );
 
     return 0;
 }

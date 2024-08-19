@@ -31,7 +31,10 @@ void branch_and_price(
     const std::vector<Route>& initial_routes,
     double reduced_cost_threshold,
     int time_limit_per_node = 60,
-    int max_depth = 10
+    int max_cg_iter = 1000,
+    int max_depth = 10,
+    bool cyclic_pricing = true,
+    bool verbose = true
     );
 
 

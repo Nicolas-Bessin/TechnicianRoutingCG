@@ -9,6 +9,7 @@
 #include <algorithm>
 
 #include "../nlohmann/json.hpp"
+#include "gurobi_c++.h"
 
 
 Route::Route(
