@@ -61,7 +61,7 @@ CGResult column_generation(
     // We switch to the cyclic pricing when we don't add any routes
     bool using_cyclic_pricing = false;
     // Initially, while using the acyclic pricing, we can use all the resources for the dominance test
-    int n_ressources_dominance = instance.capacities_labels.size();
+    int n_ressources_dominance = 0; //instance.capacities_labels.size() + 1;
 
     while (!stop && master_time + pricing_time < time_limit_ms && iteration < max_iterations){
         // Solve the master problem
