@@ -7,6 +7,9 @@
 
 #include "constants.h"
 
+#define KEEP_NON_COVERED 0
+#define KEEP_COVERED 1
+
 /*
     @struct Node
     @brief Represents either an intervention or a warehouse in the problem
@@ -124,8 +127,12 @@ struct Vehicle {
 };
 
 // Generate a new vehicle from an existing one
-// We only keep in the interventions those that have a mask value of 0
-Vehicle vehicle_mask(const Vehicle& vehicle, const std::vector<int>& mask);
+// @param mode : KEEP_NON_COVERED or KEEP_COVERED
+//
+// KEEP_NON_COVERED : the new vehicle will only have the interventions set to 0 in the mask 
+//
+// KEEP_COVERED : the new vehicle will only have the interventions set to 1 in the mask
+Vehicle vehicle_mask(const Vehicle& vehicle, const std::vector<int>& mask, bool mode = KEEP_NON_COVERED);
 
 
 /*

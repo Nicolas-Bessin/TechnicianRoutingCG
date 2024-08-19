@@ -54,14 +54,14 @@ CGResult column_generation(
     bool stop = false;
     MasterSolution solution;
     // We stop if we don't improve the objective value
-    double previous_solution_objective = -1; 
+    double previous_solution_objective = -1000; 
     // Testing out the sequential pricing problem solving
     int current_vehicle_index = 0;
     // We begin with the acyclic pricing which is so much faster
     // We switch to the cyclic pricing when we don't add any routes
     bool using_cyclic_pricing = false;
     // Initially, while using the acyclic pricing, we can use all the resources for the dominance test
-    int n_ressources_dominance = instance.capacities_labels.size() + 1;
+    int n_ressources_dominance = instance.capacities_labels.size();
 
     while (!stop && master_time + pricing_time < time_limit_ms && iteration < max_iterations){
         // Solve the master problem
@@ -75,6 +75,7 @@ CGResult column_generation(
             return CGResult{};
         }
         if (verbose) {
+            cout << "Iteration " << iteration << " - Objective value : " << solution.objective_value << "\n";
             cout << "Master problem solved in " << diff << " ms \n";
             cout << "Number of interventions covered : " << setprecision(2) << count_covered_interventions(solution, routes, instance);
             cout << " - Number of vehicles used : " << count_used_vehicles(solution, routes, instance) << "\n";
@@ -124,7 +125,6 @@ CGResult column_generation(
         if (verbose) {
             cout << "Pricing sub problems solved in " << diff_pricing << " ms - Added " << n_added_routes << " routes";
             cout << " - Max reduced cost : " << setprecision(15) << max_reduced_cost << "\n";
-            cout << "Iteration " << iteration << " - Objective value : " << solution.objective_value << "\n";
         }
         // ----------------- Stop conditions -----------------
         // If we added no routes but are not using the cyclic pricing yet, we switch to it
@@ -135,7 +135,7 @@ CGResult column_generation(
             if (verbose){
                 cout << "-----------------------------------" << endl;
                 cout << "Switching to cyclic pricing" << endl;
-                cout << " - Current time : " << master_time + pricing_time << " ms" << endl;
+                cout << "Current time : " << master_time + pricing_time << " ms" << endl;
             }
             // Go to the next iteration (skip the stop condition checks)
             continue;
@@ -165,6 +165,9 @@ CGResult column_generation(
     cout << "-----------------------------------" << endl;
     if (stop) {
         cout << "Found no new route to add" << endl;
+    }
+    if (master_time + pricing_time >= time_limit_ms){
+        cout << "Time limit reached" << endl;
     }
     cout << "End of the column generation after " << iteration << " iterations" << endl;
     cout << "Relaxed RMP objective value : " << setprecision(3) << solution.objective_value << endl;

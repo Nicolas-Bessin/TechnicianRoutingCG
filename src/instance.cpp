@@ -2,11 +2,11 @@
 
 #include <iostream>
 
-Vehicle vehicle_mask(const Vehicle& vehicle, const std::vector<int>& mask){
+Vehicle vehicle_mask(const Vehicle& vehicle, const std::vector<int>& mask, bool mode){
     std::vector<int> new_interventions;
     std::map<int, int> new_reverse_map;
     for (int intervention : vehicle.interventions){
-        if (mask[intervention] == 0){
+        if (mask[intervention] == mode){
             new_interventions.push_back(intervention);
             new_reverse_map[intervention] = new_interventions.size() - 1;
         }

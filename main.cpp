@@ -22,7 +22,7 @@
 #include <iomanip>
 #include <chrono>
 
-#define TIME_LIMIT 1200
+#define TIME_LIMIT 3600
 #define SOLVER_MODE IMPOSE_ROUTING
 #define THRESHOLD 1e-6
 #define VERBOSE true
@@ -143,7 +143,7 @@ int main(int argc, char *argv[]){
     cout << "-----------------------------------" << endl;
     cout << "Generating a new route for vehicle 14 given the final dual - without using the known best routes" << endl;
     // Generate a route for vehicle 14
-    unique_ptr<Problem> pricing_problem_normal = create_pricing_instance(instance, instance.vehicles[14], CYCLIC_PRICING);
+    unique_ptr<Problem> pricing_problem_normal = create_pricing_instance(instance, instance.vehicles[14], false);
     update_pricing_instance(pricing_problem_normal, master_solution, instance, instance.vehicles[14]);
     vector<Route> new_routes_normal = solve_pricing_problem(pricing_problem_normal, instance, instance.vehicles[14]);
     Route new_route_14_normal = new_routes_normal[0];
@@ -167,7 +167,7 @@ int main(int argc, char *argv[]){
     }
     set<tuple<int, int, int>> empty_edges = set<tuple<int, int, int>>();
     // Generate a route for vehicle 14
-    unique_ptr<Problem> pricing_problem_impose = create_pricing_instance(instance, instance.vehicles[14], CYCLIC_PRICING, empty_edges, edges_14);
+    unique_ptr<Problem> pricing_problem_impose = create_pricing_instance(instance, instance.vehicles[14], false, empty_edges, edges_14);
     update_pricing_instance(pricing_problem_impose, master_solution, instance, instance.vehicles[14]);
     vector<Route> new_routes_impose = solve_pricing_problem(pricing_problem_impose, instance, instance.vehicles[14]);
     Route new_route_14_impose = new_routes_impose[0];
@@ -189,7 +189,7 @@ int main(int argc, char *argv[]){
         edges_14_forbid.insert(std::make_tuple(edge_i, edge_j, 14));
     }
     // Generate a route for vehicle 14
-    unique_ptr<Problem> pricing_problem_forbid = create_pricing_instance(instance, instance.vehicles[14], CYCLIC_PRICING, edges_14_forbid, empty_edges);
+    unique_ptr<Problem> pricing_problem_forbid = create_pricing_instance(instance, instance.vehicles[14], false, edges_14_forbid, empty_edges);
     update_pricing_instance(pricing_problem_forbid, master_solution, instance, instance.vehicles[14]);
     vector<Route> new_routes_forbid = solve_pricing_problem(pricing_problem_forbid, instance, instance.vehicles[14]);
     Route new_route_14_forbid = new_routes_forbid[0];
