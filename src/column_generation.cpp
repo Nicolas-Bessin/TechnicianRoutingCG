@@ -3,11 +3,14 @@
 #include "RMP_solver.h"
 #include "pricing.h"
 #include "analysis.h"
+#include "route_optimizer.h"
 
 #include <iostream>
 #include <iomanip>
 #include <memory>
 #include <chrono>
+
+
 
 
 CGResult column_generation(
@@ -61,7 +64,7 @@ CGResult column_generation(
     // We switch to the cyclic pricing when we don't add any routes
     bool using_cyclic_pricing = false;
     // Initially, while using the acyclic pricing, we can use all the resources for the dominance test
-    int n_ressources_dominance = 0; //instance.capacities_labels.size() + 1;
+    int n_ressources_dominance = instance.capacities_labels.size() + 1;
 
     while (!stop && master_time + pricing_time < time_limit_ms && iteration < max_iterations){
         // Solve the master problem
@@ -89,6 +92,7 @@ CGResult column_generation(
         // Solve each pricing sub problem
         auto start_pricing = chrono::steady_clock::now();
         int n_added_routes = 0;
+        int n_routes_changed = 0;
 
         double max_reduced_cost = 0;
 
@@ -111,10 +115,19 @@ CGResult column_generation(
                 max_reduced_cost = std::max(max_reduced_cost, route.reduced_cost);
                 if (route.reduced_cost> reduced_cost_threshold){
                     // Add the route to the master problem - and update the node to set this route as active
+                    Route new_route = optimize_route(route, instance);
+                    if (!(new_route == route)) {
+                        n_routes_changed++;
+                        routes.push_back(new_route);
+                        node.active_routes.insert(routes.size() - 1);
+                        n_added_routes++;
+                        n_routes_per_v[v]++;
+                    }
+                    // Also add the non-optimized route to the master problem
                     routes.push_back(route);
                     node.active_routes.insert(routes.size() - 1);
                     n_added_routes++;
-                    n_routes_per_v[v]++;
+                    n_routes_per_v[v]++;                
                 }
             }
         }
@@ -124,6 +137,7 @@ CGResult column_generation(
         pricing_time += diff_pricing;
         if (verbose) {
             cout << "Pricing sub problems solved in " << diff_pricing << " ms - Added " << n_added_routes << " routes";
+            cout << " - Optimized " << n_routes_changed << " routes\n";
             cout << " - Max reduced cost : " << setprecision(15) << max_reduced_cost << "\n";
         }
         // ----------------- Stop conditions -----------------

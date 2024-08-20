@@ -50,6 +50,9 @@ set(
     src/analysis.h
     src/analysis.cpp
 
+    src/route_optimizer.h
+    src/route_optimizer.cpp
+
     src/master.h
     src/RMP_solver.h
     src/RMP_solver.cpp

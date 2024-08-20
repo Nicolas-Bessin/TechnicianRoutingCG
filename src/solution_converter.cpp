@@ -57,7 +57,8 @@ std::vector<Route> compact_solution_to_routes(const Instance& instance, const Co
                 }
             }
             if (next_node == -1) {
-                std::cerr << "Error : no next node found" << std::endl;
+                std::cerr << "Error : no next node found- current node : " << current_node
+                          << " - Vehicle : " << v << std::endl;
                 break;
             }
             // If the next node is already in the route and is not the depot, we have a problem

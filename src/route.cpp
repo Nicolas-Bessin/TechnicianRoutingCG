@@ -66,7 +66,7 @@ bool operator==(const Route& lhs, const Route& rhs){
     }
     // Check the start times
     for (int i = 0; i < lhs.start_times.size(); i++){
-        if (fabs(lhs.start_times[i] - rhs.start_times[i]) > 0.0001){
+        if (std::abs(lhs.start_times[i] - rhs.start_times[i]) > 1e-3){
             return false;
         }
     }
