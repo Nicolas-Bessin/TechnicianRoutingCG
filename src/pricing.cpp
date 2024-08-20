@@ -270,7 +270,7 @@ void update_pricing_instance(
 }
 
 
-vector<Route> solve_pricing_problem(
+Route solve_pricing_problem(
     unique_ptr<Problem> & problem,
     const Instance& instance, 
     const Vehicle& vehicle,
@@ -298,90 +298,85 @@ vector<Route> solve_pricing_problem(
     // If the problem is indeterminate (time limit reached, we return an empty vector)
     if (solver.getProblem()->getStatus() == PROBLEM_INDETERMINATE) {
         cout << "Time limit reached for vehicle " << vehicle.id << endl;
-        return vector<Route>();
+        return Route(instance.nodes.size());
     }
     //solver.printBestSolution();
     // Get the solution we found
-    vector<Path> solutions = solver.getBestSolutions(5);
+    Path path = solver.getBestSolution();
     //cout << "Solver found " << solver.getNumberOfSolutions() << " solutions" << endl;
-    // Convert each Path object to a Route object
-    vector<Route> routes;
-    for (auto& path : solutions) {
-        // Get the sequence as a vector of integers
-        double reduced_cost = - path.getObjective(); // (We got the max reduced cost by minimizing the opposite of the reduced cost)
-        list<int> tour_list = path.getTour();
-        vector<int> tour(tour_list.begin(), tour_list.end());
-        // Check that we found an elementary path
-        if (!path.isElementary()) {
-             cout << "Vehicle " << vehicle.id << " : Path is not elementary" << endl;
-        }
-        // Get all the info we need to build a Route object
-        double total_cost = vehicle.cost;
-        double total_duration = 0;
-        double total_travelling_time = 0;
-        double total_waiting_time = 0;
-        vector<int> id_sequence;
-        vector<int> is_in_route(instance.nodes.size(), 0);
-        vector<int> start_times(instance.nodes.size(), 0);
-        vector<vector<int>> route_edges(instance.nodes.size(), vector<int>(instance.nodes.size(), 0));
-        
-        // Keep track of the time ellapsed
-        int current_time = 0;
-        for (int i = 0; i < tour.size() - 1; i++) {
-            int true_i = i == 0 ? vehicle.depot : vehicle.interventions[tour[i]];
-            int true_j = i+1 == tour.size()-1 ? vehicle.depot : vehicle.interventions[tour[i + 1]];
-            // Update the sequence of interventions
-            id_sequence.push_back(true_i);
-            // Update the edge matrix
-            route_edges[true_i][true_j] = 1;
-            // Update the is_in_route and start_times vectors
-            is_in_route[true_i] = 1;
-            start_times[true_i] = current_time;
-            // Get the duration, and travel time and distance between the two interventions
-            int duration = instance.nodes[true_i].duration;
-            int travel_time = instance.time_matrix[true_i][true_j];
-            int travel_distance = instance.distance_matrix[true_i][true_j];
-            // Update the running total cost, duration of interventions and travel time
-            total_cost += instance.cost_per_km * travel_distance;
-            total_duration += duration;
-            total_travelling_time += travel_time;
-            
-            // Update the current time
-            int start_time_next = instance.nodes[true_j].start_window;
-            int waiting_time = std::max(0, start_time_next - (current_time + duration + travel_time));
-            total_waiting_time += waiting_time;
-            current_time = std::max(current_time + duration + travel_time, start_time_next);
-            // If we can't begin the next intervention before the lunch break, we wait until the lunch break
-            Node next_intervention = instance.nodes[true_j];
-            int next_duration = next_intervention.duration;
-            if (next_intervention.is_ambiguous && current_time < MID_DAY && current_time + next_duration > MID_DAY) {
-                current_time = MID_DAY;
-                total_waiting_time += std::max(0, MID_DAY - current_time);
-            }
-        }
-        // Add the checks related to the last intervention
-        int true_last = vehicle.depot;
-        id_sequence.push_back(true_last);
-        is_in_route[true_last] = 1;
-        start_times[true_last] = current_time;
-
-        // Create the Route object
-        Route new_route = Route{
-            vehicle.id,
-            total_cost,
-            reduced_cost,
-            total_duration,
-            total_travelling_time,
-            total_waiting_time,
-            id_sequence,
-            is_in_route,
-            start_times,
-            route_edges
-        };
-        
-        routes.push_back(new_route);
+    // Convert the Path object to a Route object
+    // Get the sequence as a vector of integers
+    double reduced_cost = - path.getObjective(); // (We got the max reduced cost by minimizing the opposite of the reduced cost)
+    list<int> tour_list = path.getTour();
+    vector<int> tour(tour_list.begin(), tour_list.end());
+    // Check that we found an elementary path
+    if (!path.isElementary()) {
+         cout << "Vehicle " << vehicle.id << " : Path is not elementary" << endl;
     }
+    // Get all the info we need to build a Route object
+    double total_cost = vehicle.cost;
+    double total_duration = 0;
+    double total_travelling_time = 0;
+    double total_waiting_time = 0;
+    vector<int> id_sequence;
+    vector<int> is_in_route(instance.nodes.size(), 0);
+    vector<int> start_times(instance.nodes.size(), 0);
+    vector<vector<int>> route_edges(instance.nodes.size(), vector<int>(instance.nodes.size(), 0));
     
-    return routes;
+    // Keep track of the time ellapsed
+    int current_time = 0;
+    for (int i = 0; i < tour.size() - 1; i++) {
+        int true_i = i == 0 ? vehicle.depot : vehicle.interventions[tour[i]];
+        int true_j = i+1 == tour.size()-1 ? vehicle.depot : vehicle.interventions[tour[i + 1]];
+        // Update the sequence of interventions
+        id_sequence.push_back(true_i);
+        // Update the edge matrix
+        route_edges[true_i][true_j] = 1;
+        // Update the is_in_route and start_times vectors
+        is_in_route[true_i] = 1;
+        start_times[true_i] = current_time;
+        // Get the duration, and travel time and distance between the two interventions
+        int duration = instance.nodes[true_i].duration;
+        int travel_time = instance.time_matrix[true_i][true_j];
+        int travel_distance = instance.distance_matrix[true_i][true_j];
+        // Update the running total cost, duration of interventions and travel time
+        total_cost += instance.cost_per_km * travel_distance;
+        total_duration += duration;
+        total_travelling_time += travel_time;
+        
+        // Update the current time
+        int start_time_next = instance.nodes[true_j].start_window;
+        int waiting_time = std::max(0, start_time_next - (current_time + duration + travel_time));
+        total_waiting_time += waiting_time;
+        current_time = std::max(current_time + duration + travel_time, start_time_next);
+        // If we can't begin the next intervention before the lunch break, we wait until the lunch break
+        Node next_intervention = instance.nodes[true_j];
+        int next_duration = next_intervention.duration;
+        if (next_intervention.is_ambiguous && current_time < MID_DAY && current_time + next_duration > MID_DAY) {
+            current_time = MID_DAY;
+            total_waiting_time += std::max(0, MID_DAY - current_time);
+        }
+    }
+    // Add the checks related to the last intervention
+    int true_last = vehicle.depot;
+    id_sequence.push_back(true_last);
+    is_in_route[true_last] = 1;
+    start_times[true_last] = current_time;
+
+    // Create the Route object
+    Route new_route = Route{
+        vehicle.id,
+        total_cost,
+        reduced_cost,
+        total_duration,
+        total_travelling_time,
+        total_waiting_time,
+        id_sequence,
+        is_in_route,
+        start_times,
+        route_edges
+    };
+    
+    return new_route;
 }
 

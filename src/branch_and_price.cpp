@@ -97,7 +97,7 @@ void branch_and_price(
             // For the root node, do not set a time limit (we set it to 1000 times the normal time limit)
             int time_limit;
             if (current_node.depth == 0) {
-                time_limit = time_limit_per_node * 1000;
+                time_limit = 600;
             } else {
                 time_limit = time_limit_per_node;
             }

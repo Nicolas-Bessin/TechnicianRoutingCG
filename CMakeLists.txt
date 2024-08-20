@@ -29,6 +29,9 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 # Add the Gurobi headers from /opt/gurobi/include
 find_package(GUROBI REQUIRED)
 
+# Add OpenMP
+find_package(OpenMP REQUIRED)
+
 include_directories(${GUROBI_INCLUDE_DIRS})
 
 # Add the pathwyse subdirectory
@@ -75,11 +78,15 @@ set(
     src/heuristics.h
     src/heuristics.cpp
 )
+
+
 add_library(technician_routing_lib ${SOURCE_FILES_LIB})
 #Link against the Gurobi library
 target_link_libraries(technician_routing_lib PUBLIC gurobi)
 #Link against the pathwyse core library
 target_link_libraries(technician_routing_lib PUBLIC pathwyse_core)
+#Link against OpenMP
+# target_link_libraries(technician_routing_lib PUBLIC OpenMP::OpenMP_CXX)
 
 # Create the column generation executable
 add_executable(TRP_cg main.cpp)

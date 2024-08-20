@@ -35,13 +35,13 @@ void update_pricing_instance(
     );
 
 
-/* Solves a pre-defined pricing problem and return a std::vector of routes that are feasible (of maximal reduced cost)
+/* Solves a pre-defined pricing problem and return a route that are feasible (of maximal reduced cost)
     @param pricing_problem: the pricing problem to solve
     @param n_res_dom : the number of resources to use in the dominance test (default -1 : use all resources)
     @param instance: the instance of the problem
     @param vehicle: the vehicle that will perform the routes
 */
-std::vector<Route> solve_pricing_problem(
+Route solve_pricing_problem(
     std::unique_ptr<Problem> & pricing_problem,
     const Instance &instance, 
     const Vehicle &vehicle,

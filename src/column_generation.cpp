@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <memory>
 #include <chrono>
+#include <execution>
 
 
 
@@ -46,11 +47,6 @@ CGResult column_generation(
     int pricing_time = 0;
 
     int time_limit_ms = time_limit * 1000;
-
-    // Count the number of time each vehicle's sub problem reached the time limit
-    vector<int> time_limit_reached(instance.vehicles.size(), 0);
-    // Aslo count the number of routes added for each vehicle
-    vector<int> n_routes_per_v(instance.vehicles.size(), 0);
 
     // Main loop of the column generation algorithm
     int iteration = 0;
@@ -101,33 +97,28 @@ CGResult column_generation(
         // Or not exploring all vehicles at each iteration in the future
         vector<int> vehicle_order(instance.vehicles.size());
         std::iota(vehicle_order.begin(), vehicle_order.end(), 0);
-
-        for (const int& v : vehicle_order){
-            const Vehicle& vehicle = instance.vehicles.at(v);
-            unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, vehicle, using_cyclic_pricing);
-            update_pricing_instance(pricing_problem, solution, instance, vehicle);
-            vector<Route> best_new_routes = solve_pricing_problem(pricing_problem, instance, vehicle, n_ressources_dominance);
-            if (best_new_routes.size() == 0){
-                time_limit_reached[vehicle.id]++;
+        #pragma omp parallel
+        {
+            std::vector<Route> new_routes_private;
+            #pragma omp for nowait
+            for( const int &v : vehicle_order){
+                const Vehicle& vehicle = instance.vehicles.at(v);
+                unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, vehicle, using_cyclic_pricing);
+                update_pricing_instance(pricing_problem, solution, instance, vehicle);
+                Route new_route = solve_pricing_problem(pricing_problem, instance, vehicle, n_ressources_dominance);
+                max_reduced_cost = std::max(max_reduced_cost, new_route.reduced_cost);
+                if (new_route.reduced_cost> reduced_cost_threshold){
+                    new_routes_private.push_back(new_route);
+                    n_added_routes++;                
+                }
             }
-            // Go through the returned routes, and add them to the master problem if they have a positive reduced cost
-            for (const auto &route : best_new_routes){
-                max_reduced_cost = std::max(max_reduced_cost, route.reduced_cost);
-                if (route.reduced_cost> reduced_cost_threshold){
-                    // Add the route to the master problem - and update the node to set this route as active
-                    Route new_route = optimize_route(route, instance);
-                    if (!(new_route == route)) {
-                        n_routes_changed++;
-                        routes.push_back(new_route);
-                        node.active_routes.insert(routes.size() - 1);
-                        n_added_routes++;
-                        n_routes_per_v[v]++;
-                    }
-                    // Also add the non-optimized route to the master problem
-                    routes.push_back(route);
-                    node.active_routes.insert(routes.size() - 1);
-                    n_added_routes++;
-                    n_routes_per_v[v]++;                
+
+            #pragma omp critical
+            {
+                routes.insert(routes.end(), new_routes_private.begin(), new_routes_private.end());
+                // Also update the node to set these routes as active
+                for (int i = routes.size() - new_routes_private.size(); i < routes.size(); i++){
+                    node.active_routes.insert(i);
                 }
             }
         }
@@ -156,7 +147,7 @@ CGResult column_generation(
         }
         // If we reached the end, and we were not using all the resources for the dominance test
         // We increase the number of resources used
-        int total_n_ressources = instance.capacities_labels.size();
+        int total_n_ressources = instance.capacities_labels.size() + 1;
         if (n_added_routes == 0 && using_cyclic_pricing && n_ressources_dominance < total_n_ressources){
             n_ressources_dominance++;
             if (verbose){
@@ -202,21 +193,6 @@ CGResult column_generation(
         auto end_integer = chrono::steady_clock::now();
         integer_time = chrono::duration_cast<chrono::milliseconds>(end_integer - start_integer).count();
         cout << "Integer RMP objective value : " << integer_solution.objective_value << endl;
-    }
-
-    if (verbose){
-        // Print the number of routes added for each vehicle
-        cout << "Number of routes added for each vehicle : " << endl;
-        for (int i = 0; i < instance.vehicles.size(); i++){
-            cout << "v" << i << " : " << n_routes_per_v[i] << ", ";
-        }
-        cout << endl;
-        // Print the number of times each vehicle's sub problem reached the time limit
-        for (int i = 0; i < instance.vehicles.size(); i++){
-            if (time_limit_reached[i] > 0) {
-                cout << "Vehicle " << i << " : the time limit was reached " << time_limit_reached[i] << " times" << endl;
-            }
-        }
     }
 
     // Build the result object

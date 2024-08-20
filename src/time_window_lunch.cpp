@@ -46,7 +46,7 @@ int CustomTimeWindow::extend(int current_value, int i, int j, bool direction) {
         }
     }
     else {
-        current_time += data->getNodeCost(j) + data->getArcCost(j, i);
+        current_time += data->getNodeCost(j) + data->getArcCost(i, j);
         current_time = std::max(current_time, upper_bound - (node_upper_bound[i] + data->getNodeCost(i)));    //bw: time between departure from j to arrival at destination
     }
 
@@ -74,14 +74,6 @@ bool CustomTimeWindow::isFeasible(int current_value, int current_node, double bo
         }
         if(current_value > feasible_value) return false;
     }
-    // We we reached this point, we know know the time window is respected
-    // Let's check if the lunch constraint is respected
-    if(!has_lunch_constraint[current_node]) return true;
-
-    bool is_respected = current_value + data->getNodeCost(current_node) <= MID_DAY || current_value >= MID_DAY;
-
-    // In truth, we do not need to check if the lunch constraint is respected
-    // Because the extend function already takes care of making sure it is
     return true;
 }
 
