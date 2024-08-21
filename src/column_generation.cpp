@@ -77,7 +77,8 @@ CGResult column_generation(
             cout << "Iteration " << iteration << " - Objective value : " << solution.objective_value << "\n";
             cout << "Master problem solved in " << diff << " ms \n";
             cout << "Number of interventions covered : " << setprecision(2) << count_covered_interventions(solution, routes, instance);
-            cout << " - Number of vehicles used : " << count_used_vehicles(solution, routes, instance) << "\n";
+            std::pair<double, int> used_vehicles = count_used_vehicles(solution, routes, instance);
+            cout << " - Number of vehicles used : " << used_vehicles.first << " - Unique vehicles used : " << used_vehicles.second << "\n";
             cout << "Min alpha : " << *std::min_element(solution.alphas.begin(), solution.alphas.end());
             cout << " - Max alpha : " << *std::max_element(solution.alphas.begin(), solution.alphas.end());
             cout << " - Min beta : " << *std::min_element(solution.betas.begin(), solution.betas.end());
@@ -109,9 +110,9 @@ CGResult column_generation(
                 max_reduced_cost = std::max(max_reduced_cost, new_route.reduced_cost);
                 if (new_route.reduced_cost> reduced_cost_threshold){
                     new_routes_private.push_back(new_route);
-                    //Route optimized_route = optimize_route(new_route, instance);
+                    // Route optimized_route = optimize_route(new_route, instance);
                     // if (!(optimized_route == new_route)){
-                    // //     new_routes_private.push_back(optimized_route);
+                    //     new_routes_private.push_back(optimized_route);
                     //     n_routes_changed++;
                     //     n_added_routes++;
                     // }
@@ -153,7 +154,7 @@ CGResult column_generation(
         }
         // If we reached the end, and we were not using all the resources for the dominance test
         // We increase the number of resources used
-        int total_n_ressources = instance.capacities_labels.size();
+        int total_n_ressources = instance.capacities_labels.size() + 1;
         if (n_added_routes == 0 && using_cyclic_pricing && n_ressources_dominance < total_n_ressources){
             n_ressources_dominance++;
             if (verbose){

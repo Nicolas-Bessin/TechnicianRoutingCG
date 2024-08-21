@@ -15,7 +15,7 @@
 #include <iomanip>
 #include <memory>
 
-#define TIME_LIMIT 60
+#define TIME_LIMIT 600
 #define HEURISTIC_INIT false
 
 int main(int argc, char** argv) {
@@ -28,8 +28,15 @@ int main(int argc, char** argv) {
     // Parse the instance from a JSON file
     auto start_parse = chrono::steady_clock::now();
     cout << "Technician Routing Problem using the compact formulation" << endl;
-    string default_filename = "../data/agency1_05-12-2022_anonymized.json";
+    string default_filename = "../data/instance_1.json";
     Instance instance = parse_file(default_filename, false);
+
+    // ONly keep the first 20 nodes
+    vector<int> kept_nodes = vector<int>(instance.number_interventions);
+    for (int i = 0; i < 25; i++){
+        kept_nodes[i] = 1;
+    }
+    instance = cut_instance(instance, kept_nodes);
 
     preprocess_interventions(instance);
     auto end_parse = chrono::steady_clock::now();

@@ -58,3 +58,81 @@ bool can_do_intervention(const Node& intervention, const Vehicle& vehicle){
     }
     return true;
 }
+
+Instance cut_instance(const Instance& instance, const std::vector<int>& mask) {
+    // We only keep the interventions that are not masked
+    // We need to remove the vehicles that cannot do any intervention
+    // We need to update the vehicles
+    // And the time and distance matrices
+
+    // First, update the interventions themselves
+    std::vector<Node> new_nodes;
+    std::map<int, int> old_to_new;
+    std::map<int, int> new_to_old;
+
+    for (int i = 0; i < instance.number_interventions; i++){
+        if (mask[i] == 1){
+            new_nodes.push_back(instance.nodes[i]);
+            old_to_new[i] = new_nodes.size() - 1;
+            new_to_old[new_nodes.size() - 1] = i;
+        }
+    }
+    // Add the warehouses
+    for (int i = instance.number_interventions; i < instance.nodes.size(); i++){
+        new_nodes.push_back(instance.nodes[i]);
+        old_to_new[i] = new_nodes.size() - 1;
+        new_to_old[new_nodes.size() - 1] = i;
+    }
+
+    // Update the vehicles' interventions
+    std::vector<Vehicle> new_vehicles;
+    for (const Vehicle& vehicle : instance.vehicles){
+        // Update the interventions & reverse map
+        std::vector<int> new_interventions;
+        std::map<int, int> new_reverse_map;
+        for (int intervention : vehicle.interventions){
+            if (mask[intervention] == 1){
+                new_interventions.push_back(old_to_new[intervention]);
+                new_reverse_map[old_to_new[intervention]] = new_interventions.size() - 1;
+            }
+        }
+        // If the vehicle can do at least one intervention, we keep it
+        Vehicle new_vehicle = Vehicle{
+            vehicle.id, 
+            vehicle.technicians, 
+            vehicle.skills, 
+            new_interventions, 
+            new_reverse_map, 
+            old_to_new[vehicle.depot],
+            vehicle.capacities, 
+            vehicle.cost};
+        if (new_vehicle.interventions.size() > 0){
+            new_vehicle.id = new_vehicles.size();
+            new_vehicles.push_back(new_vehicle);
+        }
+    }
+
+    // Update the time and distance matrices
+    std::vector<std::vector<int>> new_time_matrix(new_nodes.size(), std::vector<int>(new_nodes.size(), 0));
+    std::vector<std::vector<int>> new_distance_matrix(new_nodes.size(), std::vector<int>(new_nodes.size(), 0));
+    for (int i = 0; i < new_nodes.size(); i++){
+        for (int j = 0; j < new_nodes.size(); j++){
+            new_time_matrix[i][j] = instance.time_matrix[new_to_old[i]][new_to_old[j]];
+            new_distance_matrix[i][j] = instance.distance_matrix[new_to_old[i]][new_to_old[j]];
+        }
+    }
+
+    return Instance{
+        new_nodes.size() - instance.number_warehouses,
+        instance.number_warehouses,
+        new_vehicles.size(),
+        instance.cost_per_km,
+        instance.technician_cost,
+        instance.M,
+        new_nodes,
+        new_vehicles,
+        instance.capacities_labels,
+        new_time_matrix,
+        new_distance_matrix
+    };
+}

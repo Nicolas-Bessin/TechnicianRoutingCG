@@ -22,7 +22,8 @@ std::vector<int> used_vehicles(const IntegerSolution& solution, const std::vecto
 
 int count_used_vehicles(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
 
-double count_used_vehicles(const MasterSolution& solution, const std::vector<Route>& routes, const Instance& instance);
+// Returns a pair : the first element is the fractionnal number of vehicles used, the second is the number unique vehicles used
+std::pair<double, int> count_used_vehicles(const MasterSolution& solution, const std::vector<Route>& routes, const Instance& instance);
 
 void print_used_vehicles(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
 

@@ -10,7 +10,7 @@
 #include <assert.h>
 #include <iomanip>
 
-using std::vector, std::map, std::string, std::set;
+using std::vector, std::map, std::string, std::set, std::pair;
 using std::find;
 
 
@@ -113,20 +113,26 @@ int count_used_vehicles(const IntegerSolution& solution, const vector<Route>& ro
     return count;
 }
 
-double count_used_vehicles(const MasterSolution& solution, const vector<Route>& routes, const Instance& instance) {
+pair<double, int> count_used_vehicles(const MasterSolution& solution, const vector<Route>& routes, const Instance& instance) {
     using std::cout, std::endl;
 
     int nb_routes = routes.size();
     int nb_vehicles = instance.vehicles.size();
     double used_vehicles = 0;
-    for (int v = 0; v < nb_vehicles; v++) {
-        for (int r = 0; r < nb_routes; r++) {
-            if (routes[r].vehicle_id == v) {
-                used_vehicles += solution.coefficients[r];
-            }
+    vector<int> is_used = vector<int>(nb_vehicles, 0);
+    for (int r = 0; r < nb_routes; r++) {
+        used_vehicles += solution.coefficients[r];
+        if (solution.coefficients[r] > 0) {
+            is_used[routes[r].vehicle_id] = 1;
         }
     }
-    return used_vehicles;
+
+    int unique_used_vehicles = 0;
+    for (int e : is_used) {
+        unique_used_vehicles += e;
+    }
+
+    return std::make_pair(used_vehicles, unique_used_vehicles);
 }
 
 void print_used_vehicles(const IntegerSolution& solution, const vector<Route>& routes, const Instance& instance) {

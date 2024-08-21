@@ -40,12 +40,15 @@ int main(int argc, char *argv[]){
     auto start_parse = chrono::steady_clock::now();
     cout << "Technician Routing Problem using Column Generation" << endl;
     cout << "-----------------------------------" << endl;
-    string default_filename = "../data/instance_1_all_feasible.json";
+    string default_filename = "../data/instance_1.json";
     Instance instance = parse_file(default_filename, true);
 
-    // Check wether the time and distance matrices are symetric
-    cout << "Distance matrix is symetric : " << is_symmetric(instance.distance_matrix) << " - Biggest gap : " << symmetry_gap(instance.distance_matrix) << endl;
-    cout << "Time matrix is symetric : " << is_symmetric(instance.time_matrix) << " - Biggest gap : " << symmetry_gap(instance.time_matrix) << endl;
+    // Only keep the first 20 nodes
+    vector<int> kept_nodes = vector<int>(instance.number_interventions);
+    for (int i = 0; i < 25; i++){
+        kept_nodes[i] = 1;
+    }
+    instance = cut_instance(instance, kept_nodes);
 
     preprocess_interventions(instance);
 
