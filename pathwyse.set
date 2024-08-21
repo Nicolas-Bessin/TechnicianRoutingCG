@@ -10,7 +10,7 @@ problem/scaling/override = 0
 problem/scaling = 1.0
 problem/scaling/target = objective
 
-ensemble/algorithms = PWDefaultRelaxQueue,PWDefaultRelaxDom,PWDefault
+ensemble/algorithms = PWDefaultRelaxQueue
 ensemble/active = 0
 
 main_algorithm = PWDefault
@@ -25,7 +25,7 @@ algo/default/reserve = 100000000
 algo/default/use_visited = 1
 algo/default/compare_unreachables = 0
 algo/default/dssr = standard
-algo/default/ng = standard
+algo/default/ng = off
 algo/default/ng/set_size = 8
 
 algo/default/candidate/type = node

@@ -22,7 +22,7 @@
 #include <iomanip>
 #include <chrono>
 
-#define TIME_LIMIT 600
+#define TIME_LIMIT 300
 #define SOLVER_MODE IMPOSE_ROUTING
 #define THRESHOLD 1e-6
 #define VERBOSE true
@@ -44,7 +44,7 @@ int main(int argc, char *argv[]){
     auto start_parse = chrono::steady_clock::now();
     cout << "Technician Routing Problem using Column Generation" << endl;
     cout << "-----------------------------------" << endl;
-    string default_filename = "../data/agency1_19-01-2023_anonymized.json";
+    string default_filename = "../data/instance_1.json";
     Instance instance = parse_file(default_filename, true);
 
     // Check wether the time and distance matrices are symetric

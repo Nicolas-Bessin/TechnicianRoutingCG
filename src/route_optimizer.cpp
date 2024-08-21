@@ -23,17 +23,17 @@ Route optimize_route(const Route& route, const Instance& instance) {
         env.start();
         GRBModel model = GRBModel(env);
 
-        // Create the variables y_ij (binary variables indicating if the vehicle goes from node i to node j), the last node is the warehouse
-        vector<vector<GRBVar>> y(n_nodes, vector<GRBVar>(n_nodes));
+        // Create the variables x_ij (binary variables indicating if the vehicle goes from node i to node j), the last node is the warehouse
+        vector<vector<GRBVar>> x(n_nodes, vector<GRBVar>(n_nodes));
         for (int i = 0; i < n_nodes; i++) {
             for (int j = 0; j < n_nodes; j++) {
-                y[i][j] = model.addVar(0.0, 1.0, 0.0, GRB_BINARY);
+                x[i][j] = model.addVar(0.0, 1.0, 0.0, GRB_BINARY);
             }
         }
         // Create the time variables u_i (time at which the vehicle arrives at node i)
         vector<GRBVar> u(n_intervention);
         for (int i = 0; i < n_intervention; i++) {
-            u[i] = model.addVar(0.0, END_DAY, 0.0, GRB_INTEGER);
+            u[i] = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_INTEGER);
         }
         // Variables z_i - is the intervention i done in the afternoon ?
         vector<GRBVar> z(n_intervention);
@@ -48,12 +48,12 @@ Route optimize_route(const Route& route, const Instance& instance) {
             GRBLinExpr expr_in = 0;
             GRBLinExpr expr_out = 0;
             for (int j = 0; j < n_nodes; j++) {
-                expr_in += y[j][i];
-                expr_out += y[i][j];
+                expr_in += x[j][i];
+                expr_out += x[i][j];
             }
             model.addConstr(expr_in == 1);
             model.addConstr(expr_out == 1);
-            model.addConstr(y[i][i] == 0);
+            model.addConstr(x[i][i] == 0);
         }
         // Time constraints
         // Time window constraints
@@ -67,15 +67,15 @@ Route optimize_route(const Route& route, const Instance& instance) {
             const Node & intervention = instance.nodes[vehicle.interventions[i]];
             for (int j = 0; j < n_intervention; j++) {
                 GRBLinExpr expr = u[i] - intervention.end_window;
-                expr += (intervention.end_window + intervention.duration + instance.time_matrix[vehicle.interventions[i]][vehicle.interventions[j]]) * y[i][j];
+                expr += (intervention.end_window + intervention.duration + instance.time_matrix[vehicle.interventions[i]][vehicle.interventions[j]]) * x[i][j];
                 model.addConstr(expr <= u[j]);
             }
         }
         // Depot time constraints
         for (int i = 0; i < n_intervention; i++) {
             int duration = instance.nodes[vehicle.interventions[i]].duration;
-            model.addConstr(instance.time_matrix[vehicle.depot][vehicle.interventions[i]] * y[n_nodes - 1][i] <= u[i]);
-            model.addConstr(u[i] + duration + instance.time_matrix[vehicle.interventions[i]][vehicle.depot] * y[i][n_nodes - 1] <= END_DAY);
+            model.addConstr(instance.time_matrix[vehicle.depot][vehicle.interventions[i]] * x[n_nodes - 1][i] <= u[i]);
+            model.addConstr(u[i] + duration + (instance.time_matrix[vehicle.interventions[i]][vehicle.depot] * x[i][n_nodes - 1]) <= END_DAY);
         }
         // Lunch break
         for (int i = 0; i < n_intervention; i++) {
@@ -91,7 +91,7 @@ Route optimize_route(const Route& route, const Instance& instance) {
             for (int j = 0; j < n_nodes; j++) {
                 int true_i = i == n_nodes - 1 ? vehicle.depot : vehicle.interventions[i];
                 int true_j = j == n_nodes - 1 ? vehicle.depot : vehicle.interventions[j];
-                obj += instance.distance_matrix[true_i][true_j] * y[i][j] * instance.cost_per_km;
+                obj += instance.distance_matrix[true_i][true_j] * x[i][j] * instance.cost_per_km;
             }
         }
         model.setObjective(obj, GRB_MINIMIZE);
@@ -107,8 +107,7 @@ Route optimize_route(const Route& route, const Instance& instance) {
             for (int j = 0; j < n_nodes; j++) {
                 int true_i = i == n_nodes - 1 ? vehicle.depot : vehicle.interventions[i];
                 int true_j = j == n_nodes - 1 ? vehicle.depot : vehicle.interventions[j];
-                compact_solution.x[true_i][true_j][route.vehicle_id] = y[i][j].get(GRB_DoubleAttr_X);
-                //cout << "x[" << true_i << "][" << true_j << "][" << route.vehicle_id << "] = " << compact_solution.x[true_i][true_j][route.vehicle_id] << endl;
+                compact_solution.x[true_i][true_j][route.vehicle_id] = x[i][j].get(GRB_DoubleAttr_X);
             }
         }
         // Set the y variables in the compact solution

@@ -109,6 +109,12 @@ CGResult column_generation(
                 max_reduced_cost = std::max(max_reduced_cost, new_route.reduced_cost);
                 if (new_route.reduced_cost> reduced_cost_threshold){
                     new_routes_private.push_back(new_route);
+                    //Route optimized_route = optimize_route(new_route, instance);
+                    // if (!(optimized_route == new_route)){
+                    // //     new_routes_private.push_back(optimized_route);
+                    //     n_routes_changed++;
+                    //     n_added_routes++;
+                    // }
                     n_added_routes++;                
                 }
             }
@@ -147,7 +153,7 @@ CGResult column_generation(
         }
         // If we reached the end, and we were not using all the resources for the dominance test
         // We increase the number of resources used
-        int total_n_ressources = instance.capacities_labels.size() + 1;
+        int total_n_ressources = instance.capacities_labels.size();
         if (n_added_routes == 0 && using_cyclic_pricing && n_ressources_dominance < total_n_ressources){
             n_ressources_dominance++;
             if (verbose){

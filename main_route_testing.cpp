@@ -1,5 +1,6 @@
 #include "src/parser.h"
 #include "src/preprocessing.h"
+#include "src/plot.h"
 
 #include "src/master.h"
 #include "src/RMP_solver.h"
@@ -44,9 +45,8 @@ int main(int argc, char *argv[]){
     string default_filename = "../data/agency1_19-01-2023_anonymized.json";
     Instance instance = parse_file(default_filename, true);
 
-    // Check wether the time and distance matrices are symetric
-    cout << "Distance matrix is symetric : " << is_symmetric(instance.distance_matrix) << " - Biggest gap : " << symmetry_gap(instance.distance_matrix) << endl;
-    cout << "Time matrix is symetric : " << is_symmetric(instance.time_matrix) << " - Biggest gap : " << symmetry_gap(instance.time_matrix) << endl;
+    // Plot the instance
+    plot_instance(instance);
 
     preprocess_interventions(instance);
 

@@ -46,7 +46,11 @@ Node parse_intervention(json data){
         }
     }
     map<string, int> quantities = data.at("quantities");
-    return Node(id, node_id, duration, start_window, end_window, is_long, quantities, skills);
+    // The position is given as a pair of coordinates
+    double lon = data.at("longitude");
+    double lat = data.at("latitude");
+    std::pair<double, double> position = std::make_pair(lon, lat);
+    return Node(id, node_id, duration, start_window, end_window, is_long, quantities, skills, position);
 }
 
 
@@ -54,7 +58,14 @@ Node parse_intervention(json data){
 Node parse_warehouse(json data){
     int node_id = data.at("node_id");
     string ope_base = data.at("ope_base");
-    return Node(ope_base, node_id);
+    // The position is given as a pair of coordinates 
+    // However they are stored as string so we must convert them to double
+    string lon_str = data.at("longitude");
+    string lat_str = data.at("latitude");
+    double lon = stod(lon_str);
+    double lat = stod(lat_str);
+    std::pair<double, double> position = std::make_pair(lon, lat);
+    return Node(ope_base, node_id, position);
 }
 
 

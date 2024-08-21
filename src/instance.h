@@ -33,12 +33,15 @@ struct Node {
     std::map<std::string, int> quantities;
     // Skills required to perform the intervention (left empty for warehouses) (counting the number of technicians needed with each skill)
     std::map<std::string, int> required_skills;
+    // Position information
+    std::pair<double, double> position;
 
     // Empty constructor
     Node(){}
 
     // Constructor for a warehouse
-    Node(std::string id, int node_id) : id(id), node_id(node_id), is_intervention(false), duration(0), start_window(0), end_window(END_DAY) {}
+    Node(std::string id, int node_id, std::pair<double, double> pos) : 
+        id(id), node_id(node_id), is_intervention(false), duration(0), start_window(0), end_window(END_DAY), position(pos) {}
 
     // Constructor for an intervention
     Node(
@@ -49,7 +52,8 @@ struct Node {
         int end_window,
         bool is_ambiguous,
         std::map<std::string, int> quantities,
-        std::map<std::string, int> required_skills
+        std::map<std::string, int> required_skills,
+        std::pair<double, double> pos
     ) : 
         id(id), 
         node_id(node_id), 
@@ -59,7 +63,8 @@ struct Node {
         end_window(end_window), 
         is_ambiguous(is_ambiguous), 
         quantities(quantities), 
-        required_skills(required_skills) 
+        required_skills(required_skills),
+        position(pos)
         {}
 };
 
@@ -192,3 +197,9 @@ bool is_symmetric(const std::vector<std::vector<int>>& matrix);
 int symmetry_gap(const std::vector<std::vector<int>>& matrix);
 
 bool can_do_intervention(const Node& intervention, const Vehicle& vehicle);
+
+
+// Generate a new instance from an existing one
+// @param mask : vector of size instance.number_interventions
+// mask[i] = 0 if the intervention i is removed from the new instance
+Instance cut_instance(const Instance& instance, const std::vector<int>& mask);

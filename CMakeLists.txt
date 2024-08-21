@@ -37,6 +37,9 @@ include_directories(${GUROBI_INCLUDE_DIRS})
 # Add the pathwyse subdirectory
 add_subdirectory(pathwyse)
 
+# Add Matplotplusplus
+add_subdirectory(matplotplusplus)
+
 #Source code
 set(
     SOURCE_FILES_LIB
@@ -77,6 +80,9 @@ set(
 
     src/heuristics.h
     src/heuristics.cpp
+
+    src/plot.h
+    src/plot.cpp
 )
 
 
@@ -86,7 +92,9 @@ target_link_libraries(technician_routing_lib PUBLIC gurobi)
 #Link against the pathwyse core library
 target_link_libraries(technician_routing_lib PUBLIC pathwyse_core)
 #Link against OpenMP
-# target_link_libraries(technician_routing_lib PUBLIC OpenMP::OpenMP_CXX)
+#target_link_libraries(technician_routing_lib PUBLIC OpenMP::OpenMP_CXX)
+#Link against Matplotplusplus
+target_link_libraries(technician_routing_lib PUBLIC matplot)
 
 # Create the column generation executable
 add_executable(TRP_cg main.cpp)
