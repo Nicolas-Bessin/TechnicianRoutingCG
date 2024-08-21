@@ -200,6 +200,8 @@ CGResult column_generation(
         auto end_integer = chrono::steady_clock::now();
         integer_time = chrono::duration_cast<chrono::milliseconds>(end_integer - start_integer).count();
         cout << "Integer RMP objective value : " << integer_solution.objective_value << endl;
+        double gap = (solution.objective_value - integer_solution.objective_value) / integer_solution.objective_value;
+        cout << "Gap between the relaxed and integer RMP : " << setprecision(3) << gap << endl;
     }
 
     // Build the result object

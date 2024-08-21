@@ -22,7 +22,7 @@
 #include <iomanip>
 #include <chrono>
 
-#define TIME_LIMIT 300
+#define TIME_LIMIT 600
 #define SOLVER_MODE IMPOSE_ROUTING
 #define THRESHOLD 1e-6
 #define VERBOSE true
@@ -30,6 +30,7 @@
 #define CYCLIC_PRICING true
 #define MAX_ITER 10000
 #define COMPUTE_INTEGER_SOL true
+#define N_INTERVENTIONS 25
 
 int main(int argc, char *argv[]){
 
@@ -49,7 +50,7 @@ int main(int argc, char *argv[]){
 
     // Only keep the first 20 nodes
     vector<int> kept_nodes = vector<int>(instance.number_interventions);
-    for (int i = 0; i < 25; i++){
+    for (int i = 0; i < N_INTERVENTIONS; i++){
         kept_nodes[i] = 1;
     }
     instance = cut_instance(instance, kept_nodes);
@@ -122,7 +123,7 @@ int main(int argc, char *argv[]){
     cout << "True cost of the integer solution : " << compute_integer_objective(integer_solution, routes, instance) << endl;
 
     cout << "-----------------------------------" << endl;
-    // print_used_routes(integer_solution, routes, instance);
+    print_used_routes(integer_solution, routes, instance);
 
     
 
