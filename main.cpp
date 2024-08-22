@@ -4,6 +4,7 @@
 #include "src/master.h"
 #include "src/RMP_solver.h"
 #include "src/pricing.h"
+#include "src/route_optimizer.h"
 
 #include "src/column_generation.h"
 
@@ -123,7 +124,33 @@ int main(int argc, char *argv[]){
     cout << "True cost of the integer solution : " << compute_integer_objective(integer_solution, routes, instance) << endl;
 
     cout << "-----------------------------------" << endl;
-    print_used_routes(integer_solution, routes, instance);
+
+    cout << "Optimizing the routes for travel length" << endl;
+    auto start_optimization = chrono::steady_clock::now();
+    vector<Route> optimized_routes = vector<Route>();
+    int count = 0;
+    double km_saved = 0;
+    for (int r = 0; r < routes.size(); r++){
+        if (integer_solution.coefficients[r] == 1){
+            Route optimized_route = optimize_route(routes.at(r), instance);
+            optimized_routes.push_back(optimized_route); 
+            if(!(optimized_route == routes.at(r))){
+                count++;
+                km_saved += count_route_kilometres(routes.at(r), instance) - count_route_kilometres(optimized_route, instance);
+            }
+        }
+    }
+    auto end_optimization = chrono::steady_clock::now();
+    int optimization_time = chrono::duration_cast<chrono::milliseconds>(end_optimization - start_optimization).count();
+    cout << "Optimized " << count << " routes in " << optimization_time << " ms" << endl;
+    cout << "Total km saved : " << km_saved << endl;
+
+    // Re-compute the integer solution with the optimized routes
+    BPNode optimized_root = RootNode(optimized_routes);
+    IntegerSolution optimized_solution = integer_RMP(instance, optimized_routes, optimized_root);
+    cout << "Cost of the optimized solution : " << compute_integer_objective(optimized_solution, optimized_routes, instance) << endl;
+
+    //print_used_routes(integer_solution, routes, instance);
 
     
 

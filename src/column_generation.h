@@ -18,7 +18,6 @@ struct CGResult {
     CGResult() {};
     // Constructor
     CGResult(
-        const BPNode& node,
         const MasterSolution& master_solution,
         const IntegerSolution& integer_solution,
         const std::vector<Route>& routes,

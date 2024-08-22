@@ -404,6 +404,12 @@ void print_route(const Route & route, const Instance & instance, const MasterSol
     using std::cout, std::endl;
     using std::setprecision, std::fixed, std::setw;
 
+    // If the route is empty, print a message and return
+    if (route.id_sequence.size() == 0) {
+        cout << "Empty route" << endl;
+        return;
+    }
+
     // Print the vehicle id
     cout << "Vehicle id: " << route.vehicle_id << " - Tour length: " << route.id_sequence.size() << endl;
     cout << "Technicians in the vehicle: ";

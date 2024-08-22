@@ -9,6 +9,13 @@
 Route optimize_route(const Route& route, const Instance& instance) {
     using namespace std;
 
+    // If the route is empty, skip the optimization
+    if (route.id_sequence.empty()) {
+        return route;
+    }
+
+    //print_route(route, instance);
+
     // Get the vehicle that will perform the route
     // Only keep the interventions that are in the route
     const Vehicle vehicle = vehicle_mask(instance.vehicles[route.vehicle_id], route.is_in_route, KEEP_COVERED);
@@ -55,6 +62,15 @@ Route optimize_route(const Route& route, const Instance& instance) {
             model.addConstr(expr_out == 1);
             model.addConstr(x[i][i] == 0);
         }
+        // Depot constraints
+        GRBLinExpr depot_out = 0;
+        GRBLinExpr depot_in = 0;
+        for (int i = 0; i < n_intervention; i++) {
+            depot_out += x[n_nodes - 1][i];
+            depot_in += x[i][n_nodes - 1];
+        }
+        model.addConstr(depot_out == 1);
+        model.addConstr(depot_in == 1);
         // Time constraints
         // Time window constraints
         for (int i = 0; i < n_intervention; i++) {
@@ -79,20 +95,25 @@ Route optimize_route(const Route& route, const Instance& instance) {
         }
         // Lunch break
         for (int i = 0; i < n_intervention; i++) {
-            int duration = instance.nodes[vehicle.interventions[i]].duration;
-            model.addConstr(u[i] + duration <= MID_DAY + (END_DAY - MID_DAY) * z[i]);
-            model.addConstr(u[i] >= MID_DAY * z[i]);
+            if (instance.nodes[vehicle.interventions[i]].is_ambiguous) {
+                int duration = instance.nodes[vehicle.interventions[i]].duration;
+                model.addConstr(u[i] + duration <= MID_DAY + (END_DAY - MID_DAY) * z[i]);
+                model.addConstr(u[i] >= MID_DAY * z[i]);
+            }
         }
         // No need to check the capacities - capacity is order agnostic, and the initial route is feasible
 
         // Objective function
         GRBLinExpr obj = 0;
-        for (int i = 0; i < n_nodes; i++) {
-            for (int j = 0; j < n_nodes; j++) {
-                int true_i = i == n_nodes - 1 ? vehicle.depot : vehicle.interventions[i];
-                int true_j = j == n_nodes - 1 ? vehicle.depot : vehicle.interventions[j];
-                obj += instance.distance_matrix[true_i][true_j] * x[i][j] * instance.cost_per_km;
+        for (int i = 0; i < n_intervention; i++) {
+            for (int j = 0; j < n_intervention; j++) {
+                int true_i = vehicle.interventions[i];
+                int true_j = vehicle.interventions[j];
+                obj += instance.distance_matrix[true_i][true_j] * x[i][j];
             }
+            // Also add the cost of going to and from the depot
+            obj += instance.distance_matrix[vehicle.interventions[i]][vehicle.depot] * x[i][n_nodes - 1];
+            obj += instance.distance_matrix[vehicle.depot][vehicle.interventions[i]] * x[n_nodes - 1][i];
         }
         model.setObjective(obj, GRB_MINIMIZE);
 
@@ -109,8 +130,8 @@ Route optimize_route(const Route& route, const Instance& instance) {
                 int true_j = j == n_nodes - 1 ? vehicle.depot : vehicle.interventions[j];
                 compact_solution.x[true_i][true_j][route.vehicle_id] = x[i][j].get(GRB_DoubleAttr_X);
             }
-        }
-        // Set the y variables in the compact solution
+            }
+        // Set the y variablesZ in the compact solution
         compact_solution.y[route.vehicle_id] = 1;
         // Set the u variables in the compact solution
         for (int i = 0; i < n_intervention; i++) {
@@ -120,10 +141,34 @@ Route optimize_route(const Route& route, const Instance& instance) {
         // Convert the compact solution to a route
         // cout << "Current vehicle v" << vehicle.id << " has depot " << vehicle.depot << endl;
         vector<Route> routes = compact_solution_to_routes(instance, compact_solution);
-        return routes.at(0);
+        Route optimized_route = routes[0];
+        // If the sequence is shorter than before, there is a problem
+        if (optimized_route.id_sequence.size() < route.id_sequence.size()) {
+            cout << "Optimized route has less interventions than the initial route" << endl;
+            return route;
+        }
+        // If the reduced cost is longer than before, there is a problem
+        double new_length = count_route_kilometres(optimized_route, instance);
+        double old_length = count_route_kilometres(route, instance);
+        if (new_length > old_length) {
+            cout << "Length of the optimized route is more than the initial route" << endl;
+            print_route(route, instance);
+            cout << "-----------------" << endl;
+            print_route(optimized_route, instance);
+            return route;
+        }
+
+        // If we did not improve, return the initial route
+        if (new_length == old_length) {
+            return route;
+        }
+
+        return optimized_route;
+
     } catch (GRBException e) {
         cout << "Error code = " << e.getErrorCode() << endl;
         cout << e.getMessage() << endl;
+        print_route(route, instance);
         return route;
     } catch (...) {
         cout << "Exception during optimization" << endl;

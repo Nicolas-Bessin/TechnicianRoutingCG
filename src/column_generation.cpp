@@ -32,14 +32,6 @@ CGResult column_generation(
     namespace chrono = std::chrono;
 
     auto start_sub_building = chrono::steady_clock::now();
-    // Create the pricing sub problems for each vehicle
-    const string pricing_folder = "../pricing_instances/";
-    vector<unique_ptr<Problem>> pricing_problems;
-    for (const Vehicle& vehicle : instance.vehicles){
-        string filename = pricing_folder + "v_" + to_string(vehicle.id) + ".txt";
-        //write_pricing_instance(filename, instance, vehicle);
-        pricing_problems.push_back(create_pricing_instance(instance, vehicle));
-    }
     auto end_sub_building = chrono::steady_clock::now();
     int building_time = chrono::duration_cast<chrono::milliseconds>(end_sub_building - start_sub_building).count();
 
@@ -206,7 +198,6 @@ CGResult column_generation(
 
     // Build the result object
     CGResult result = CGResult{
-        node,
         solution,
         integer_solution,
         routes,
