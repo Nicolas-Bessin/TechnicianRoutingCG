@@ -12,34 +12,34 @@
 #include "gurobi_c++.h"
 
 
-Route::Route(
-        int vehicle_id,
-        double total_cost,
-        double reduced_cost,
-        int total_duration,
-        int total_travelling_time,
-        int total_waiting_time,
-        std::vector<int> id_sequence,
-        std::vector<int> is_in_route,
-        std::vector<int> start_times
-    ) : 
-    vehicle_id(vehicle_id),
-    total_cost(total_cost),
-    reduced_cost(reduced_cost),
-    total_duration(total_duration),
-    total_travelling_time(total_travelling_time),
-    total_waiting_time(total_waiting_time),
-    id_sequence(id_sequence),
-    is_in_route(is_in_route),
-    start_times(start_times)
-    {
-        // Initialize the route_edges matrix
-        int n_nodes = is_in_route.size();
-        route_edges = std::vector<std::vector<int>>(n_nodes, std::vector<int>(n_nodes, 0));
-        for (int i = 0; i < id_sequence.size() - 1; i++) {
-            route_edges[id_sequence[i]][id_sequence[i + 1]] = 1;
-        }
-    }
+// Route::Route(
+//         int vehicle_id,
+//         double total_cost,
+//         double reduced_cost,
+//         int total_duration,
+//         int total_travelling_time,
+//         int total_waiting_time,
+//         std::vector<int> id_sequence,
+//         std::vector<int> is_in_route,
+//         std::vector<int> start_times
+//     ) : 
+//     vehicle_id(vehicle_id),
+//     total_cost(total_cost),
+//     reduced_cost(reduced_cost),
+//     total_duration(total_duration),
+//     total_travelling_time(total_travelling_time),
+//     total_waiting_time(total_waiting_time),
+//     id_sequence(id_sequence),
+//     is_in_route(is_in_route),
+//     start_times(start_times)
+//     {
+//         // Initialize the route_edges matrix
+//         int n_nodes = is_in_route.size();
+//         route_edges = std::vector<std::vector<int>>(n_nodes, std::vector<int>(n_nodes, 0));
+//         for (int i = 0; i < id_sequence.size() - 1; i++) {
+//             route_edges[id_sequence[i]][id_sequence[i + 1]] = 1;
+//         }
+//     }
 
 
 using std::min;

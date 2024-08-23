@@ -49,12 +49,11 @@ std::tuple<int, int, int> find_first_valid_cut(const MasterSolution& master_solu
 
 void branch_and_price(
     const Instance& instance, 
-    const std::vector<Route>& initial_routes,
-    double reduced_cost_threshold,
-    int time_limit_per_node,
-    int max_cg_iter,
-    int max_depth,
+    std::vector<Route>& routes,
+    int max_resources_dominance,
     bool cyclic_pricing,
+    int time_limit_per_node,
+    int max_depth,
     bool verbose
     ){
         using std::queue, std::vector;
@@ -63,9 +62,8 @@ void branch_and_price(
         // Get the problem sizes
         int n_nodes = instance.nodes.size();
         int n_vehicles = instance.vehicles.size();
-        // First step : we create the root node from the initial routes
-        std::vector<Route> routes = initial_routes;
-        BPNode root_node = RootNode(initial_routes);
+
+        BPNode root_node = RootNode(routes);
         queue<BPNode> node_queue;
         node_queue.push(root_node);
         // We also keep track of the best node & corresponding solution value
@@ -103,7 +101,15 @@ void branch_and_price(
             }
 
             // Solve this node
-            CGResult result = column_generation(instance, current_node, routes, reduced_cost_threshold, time_limit, max_cg_iter, cyclic_pricing, true, false);
+            CGResult result = column_generation(
+                instance,
+                current_node,
+                routes,
+                max_resources_dominance,
+                cyclic_pricing,
+                true,
+                time_limit
+            );
 
             // If the returned relaxed solution is tagged as non feasible, it means the cuts introduced to this node are non feasible
             if (!result.master_solution.is_feasible) {

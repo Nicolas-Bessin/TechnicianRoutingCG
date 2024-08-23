@@ -17,12 +17,12 @@
 CGResult column_generation(
     const Instance & instance,
     BPNode & node,
-    std::vector<Route> & routes, 
-    double reduced_cost_threshold, 
-    int time_limit, 
-    int max_iterations,
+    std::vector<Route> & routes,
+    int max_resources_dominance,
     bool switch_to_cyclic_pricing,
     bool compute_integer_solution,
+    int time_limit, // (in seconds)
+    double reduced_cost_threshold,
     bool verbose
     ){
     using std::cout, std::endl;
@@ -40,6 +40,11 @@ CGResult column_generation(
 
     int time_limit_ms = time_limit * 1000;
 
+    // If the given max_resources_dominance is -1, we use all the resources
+    if (max_resources_dominance == -1){
+        max_resources_dominance = instance.capacities_labels.size() + 1;
+    }
+
     // Main loop of the column generation algorithm
     int iteration = 0;
     bool stop = false;
@@ -52,9 +57,9 @@ CGResult column_generation(
     // We switch to the cyclic pricing when we don't add any routes
     bool using_cyclic_pricing = false;
     // Initially, while using the acyclic pricing, we can use all the resources for the dominance test
-    int n_ressources_dominance = 0; //instance.capacities_labels.size() + 1;
+    int n_ressources_dominance = 0;
 
-    while (!stop && master_time + pricing_time < time_limit_ms && iteration < max_iterations){
+    while (!stop && master_time + pricing_time < time_limit_ms){
         // Solve the master problem
         auto start = chrono::steady_clock::now();
         solution = relaxed_RMP(instance, routes, node);
@@ -90,11 +95,13 @@ CGResult column_generation(
         // Or not exploring all vehicles at each iteration in the future
         vector<int> vehicle_order(instance.vehicles.size());
         std::iota(vehicle_order.begin(), vehicle_order.end(), 0);
-        #pragma omp parallel
-        {
-            std::vector<Route> new_routes_private;
-            #pragma omp for nowait
-            for(const int &v : vehicle_order){
+        std::vector<Route> new_routes_private = std::vector<Route>();
+        // Parallelize the pricing sub problems
+        std::for_each(
+            std::execution::par,
+            vehicle_order.begin(),
+            vehicle_order.end(),
+            [&](int v){
                 const Vehicle& vehicle = instance.vehicles.at(v);
                 unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, vehicle, using_cyclic_pricing);
                 update_pricing_instance(pricing_problem, solution, instance, vehicle);
@@ -105,16 +112,13 @@ CGResult column_generation(
                     n_added_routes++;                
                 }
             }
-
-            #pragma omp critical
-            {
-                routes.insert(routes.end(), new_routes_private.begin(), new_routes_private.end());
-                // Also update the node to set these routes as active
-                for (int i = routes.size() - new_routes_private.size(); i < routes.size(); i++){
-                    node.active_routes.insert(i);
-                }
-            }
+        );
+        // We add the new routes to the global routes vector
+        for (Route& new_route : new_routes_private){
+            routes.push_back(new_route);
+            node.active_routes.insert(routes.size() - 1);
         }
+        
 
         auto end_pricing = chrono::steady_clock::now();
         int diff_pricing = chrono::duration_cast<chrono::milliseconds>(end_pricing - start_pricing).count();
@@ -140,8 +144,7 @@ CGResult column_generation(
         }
         // If we reached the end, and we were not using all the resources for the dominance test
         // We increase the number of resources used
-        int total_n_ressources = instance.capacities_labels.size();
-        if (n_added_routes == 0 && using_cyclic_pricing && n_ressources_dominance < total_n_ressources){
+        if (n_added_routes == 0 && using_cyclic_pricing && n_ressources_dominance < max_resources_dominance){
             n_ressources_dominance++;
             if (verbose){
                 cout << "-----------------------------------" << endl;

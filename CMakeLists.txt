@@ -91,15 +91,16 @@ add_library(technician_routing_lib ${SOURCE_FILES_LIB})
 target_link_libraries(technician_routing_lib PUBLIC gurobi)
 #Link against the pathwyse core library
 target_link_libraries(technician_routing_lib PUBLIC pathwyse_core)
-#Link against OpenMP
-#target_link_libraries(technician_routing_lib PUBLIC OpenMP::OpenMP_CXX)
 #Link against Matplotplusplus
 target_link_libraries(technician_routing_lib PUBLIC matplot)
+# Add the necessary flag for parallelization
+target_compile_options(technician_routing_lib PUBLIC -ltbb)
 
 # Create the column generation executable
 add_executable(TRP_cg main.cpp)
 # Link against the core library
 target_link_libraries(TRP_cg PUBLIC technician_routing_lib)
+
 
 # Also create a compact formulation executable
 add_executable(TRP_compact main_compact.cpp)

@@ -6,6 +6,8 @@
 
 #include <vector>
 
+#define ALL_RES_DOMINANCE -1
+
 struct CGResult {
     MasterSolution master_solution;
     IntegerSolution integer_solution;
@@ -49,25 +51,27 @@ struct CGResult {
     If compute_integer_solution is set to true, the algorithm will also try to compute
     an integer solution to the problem.
 
-    @param instance The instance of the problem to solve.
-    @param node The current node in the B&P tree (is modified when adding routes)
-    @param routes The routes before this round of column generation (is modified when adding routes)
-    @param reduced_cost_threshold Only accepts columns with reduced cost over this threshold
-    @param time_limit The time limit for the column generation algorithm (in seconds)
-    @param max_iterations The maximum number of iterations for the column generation algorithm
-    @param compute_integer_solution If set to true, compute an Integer solution at the end
-    @param verbose If set to true, prints information at each iteration
+    @param instance: The instance of the problem to solve
+    @param node: The root node of the branch and price tree
+    @param initial_routes: The initial routes to use in the column generation algorithm
+
+    @param max_resources_dominance: The maximum number of resources to use in the dominance test
+    @param switch_to_cyclic_pricing: Whether to switch to cyclic pricing when no new routes are added
+    @param compute_integer_solution: Whether to compute an integer solution to the problem
+    @param time_limit: The time limit for the column generation algorithm
+    @param reduced_cost_threshold: The reduced cost threshold to stop the column generation algorithm
+    @param verbose: Whether to print information about the column generation algorithm
 
     Returns a CGResult object containing the results of the column generation algorithm.
 */
 CGResult column_generation(
     const Instance & instance,
     BPNode & node,
-    std::vector<Route> & initial_routes,
-    double reduced_cost_threshold,
-    int time_limit = 60, // (in seconds)
-    int max_iterations = 1000,
+    std::vector<Route> & routes,
+    int max_resources_dominance = ALL_RES_DOMINANCE,
     bool switch_to_cyclic_pricing = false,
     bool compute_integer_solution = true,
+    int time_limit = 60, // (in seconds)
+    double reduced_cost_threshold = 1e-6,
     bool verbose = false
     );

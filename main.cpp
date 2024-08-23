@@ -31,7 +31,7 @@
 #define CYCLIC_PRICING true
 #define MAX_ITER 10000
 #define COMPUTE_INTEGER_SOL true
-#define N_INTERVENTIONS 77
+#define N_INTERVENTIONS 25
 
 int main(int argc, char *argv[]){
 
@@ -56,12 +56,6 @@ int main(int argc, char *argv[]){
     // }
     // instance = cut_instance(instance, kept_nodes);
 
-    // Check wether the time and distance matrices are symetric
-    cout << "Distance matrix is symetric : " << is_symmetric(instance.distance_matrix);
-    cout << " - Biggest gap : " << symmetry_gap(instance.distance_matrix) << endl;
-    cout << "Time matrix is symetric : " << is_symmetric(instance.time_matrix);
-    cout << " - Biggest gap : " << symmetry_gap(instance.time_matrix) << endl;
-
     preprocess_interventions(instance);
 
     auto end_parse = chrono::steady_clock::now();
@@ -85,11 +79,22 @@ int main(int argc, char *argv[]){
 
     cout << "-----------------------------------" << endl;
     cout << "Starting the column generation algorithm" << endl;
+    
 
-
+    int MAX_RESOURCES_DOMINANCE = instance.capacities_labels.size();
     // Create a root node for the algorithm
     BPNode root = RootNode(routes);
-    CGResult result = column_generation(instance, root, routes, THRESHOLD, TIME_LIMIT, MAX_ITER, CYCLIC_PRICING, COMPUTE_INTEGER_SOL, VERBOSE);
+    CGResult result = column_generation(
+        instance,
+        root, 
+        routes, 
+        MAX_RESOURCES_DOMINANCE,
+        CYCLIC_PRICING,
+        COMPUTE_INTEGER_SOL,
+        TIME_LIMIT,
+        THRESHOLD,
+        VERBOSE
+        );
 
     // Extract the results from the column generation algorithm
     int master_time = result.master_time;

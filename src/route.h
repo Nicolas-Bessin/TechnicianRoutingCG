@@ -33,18 +33,6 @@ struct Route {
     std::vector<std::vector<int>> route_edges;
     // Empty constructor
     Route(int n_nodes) : is_in_route(n_nodes), start_times(n_nodes), route_edges(n_nodes, std::vector<int>(n_nodes, 0)) {}
-    // Constructor with automatic building of the route_edges matrix
-    Route(
-        int vehicle_id,
-        double total_cost,
-        double reduced_cost,
-        int total_duration,
-        int total_travelling_time,
-        int total_waiting_time,
-        std::vector<int> id_sequence,
-        std::vector<int> is_in_route,
-        std::vector<int> start_times
-    ); 
     // Constructor with all the attributes
     Route(
         int vehicle_id,
