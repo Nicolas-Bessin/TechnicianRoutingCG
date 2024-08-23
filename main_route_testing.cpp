@@ -28,6 +28,7 @@
 #define THRESHOLD 1e-6
 #define VERBOSE false
 #define GREEDY_INIT false
+#define N_INTERVENTIONS 25
 
 int main(int argc, char *argv[]){
 
@@ -44,6 +45,15 @@ int main(int argc, char *argv[]){
     cout << "-----------------------------------" << endl;
     string default_filename = "../data/agency1_19-01-2023_anonymized.json";
     Instance instance = parse_file(default_filename, true);
+
+    plot_instance(instance);
+
+    // Only keep the first 25 nodes
+    vector<int> kept_nodes = vector<int>(instance.number_interventions);
+    for (int i = 0; i < N_INTERVENTIONS; i++){
+        kept_nodes[i] = 1;
+    }
+    instance = cut_instance(instance, kept_nodes);
 
     // Plot the instance
     plot_instance(instance);

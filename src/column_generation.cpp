@@ -52,7 +52,7 @@ CGResult column_generation(
     // We switch to the cyclic pricing when we don't add any routes
     bool using_cyclic_pricing = false;
     // Initially, while using the acyclic pricing, we can use all the resources for the dominance test
-    int n_ressources_dominance = instance.capacities_labels.size() + 1;
+    int n_ressources_dominance = 0; //instance.capacities_labels.size() + 1;
 
     while (!stop && master_time + pricing_time < time_limit_ms && iteration < max_iterations){
         // Solve the master problem
@@ -94,7 +94,7 @@ CGResult column_generation(
         {
             std::vector<Route> new_routes_private;
             #pragma omp for nowait
-            for( const int &v : vehicle_order){
+            for(const int &v : vehicle_order){
                 const Vehicle& vehicle = instance.vehicles.at(v);
                 unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, vehicle, using_cyclic_pricing);
                 update_pricing_instance(pricing_problem, solution, instance, vehicle);
@@ -102,12 +102,6 @@ CGResult column_generation(
                 max_reduced_cost = std::max(max_reduced_cost, new_route.reduced_cost);
                 if (new_route.reduced_cost> reduced_cost_threshold){
                     new_routes_private.push_back(new_route);
-                    // Route optimized_route = optimize_route(new_route, instance);
-                    // if (!(optimized_route == new_route)){
-                    //     new_routes_private.push_back(optimized_route);
-                    //     n_routes_changed++;
-                    //     n_added_routes++;
-                    // }
                     n_added_routes++;                
                 }
             }
@@ -146,7 +140,7 @@ CGResult column_generation(
         }
         // If we reached the end, and we were not using all the resources for the dominance test
         // We increase the number of resources used
-        int total_n_ressources = instance.capacities_labels.size() + 1;
+        int total_n_ressources = instance.capacities_labels.size();
         if (n_added_routes == 0 && using_cyclic_pricing && n_ressources_dominance < total_n_ressources){
             n_ressources_dominance++;
             if (verbose){
@@ -195,6 +189,8 @@ CGResult column_generation(
         double gap = (solution.objective_value - integer_solution.objective_value) / integer_solution.objective_value;
         cout << "Gap between the relaxed and integer RMP : " << setprecision(3) << gap << endl;
     }
+
+
 
     // Build the result object
     CGResult result = CGResult{

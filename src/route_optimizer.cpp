@@ -2,7 +2,9 @@
 
 #include "analysis.h"
 #include "solution_converter.h"
+#include "RMP_solver.h"
 
+#include <chrono>
 #include <vector>
 #include "gurobi_c++.h"
 
@@ -174,11 +176,33 @@ Route optimize_route(const Route& route, const Instance& instance) {
         cout << "Exception during optimization" << endl;
         return route;
     }
-
-    
-
-    
+}
 
 
+IntegerSolution optimize_routes(const IntegerSolution& integer_solution, std::vector<Route>& routes, const Instance& instance) {
+    namespace chrono = std::chrono;
+    using std::cout, std::endl;
+    // Go through each route, and optimize them if they are used
+    auto start = chrono::steady_clock::now();
+    int n_changed = 0;
+    double km_saved = 0;
+    for (int r = 0; r < routes.size(); r++) {
+        if (integer_solution.coefficients[r] > 0) {
+            Route optimized_route = optimize_route(routes[r], instance);
+            km_saved += count_route_kilometres(routes[r], instance) - count_route_kilometres(optimized_route, instance);
+            if (!(optimized_route == routes[r])) {
+                routes[r] = optimized_route;
+                n_changed++;              
+            }
+        }
+    }
 
+    // Re-compute the objective value
+    IntegerSolution new_solution = integer_RMP(instance, routes, RootNode(routes));
+    auto end = chrono::steady_clock::now();
+    int diff = chrono::duration_cast<chrono::milliseconds>(end - start).count();
+    cout << "Optimized " << n_changed << " routes in " << diff << " ms" << endl;
+    cout << "Saved " << km_saved << " km" << endl;
+
+    return new_solution;
 }
