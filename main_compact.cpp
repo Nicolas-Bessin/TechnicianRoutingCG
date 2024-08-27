@@ -15,8 +15,9 @@
 #include <iomanip>
 #include <memory>
 
-#define TIME_LIMIT 600
+#define TIME_LIMIT 300
 #define HEURISTIC_INIT false
+#define N_INTERVENTIONS 30
 
 int main(int argc, char** argv) {
     using std::cout, std::endl;
@@ -31,9 +32,9 @@ int main(int argc, char** argv) {
     string default_filename = "../data/instance_1.json";
     Instance instance = parse_file(default_filename, false);
 
-    // ONly keep the first 20 nodes
+    // ONly keep the first N_INTERVENTIONS nodes
     vector<int> kept_nodes = vector<int>(instance.number_interventions);
-    for (int i = 0; i < 25; i++){
+    for (int i = 0; i < N_INTERVENTIONS; i++){
         kept_nodes[i] = 1;
     }
     instance = cut_instance(instance, kept_nodes);

@@ -16,7 +16,7 @@ ensemble/active = 0
 main_algorithm = PWDefault
 
 algo/default/autoconfig = 1
-algo/default/timelimit = 0
+algo/default/timelimit = 5
 algo/default/parallel = 0
 algo/default/bidirectional = 0
 algo/default/bidirectional/split = 0.5

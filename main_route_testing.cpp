@@ -46,17 +46,17 @@ int main(int argc, char *argv[]){
     string default_filename = "../data/agency1_19-01-2023_anonymized.json";
     Instance instance = parse_file(default_filename, true);
 
-    plot_instance(instance);
+    //plot_instance(instance);
 
-    // Only keep the first 25 nodes
-    vector<int> kept_nodes = vector<int>(instance.number_interventions);
-    for (int i = 0; i < N_INTERVENTIONS; i++){
-        kept_nodes[i] = 1;
-    }
-    instance = cut_instance(instance, kept_nodes);
+    // // Only keep the first 25 nodes
+    // vector<int> kept_nodes = vector<int>(instance.number_interventions);
+    // for (int i = 0; i < N_INTERVENTIONS; i++){
+    //     kept_nodes[i] = 1;
+    // }
+    // instance = cut_instance(instance, kept_nodes);
 
     // Plot the instance
-    plot_instance(instance);
+    // plot_instance(instance);
 
     preprocess_interventions(instance);
 
@@ -65,7 +65,7 @@ int main(int argc, char *argv[]){
 
     cout << "Total time spent parsing the instance : " << diff_parse << " ms" << endl;
 
-    vector<Route> routes = parse_routes_from_file("../routes/predefined_14_08.json", instance);
+    vector<Route> routes = parse_routes_from_file("../routes/best_small.json", instance);
 
     cout << "-----------------------------------" << endl;
     // Get an integer solution from the routes
@@ -79,6 +79,9 @@ int main(int argc, char *argv[]){
 
     cout << "True cost of the integer solution : " << setprecision(10) <<  compute_integer_objective(integer_solution, routes, instance) << endl;
     cout << "True cost of the master solution : " << setprecision(10) <<  master_solution.objective_value << endl;
+
+    // Plot the routes
+    plot_instance(instance, routes);
 
     // cout << "-----------------------------------" << endl;
     // // Convert those routes to a set a required edges

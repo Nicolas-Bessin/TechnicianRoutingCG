@@ -23,7 +23,7 @@
 #include <iomanip>
 #include <chrono>
 
-#define TIME_LIMIT 1200
+#define TIME_LIMIT 3600
 #define SOLVER_MODE IMPOSE_ROUTING
 #define THRESHOLD 1e-6
 #define VERBOSE true
@@ -49,12 +49,12 @@ int main(int argc, char *argv[]){
     string default_filename = "../data/instance_1.json";
     Instance instance = parse_file(default_filename, true);
 
-    // // Only keep the first 25 nodes
-    // vector<int> kept_nodes = vector<int>(instance.number_interventions);
-    // for (int i = 0; i < N_INTERVENTIONS; i++){
-    //     kept_nodes[i] = 1;
-    // }
-    // instance = cut_instance(instance, kept_nodes);
+    // Only keep the first 25 nodes
+    vector<int> kept_nodes = vector<int>(instance.number_interventions);
+    for (int i = 0; i < N_INTERVENTIONS; i++){
+        kept_nodes[i] = 1;
+    }
+    instance = cut_instance(instance, kept_nodes);
 
     preprocess_interventions(instance);
 
@@ -81,7 +81,7 @@ int main(int argc, char *argv[]){
     cout << "Starting the column generation algorithm" << endl;
     
 
-    int MAX_RESOURCES_DOMINANCE = instance.capacities_labels.size();
+    int MAX_RESOURCES_DOMINANCE = instance.capacities_labels.size() + 1;
     // Create a root node for the algorithm
     BPNode root = RootNode(routes);
     CGResult result = column_generation(
