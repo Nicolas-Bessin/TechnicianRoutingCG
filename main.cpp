@@ -31,7 +31,7 @@
 #define CYCLIC_PRICING true
 #define MAX_ITER 10000
 #define COMPUTE_INTEGER_SOL true
-#define N_INTERVENTIONS 25
+#define N_INTERVENTIONS 77
 
 int main(int argc, char *argv[]){
 

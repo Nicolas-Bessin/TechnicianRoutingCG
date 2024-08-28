@@ -35,3 +35,9 @@ GeneticSolution crossover(const GeneticSolution& parent1, const GeneticSolution&
     @brief Initializes a new GeneticSolution using the greedy heuristic
 */
 GeneticSolution greedy_heuristic(const Instance& instance);
+
+
+/*
+    @brief Performs the genetic algorithm to solve the technician routing problem
+*/
+void genetic_algorithm(const Instance& instance);
