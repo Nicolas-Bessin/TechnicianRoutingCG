@@ -315,12 +315,11 @@ Route solve_pricing_problem(
     }
     // Get all the info we need to build a Route object
     double total_cost = vehicle.cost;
-    double total_duration = 0;
-    double total_travelling_time = 0;
-    double total_waiting_time = 0;
+    int total_duration = 0;
+    int total_travelling_time = 0;
+    int total_waiting_time = 0;
     vector<int> id_sequence;
     vector<int> is_in_route(instance.nodes.size(), 0);
-    vector<int> start_times(instance.nodes.size(), 0);
     vector<vector<int>> route_edges(instance.nodes.size(), vector<int>(instance.nodes.size(), 0));
     
     // Keep track of the time ellapsed
@@ -332,9 +331,8 @@ Route solve_pricing_problem(
         id_sequence.push_back(true_i);
         // Update the edge matrix
         route_edges[true_i][true_j] = 1;
-        // Update the is_in_route and start_times vectors
+        // Update the is_in_route
         is_in_route[true_i] = 1;
-        start_times[true_i] = current_time;
         // Get the duration, and travel time and distance between the two interventions
         int duration = instance.nodes[true_i].duration;
         int travel_time = instance.time_matrix[true_i][true_j];
@@ -348,7 +346,7 @@ Route solve_pricing_problem(
         int start_time_next = instance.nodes[true_j].start_window;
         int waiting_time = std::max(0, start_time_next - (current_time + duration + travel_time));
         total_waiting_time += waiting_time;
-        current_time = std::max(current_time + duration + travel_time, start_time_next);
+        current_time = current_time + duration + travel_time + waiting_time;
         // If we can't begin the next intervention before the lunch break, we wait until the lunch break
         Node next_intervention = instance.nodes[true_j];
         int next_duration = next_intervention.duration;
@@ -361,7 +359,6 @@ Route solve_pricing_problem(
     int true_last = vehicle.depot;
     id_sequence.push_back(true_last);
     is_in_route[true_last] = 1;
-    start_times[true_last] = current_time;
 
     // Create the Route object
     Route new_route = Route{
@@ -373,7 +370,6 @@ Route solve_pricing_problem(
         total_waiting_time,
         id_sequence,
         is_in_route,
-        start_times,
         route_edges
     };
     

@@ -26,7 +26,6 @@ std::vector<Route> compact_solution_to_routes(const Instance& instance, const Co
         double total_waiting_time = 0;
         vector<int> sequence;
         vector<int> is_in_route = vector<int>(n_nodes, 0);
-        vector<int> start_times = vector<int>(n_nodes, 0);
         vector<vector<int>> route_edges = vector<vector<int>>(n_nodes, vector<int>(n_nodes, 0));
         // Go through the route
         bool reached_depot = false;
@@ -39,14 +38,13 @@ std::vector<Route> compact_solution_to_routes(const Instance& instance, const Co
             const Node& node = instance.nodes[current_node];
             sequence.push_back(current_node);
             is_in_route[current_node] = 1;
-            if (current_node == vehicle.depot) {
-                start_times[current_node] = 0;
-            } else {
-                start_times[current_node] = compact_solution.u[current_node];
+            int start_time = 0;
+            if (current_node != vehicle.depot) {
+                start_time = compact_solution.u[current_node];
             }
             // Update the counters : waiting time is max between current start time and time elapsed until now
-            total_waiting_time += std::max(0, start_times[current_node] - current_time);
-            current_time = start_times[current_node] + node.duration;
+            total_waiting_time += std::max(0, start_time - current_time);
+            current_time = start_time + node.duration;
             total_duration += node.duration;
             // Find the next node
             int next_node = -1;
@@ -96,7 +94,6 @@ std::vector<Route> compact_solution_to_routes(const Instance& instance, const Co
         route.total_waiting_time = total_waiting_time;
         route.id_sequence = sequence;
         route.is_in_route = is_in_route;
-        route.start_times = start_times;
         route.route_edges = route_edges;
 
         routes.push_back(route);

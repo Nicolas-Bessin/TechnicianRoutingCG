@@ -72,6 +72,9 @@ double compute_reduced_cost(const Route& route, const std::vector<double>& alpha
 // Checks if a route is feasible
 bool is_route_feasible(const Route& route, const Instance& instance);
 
+// Returns a vector of the start times of the nodes along the route's sequence
+std::vector<int> compute_start_times(const Route& route, const Instance& instance);
+
 
 // Build a vector of pairs (vehicle_id, intervention_id) from the routes in an IntegerSolution
 std::vector<std::pair<int, int>> imposed_routings_from_routes(const std::vector<Route>& routes, const IntegerSolution& integer_solution);

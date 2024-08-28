@@ -446,8 +446,9 @@ void print_route(const Route & route, const Instance & instance, const MasterSol
     }
     cout << endl;
     cout << "Start time:   |";
+    vector<int> start_times = compute_start_times(route, instance);
     for (int i = 0; i < route.id_sequence.size(); i++) {
-        cout << setw(col_width) << route.start_times[route.id_sequence[i]] << ", ";
+        cout << setw(col_width) << start_times[i] << ", ";
     }
     cout << endl;
     cout << "Duration:     |";

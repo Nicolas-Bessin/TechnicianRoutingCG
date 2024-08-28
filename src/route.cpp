@@ -12,35 +12,6 @@
 #include "gurobi_c++.h"
 
 
-// Route::Route(
-//         int vehicle_id,
-//         double total_cost,
-//         double reduced_cost,
-//         int total_duration,
-//         int total_travelling_time,
-//         int total_waiting_time,
-//         std::vector<int> id_sequence,
-//         std::vector<int> is_in_route,
-//         std::vector<int> start_times
-//     ) : 
-//     vehicle_id(vehicle_id),
-//     total_cost(total_cost),
-//     reduced_cost(reduced_cost),
-//     total_duration(total_duration),
-//     total_travelling_time(total_travelling_time),
-//     total_waiting_time(total_waiting_time),
-//     id_sequence(id_sequence),
-//     is_in_route(is_in_route),
-//     start_times(start_times)
-//     {
-//         // Initialize the route_edges matrix
-//         int n_nodes = is_in_route.size();
-//         route_edges = std::vector<std::vector<int>>(n_nodes, std::vector<int>(n_nodes, 0));
-//         for (int i = 0; i < id_sequence.size() - 1; i++) {
-//             route_edges[id_sequence[i]][id_sequence[i + 1]] = 1;
-//         }
-//     }
-
 
 using std::min;
 
@@ -153,35 +124,10 @@ bool is_route_feasible(const Route& route, const Instance& instance) {
         }
         // Check that the time window is respected
         double duration = intervention.duration;
-        // Check that the start time is the current time 
-        // (for the first node which is the depot, the start time will hold the arrival time at the end of the day)
-        if (i > 0 && route.start_times[intervention_id] > current_time) {
-            // This means we arrived too early - we thus wait until the time of the intervention
-            current_time = route.start_times[intervention_id];
-        }
-        // If we are too late, the route is not feasible
-        if (route.start_times[intervention_id] < current_time) {
-            cout << "Start time of intervention " << intervention_id << " is not the time of arrival" << endl;
-            cout << "Start time: " << route.start_times[intervention_id] << " Current time: " << current_time << endl;
-            return false;
-        }
-        // Check that the time window is respected (with the way we built the solution, we can't arrive too early)
-        if (current_time < intervention.start_window) {
-            cout << "Intervention " << intervention_id << " starts too early";
-            cout << " : " << current_time << " < " << intervention.start_window << endl;
-            return false;
-        }
+        // Check that intervention ends before the end of its time window
         if (current_time + duration > intervention.end_window) {
-            cout << std::setprecision(4) << "Intervention " << intervention_id << " ends too late : ";
-            cout << current_time + duration << " > " << intervention.end_window << endl;
+            cout << "Intervention" << intervention_id << " ends too late : " << current_time + duration << " > " << intervention.end_window << endl;
             return false;
-        }
-        // Check wether the lunch break is respected
-        // If  we arrive at a time where we can't begin the intervention before the lunch break, we wait out the lunch break
-        if (intervention.is_ambiguous && current_time < MID_DAY && current_time + duration > MID_DAY) {
-            current_time = MID_DAY;
-            // cout << "Intervention " << intervention_id << " ends after the lunch break : start = " << current_time << " end = " << current_time + duration << endl;
-            // return false;
         }
         // Update the quantities consummed
         for (auto& [key, value] : intervention.quantities) {
@@ -195,6 +141,10 @@ bool is_route_feasible(const Route& route, const Instance& instance) {
         // If we arrive too early, we will wait
         if (current_time < next_intervention.start_window) {
             current_time = next_intervention.start_window;
+        }
+        // If we need to wait out of the lunch break, we wait
+        if (next_intervention.is_ambiguous && current_time < MID_DAY && current_time + next_intervention.duration > MID_DAY) {
+            current_time = MID_DAY;
         }
     }
     // Check the final intervention, we only have to check the end window
@@ -215,6 +165,34 @@ bool is_route_feasible(const Route& route, const Instance& instance) {
     }
 
     return true;
+}
+
+std::vector<int> compute_start_times(const Route& route, const Instance& instance) {
+    // We go through the route and compute the start times of the interventions
+    std::vector<int> start_times;
+    int current_time = 0;
+    for (int i = 0; i < route.id_sequence.size() - 1; i++) {
+        // We just arrived at the intervention - push the current time
+        start_times.push_back(current_time);
+        // Update the current time
+        int intervention_id = route.id_sequence[i];
+        const Node& intervention = instance.nodes[intervention_id];
+        current_time += intervention.duration;
+        // Add the travel time to the next intervention
+        int next_intervention_id = route.id_sequence[i + 1];
+        const Node& next_intervention = instance.nodes[next_intervention_id];
+        current_time += instance.time_matrix[intervention_id][next_intervention_id];
+        // And the eventual waiting time
+        current_time = std::max(current_time, next_intervention.start_window);
+        // And the eventual waiting out of the lunch break
+        if (next_intervention.is_ambiguous && current_time < MID_DAY &&  current_time + next_intervention.duration > MID_DAY) {
+            current_time = MID_DAY;
+        }
+    }
+    // Treat the last intervention
+    start_times.push_back(current_time);
+
+    return start_times;
 }
 
 
@@ -266,12 +244,10 @@ Route parse_route(const nlohmann::json & data, const Instance& instance) {
     }
     vector<int> id_sequence = vector<int>();
     vector<int> is_in_route = vector<int>(n_nodes, 0);
-    vector<int> start_times = vector<int>(n_nodes, 0);
     vector<vector<int>> route_edges = vector<vector<int>>(n_nodes, vector<int>(n_nodes, 0));
     // Initialize the sequence with the depot
     id_sequence.push_back(instance.vehicles[true_vehicle_id].depot);
     is_in_route[instance.vehicles[true_vehicle_id].depot] = 1;
-    start_times[instance.vehicles[true_vehicle_id].depot] = 0;
     int duration = 0;
 
     vector<int> order = std::vector<int>(sequence_julia.size());
@@ -287,11 +263,6 @@ Route parse_route(const nlohmann::json & data, const Instance& instance) {
         int node_id = sequence_julia[i] - 1;
         id_sequence.push_back(node_id);
         is_in_route[node_id] = 1;
-        if (start_times_data.size() == 0) {
-            start_times[node_id] = -1;
-        } else {
-            start_times[node_id] = start_times_data.at(i);
-        }
         duration += instance.nodes.at(node_id).duration;
     }
     // Finally, also add the depot at the end
@@ -312,7 +283,6 @@ Route parse_route(const nlohmann::json & data, const Instance& instance) {
         -1,
         id_sequence,
         is_in_route,
-        start_times,
         route_edges
     };
 }
