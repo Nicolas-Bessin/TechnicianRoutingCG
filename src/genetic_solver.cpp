@@ -72,7 +72,7 @@ double compute_delta(const Route& route, int intervention, const Instance& insta
 // @brief Deletes a given intervention from a route
 // @param route The route from which we want to remove the intervention
 // @param intervention The intervention we want to remove
-void delete_intervention(Route& route, int intervention){
+void delete_intervention(Route& route, int intervention, const Instance& instance){
     // First, we need to find the intervention in the route
     auto it = std::find(route.id_sequence.begin(), route.id_sequence.end(), intervention);
     // Since the sequence necessarily begins and ends with the depot, we know that it +- 1 is always a valid index
@@ -85,7 +85,9 @@ void delete_intervention(Route& route, int intervention){
     route.route_edges[previous_intervention][intervention] = 0;
     route.route_edges[intervention][next_intervention] = 0;
     route.route_edges[previous_intervention][next_intervention] = 1;
-    // Update the start times
+    // Update the total duration of the route
+    route.total_duration -= instance.nodes[intervention].duration;
+
     
 
 }

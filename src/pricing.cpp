@@ -138,7 +138,7 @@ unique_ptr<Problem> create_pricing_instance(
         // Incoming arcs to the warehouse
         // Distance is not the same as the outgoing distance
         int distance_in = instance.distance_matrix[true_i][vehicle.depot];
-        // Here we only consider the cost of travelng, the node costs have already been set
+        // Here we only consider the cost of travelling, the node costs have already been set
         objective->setArcCost(i, destination, instance.cost_per_km * distance_in);
     }
 
@@ -316,14 +316,11 @@ Route solve_pricing_problem(
     // Get all the info we need to build a Route object
     double total_cost = vehicle.cost;
     int total_duration = 0;
-    int total_travelling_time = 0;
-    int total_waiting_time = 0;
     vector<int> id_sequence;
     vector<int> is_in_route(instance.nodes.size(), 0);
     vector<vector<int>> route_edges(instance.nodes.size(), vector<int>(instance.nodes.size(), 0));
     
-    // Keep track of the time ellapsed
-    int current_time = 0;
+
     for (int i = 0; i < tour.size() - 1; i++) {
         int true_i = i == 0 ? vehicle.depot : vehicle.interventions[tour[i]];
         int true_j = i+1 == tour.size()-1 ? vehicle.depot : vehicle.interventions[tour[i + 1]];
@@ -333,27 +330,12 @@ Route solve_pricing_problem(
         route_edges[true_i][true_j] = 1;
         // Update the is_in_route
         is_in_route[true_i] = 1;
-        // Get the duration, and travel time and distance between the two interventions
+        // Get the duration, and distance between the two interventions
         int duration = instance.nodes[true_i].duration;
-        int travel_time = instance.time_matrix[true_i][true_j];
-        int travel_distance = instance.distance_matrix[true_i][true_j];
-        // Update the running total cost, duration of interventions and travel time
-        total_cost += instance.cost_per_km * travel_distance;
-        total_duration += duration;
-        total_travelling_time += travel_time;
-        
-        // Update the current time
-        int start_time_next = instance.nodes[true_j].start_window;
-        int waiting_time = std::max(0, start_time_next - (current_time + duration + travel_time));
-        total_waiting_time += waiting_time;
-        current_time = current_time + duration + travel_time + waiting_time;
-        // If we can't begin the next intervention before the lunch break, we wait until the lunch break
-        Node next_intervention = instance.nodes[true_j];
-        int next_duration = next_intervention.duration;
-        if (next_intervention.is_ambiguous && current_time < MID_DAY && current_time + next_duration > MID_DAY) {
-            current_time = MID_DAY;
-            total_waiting_time += std::max(0, MID_DAY - current_time);
-        }
+        int distance = instance.distance_matrix[true_i][true_j];
+        // Update the running total cost & duration
+        total_cost += instance.cost_per_km * distance;
+        total_duration += duration;        
     }
     // Add the checks related to the last intervention
     int true_last = vehicle.depot;
@@ -366,8 +348,6 @@ Route solve_pricing_problem(
         total_cost,
         reduced_cost,
         total_duration,
-        total_travelling_time,
-        total_waiting_time,
         id_sequence,
         is_in_route,
         route_edges

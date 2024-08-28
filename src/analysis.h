@@ -34,12 +34,12 @@ double time_spent_working(const IntegerSolution& solution, const std::vector<Rou
 double time_spent_waiting(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
 
 // Returns the used route which has the shortest cumulative time
-int shortest_time_route(const IntegerSolution& solution, const std::vector<Route>& routes);
+int shortest_time_route(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
 
 // Returns the used route which has the longest cumulative time
-int longest_time_route(const IntegerSolution& solution, const std::vector<Route>& routes);
+int longest_time_route(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
 
-void print_used_route_durations(const IntegerSolution& solution, const std::vector<Route>& routes);
+void print_used_route_durations(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
 
 // Count the number of interventions the vehicles used in the solution can perform
 // (without considering the time windows, only the skills)

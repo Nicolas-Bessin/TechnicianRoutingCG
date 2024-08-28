@@ -22,15 +22,12 @@ std::vector<Route> compact_solution_to_routes(const Instance& instance, const Co
         // Initialize the route components
         double total_cost = vehicle.cost;
         double total_duration = 0;
-        double total_travelling_time = 0;
-        double total_waiting_time = 0;
         vector<int> sequence;
         vector<int> is_in_route = vector<int>(n_nodes, 0);
         vector<vector<int>> route_edges = vector<vector<int>>(n_nodes, vector<int>(n_nodes, 0));
         // Go through the route
         bool reached_depot = false;
         int current_node = vehicle.depot;
-        int current_time = 0;
 
         while (!reached_depot) {
             // Update the info relative to the current node
@@ -38,13 +35,6 @@ std::vector<Route> compact_solution_to_routes(const Instance& instance, const Co
             const Node& node = instance.nodes[current_node];
             sequence.push_back(current_node);
             is_in_route[current_node] = 1;
-            int start_time = 0;
-            if (current_node != vehicle.depot) {
-                start_time = compact_solution.u[current_node];
-            }
-            // Update the counters : waiting time is max between current start time and time elapsed until now
-            total_waiting_time += std::max(0, start_time - current_time);
-            current_time = start_time + node.duration;
             total_duration += node.duration;
             // Find the next node
             int next_node = -1;
@@ -66,13 +56,9 @@ std::vector<Route> compact_solution_to_routes(const Instance& instance, const Co
             }
             // Update the edge matrix
             route_edges[current_node][next_node] = 1;
-            // Update the travelling time & cost
-            int travelling_time = instance.time_matrix[current_node][next_node];
-            total_travelling_time += travelling_time;
+            // Update the cost
             int distance = instance.distance_matrix[current_node][next_node];
             total_cost += distance * instance.cost_per_km;
-
-            current_time += travelling_time;
             // Check if we reached the depot
             if (next_node == vehicle.depot) {
                 reached_depot = true;
@@ -85,16 +71,15 @@ std::vector<Route> compact_solution_to_routes(const Instance& instance, const Co
         sequence.push_back(vehicle.depot);
 
         // Create the route and add it to the list
-        Route route(n_nodes);
-        route.vehicle_id = v;
-        route.total_cost = total_cost;
-        route.reduced_cost = 0.0;
-        route.total_duration = total_duration;
-        route.total_travelling_time = total_travelling_time;
-        route.total_waiting_time = total_waiting_time;
-        route.id_sequence = sequence;
-        route.is_in_route = is_in_route;
-        route.route_edges = route_edges;
+        Route route = Route{
+            vehicle.id,
+            total_cost,
+            0,
+            total_duration,
+            sequence,
+            is_in_route,
+            route_edges
+        };
 
         routes.push_back(route);
     }

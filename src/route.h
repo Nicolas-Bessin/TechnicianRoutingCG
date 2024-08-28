@@ -19,10 +19,6 @@ struct Route {
     double reduced_cost;
     // Total duration of the interventions along the route
     int total_duration;
-    // Total travelling time of the route
-    int total_travelling_time;
-    // Total waiting time of the route
-    int total_waiting_time;
     // Sequence of nodes in the route (not strictly necessary for the problem but useful for analysis)
     std::vector<int> id_sequence;
     // List of nodes in the route (1 if the node is in the route, 0 otherwise)
@@ -37,8 +33,6 @@ struct Route {
         double total_cost,
         double reduced_cost,
         int total_duration,
-        int total_travelling_time,
-        int total_waiting_time,
         std::vector<int> id_sequence,
         std::vector<int> is_in_route,
         std::vector<std::vector<int>> route_edges
@@ -47,8 +41,6 @@ struct Route {
         total_cost(total_cost),
         reduced_cost(reduced_cost),
         total_duration(total_duration),
-        total_travelling_time(total_travelling_time),
-        total_waiting_time(total_waiting_time),
         id_sequence(id_sequence),
         is_in_route(is_in_route),
         route_edges(route_edges) {}
@@ -74,6 +66,12 @@ bool is_route_feasible(const Route& route, const Instance& instance);
 
 // Returns a vector of the start times of the nodes along the route's sequence
 std::vector<int> compute_start_times(const Route& route, const Instance& instance);
+
+// Computes the total waiting time along a route (time not spent travelling nor performing interventions)
+int compute_total_waiting_time(const Route& route, const Instance& instance);
+
+// Computes the total travelling time along a route
+int compute_total_travelling_time(const Route& route, const Instance& instance);
 
 
 // Build a vector of pairs (vehicle_id, intervention_id) from the routes in an IntegerSolution

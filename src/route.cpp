@@ -195,6 +195,41 @@ std::vector<int> compute_start_times(const Route& route, const Instance& instanc
     return start_times;
 }
 
+int compute_total_waiting_time(const Route& route, const Instance& instance) {
+    // We go through the route and compute the total waiting time
+    int total_waiting_time = 0;
+    int current_time = 0;
+    for (int i = 0; i < route.id_sequence.size() - 1; i++) {
+        // Update the current time
+        int intervention_id = route.id_sequence[i];
+        const Node& intervention = instance.nodes[intervention_id];
+        current_time += intervention.duration;
+        // Add the travel time to the next intervention
+        int next_intervention_id = route.id_sequence[i + 1];
+        const Node& next_intervention = instance.nodes[next_intervention_id];
+        current_time += instance.time_matrix[intervention_id][next_intervention_id];
+        // And the eventual waiting time
+        total_waiting_time += std::max(0, next_intervention.start_window - current_time);
+        current_time = std::max(current_time, next_intervention.start_window);
+        // And the eventual waiting out of the lunch break
+        if (next_intervention.is_ambiguous && current_time < MID_DAY &&  current_time + next_intervention.duration > MID_DAY) {
+            total_waiting_time += MID_DAY - current_time;
+            current_time = MID_DAY;
+        }
+    }
+    return total_waiting_time;
+}
+
+int compute_total_travelling_time(const Route& route, const Instance& instance) {
+    // We go through the route and compute the total travelling time
+    int total_travelling_time = 0;
+    for (int i = 0; i < route.id_sequence.size() - 1; i++) {
+        int intervention_id = route.id_sequence[i];
+        int next_intervention_id = route.id_sequence[i + 1];
+        total_travelling_time += instance.time_matrix[intervention_id][next_intervention_id];
+    }
+    return total_travelling_time;
+}
 
 std::vector<std::pair<int, int>> imposed_routings_from_routes(const std::vector<Route>& routes, const IntegerSolution& integer_solution) {
     std::vector<std::pair<int, int>> imposed_routings;
@@ -279,8 +314,6 @@ Route parse_route(const nlohmann::json & data, const Instance& instance) {
         total_cost,
         -1.0,
         duration,
-        -1,
-        -1,
         id_sequence,
         is_in_route,
         route_edges
