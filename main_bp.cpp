@@ -68,19 +68,20 @@ int main(int argc, char *argv[]){
     } else {
         cout << "Initializing the routes with an empty route" << endl;
         routes = vector<Route>();
-        routes.push_back(Route(instance.nodes.size()));
+        routes.push_back(EmptyRoute(instance.nodes.size()));
     }
 
     cout << "-----------------------------------" << endl;
 
+    int MAX_RES_DOMINANCE = instance.capacities_labels.size() + 1;
+
     branch_and_price(
         instance,
         routes,
-        THRESHOLD,
-        TIME_LIMIT,
-        MAX_ITER,
-        MAX_DEPTH,
+        MAX_RES_DOMINANCE,
         CYCLIC_PRICING,
+        TIME_LIMIT,
+        MAX_DEPTH,
         VERBOSE
         );
 

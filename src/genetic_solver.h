@@ -18,6 +18,13 @@ struct GeneticSolution {
 */
 double evaluate(const GeneticSolution& solution, const Instance& instance);
 
+
+/*
+    @brief Repairs a solution that results from a crossover by removing duplicate interventions in the most advantageous way
+*/
+void repair(GeneticSolution& solution, const Instance& instance);
+
+
 /*
     @brief Generates a new solution from two parents by picking routes from each parent at random
 */
@@ -25,6 +32,6 @@ GeneticSolution crossover(const GeneticSolution& parent1, const GeneticSolution&
 
 
 /*
-    @brief Repairs a solution that results from a crossover by removing duplicate interventions in the most advantageous way
+    @brief Initializes a new GeneticSolution using the greedy heuristic
 */
-void repair(GeneticSolution& solution, const Instance& instance);
+GeneticSolution greedy_heuristic(const Instance& instance);

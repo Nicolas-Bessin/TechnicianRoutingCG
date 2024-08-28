@@ -74,7 +74,7 @@ int main(int argc, char *argv[]){
     } else {
         cout << "Initializing the routes with an empty route" << endl;
         routes = vector<Route>();
-        routes.push_back(Route(instance.nodes.size()));
+        routes.push_back(EmptyRoute(instance.nodes.size()));
     }
 
     cout << "-----------------------------------" << endl;

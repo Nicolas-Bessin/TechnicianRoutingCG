@@ -298,7 +298,7 @@ Route solve_pricing_problem(
     // If the problem is indeterminate (time limit reached, we return an empty vector)
     if (solver.getProblem()->getStatus() == PROBLEM_INDETERMINATE) {
         cout << "Time limit reached for vehicle " << vehicle.id << endl;
-        return Route(instance.nodes.size());
+        return EmptyRoute(instance.nodes.size());
     }
     //solver.printBestSolution();
     // Get the solution we found

@@ -9,7 +9,16 @@
 #include <set>
 
 
-// Class Route : represents a sequence of nodes, starting at the warehouse, going through interventions and ending at the warehouse
+/*
+    Class Route : represents a sequence of nodes, starting at the warehouse, going through interventions and ending at the warehouse
+    @param vehicle_id int
+    @param total_cost double
+    @param reduced_cost double
+    @param total_duration int
+    @param id_sequence vector<int>
+    @param is_in_route vector<int>
+    @param route_edges vector<vector<int>>
+*/
 struct Route {
     // Index of the vehicle that will perform the route
     int vehicle_id;
@@ -17,7 +26,7 @@ struct Route {
     double total_cost;
     // Reduced cost of the route at the time of creation
     double reduced_cost;
-    // Total duration of the interventions along the route
+    // Total duration of the interventions along the route 
     int total_duration;
     // Sequence of nodes in the route (not strictly necessary for the problem but useful for analysis)
     std::vector<int> id_sequence;
@@ -25,27 +34,10 @@ struct Route {
     std::vector<int> is_in_route;
     // Matrix of the travel path
     std::vector<std::vector<int>> route_edges;
-    // Empty constructor
-    Route(int n_nodes) : is_in_route(n_nodes), route_edges(n_nodes, std::vector<int>(n_nodes, 0)) {}
-    // Constructor with all the attributes
-    Route(
-        int vehicle_id,
-        double total_cost,
-        double reduced_cost,
-        int total_duration,
-        std::vector<int> id_sequence,
-        std::vector<int> is_in_route,
-        std::vector<std::vector<int>> route_edges
-    ) : 
-        vehicle_id(vehicle_id),
-        total_cost(total_cost),
-        reduced_cost(reduced_cost),
-        total_duration(total_duration),
-        id_sequence(id_sequence),
-        is_in_route(is_in_route),
-        route_edges(route_edges) {}
-
 };
+
+
+Route EmptyRoute(int n_nodes);
 
 
 // Checks if two routes are equal

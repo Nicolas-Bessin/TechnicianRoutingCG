@@ -5,6 +5,8 @@
 #include <random>
 #include <bits/stdc++.h>
 
+#include "heuristics.h"
+
 double evaluate(const GeneticSolution& solution, const Instance& instance) {
     double objective = 0;
     for (const Route& route : solution.routes){
@@ -12,43 +14,6 @@ double evaluate(const GeneticSolution& solution, const Instance& instance) {
     }
     return objective;
 }
-
-
-GeneticSolution crossover(const GeneticSolution& parent1, const GeneticSolution& parent2, const Instance& instance) {
-    using std::vector;
-    // Enumerate through all the vehicles in the instance, and if two are available, pick a random parent to get the route from
-    GeneticSolution child;
-    for (int v = 0; v < instance.number_vehicles; v++){
-        // If both parents have the vehicle, pick one at random
-        if (parent1.vehicle_to_route.count(v) && parent2.vehicle_to_route.count(v)){
-            // Generate a random number between 0 and 1
-            std::random_device rd;
-            std::mt19937 gen(rd());
-            std::uniform_real_distribution<> dis(0, 1);
-            double random = dis(gen);
-            if (random < 0.5){
-                child.routes.push_back(parent1.routes[parent1.vehicle_to_route.at(v)]);
-                child.vehicle_to_route[v] = child.routes.size() - 1;
-            } else {
-                child.routes.push_back(parent2.routes[parent2.vehicle_to_route.at(v)]);
-                child.vehicle_to_route[v] = child.routes.size() - 1;
-            }
-        } else if (parent1.vehicle_to_route.count(v)){  
-            child.routes.push_back(parent1.routes[parent1.vehicle_to_route.at(v)]);
-            child.vehicle_to_route[v] = child.routes.size() - 1;
-        } else if (parent2.vehicle_to_route.count(v)){
-            child.routes.push_back(parent2.routes[parent2.vehicle_to_route.at(v)]);
-            child.vehicle_to_route[v] = child.routes.size() - 1;
-        }
-    }
-    // First thing : we need to repair the solution
-    repair(child, instance);
-    // Evaluate the objective value of the child
-    child.objective = evaluate(child, instance);
-
-    return child;
-}
-
 
 // @brief Computes the delta in the route's length if we remove a given intervention
 // @param route The route from which we want to remove the intervention
@@ -87,10 +52,12 @@ void delete_intervention(Route& route, int intervention, const Instance& instanc
     route.route_edges[previous_intervention][next_intervention] = 1;
     // Update the total duration of the route
     route.total_duration -= instance.nodes[intervention].duration;
-
-    
-
+    // Update the total cost of the route
+    int distance_deleted = instance.distance_matrix[previous_intervention][intervention] + instance.distance_matrix[intervention][next_intervention];
+    int distance_added = instance.distance_matrix[previous_intervention][next_intervention];
+    route.total_cost += (distance_added - distance_deleted) * instance.cost_per_km;
 }
+
 
 void repair(GeneticSolution& solution, const Instance& instance) {
     // Each intervention can be covered at most twice
@@ -123,5 +90,71 @@ void repair(GeneticSolution& solution, const Instance& instance) {
         // Equivalent to the biggest delta in route length
         double relative1 = delta1 / count_route_kilometres(solution.routes[indexes[0]], instance);
         double relative2 = delta2 / count_route_kilometres(solution.routes[indexes[1]], instance);
+        if (relative1 > relative2){
+            delete_intervention(solution.routes[indexes[0]], intervention, instance);
+        } else {
+            delete_intervention(solution.routes[indexes[1]], intervention, instance);
+        }
     }
+}
+
+
+
+GeneticSolution crossover(const GeneticSolution& parent1, const GeneticSolution& parent2, const Instance& instance) {
+    using std::vector;
+    // Enumerate through all the vehicles in the instance, and if two are available, pick a random parent to get the route from
+    GeneticSolution child;
+    for (int v = 0; v < instance.number_vehicles; v++){
+        // If both parents have the vehicle, pick one at random
+        if (parent1.vehicle_to_route.count(v) && parent2.vehicle_to_route.count(v)){
+            // Generate a random number between 0 and 1
+            std::random_device rd;
+            std::mt19937 gen(rd());
+            std::uniform_real_distribution<> dis(0, 1);
+            double random = dis(gen);
+            if (random < 0.5){
+                child.routes.push_back(parent1.routes[parent1.vehicle_to_route.at(v)]);
+                child.vehicle_to_route[v] = child.routes.size() - 1;
+            } else {
+                child.routes.push_back(parent2.routes[parent2.vehicle_to_route.at(v)]);
+                child.vehicle_to_route[v] = child.routes.size() - 1;
+            }
+        } else if (parent1.vehicle_to_route.count(v)){  
+            child.routes.push_back(parent1.routes[parent1.vehicle_to_route.at(v)]);
+            child.vehicle_to_route[v] = child.routes.size() - 1;
+        } else if (parent2.vehicle_to_route.count(v)){
+            child.routes.push_back(parent2.routes[parent2.vehicle_to_route.at(v)]);
+            child.vehicle_to_route[v] = child.routes.size() - 1;
+        }
+    }
+    // First thing : we need to repair the solution
+    repair(child, instance);
+    // Evaluate the objective value of the child
+    child.objective = evaluate(child, instance);
+
+    return child;
+}
+
+
+GeneticSolution greedy_heuristic(const Instance& instance) {
+    using std::vector;
+    // First step : generate a random permutation of [|1, n_v|]
+    vector<int> order(instance.number_vehicles);
+    std::iota(order.begin(), order.end(), 0);
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::shuffle(order.begin(), order.end(), g);
+
+    // Second step : generate the routes
+    vector<Route> routes = greedy_heuristic(instance, order);
+
+    // Third step : build the GeneticSolution
+    GeneticSolution solution;
+    solution.routes = routes;
+    for (int i = 0; i < routes.size(); i++){
+        solution.vehicle_to_route[routes[i].vehicle_id] = i;
+    }
+    solution.objective = evaluate(solution, instance);
+
+    return solution;
 }

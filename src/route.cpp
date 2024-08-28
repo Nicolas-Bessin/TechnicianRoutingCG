@@ -13,7 +13,12 @@
 
 
 
-using std::min;
+Route EmptyRoute(int n_nodes) {
+    Route route;
+    route.is_in_route = std::vector<int>(n_nodes, 0);
+    route.route_edges = std::vector<std::vector<int>>(n_nodes, std::vector<int>(n_nodes, 0));
+    return route;
+}
 
 // Checks if two routes are equal
 // That is, if they have :
@@ -312,7 +317,7 @@ Route parse_route(const nlohmann::json & data, const Instance& instance) {
     return Route{
         true_vehicle_id,
         total_cost,
-        -1.0,
+        0,
         duration,
         id_sequence,
         is_in_route,
