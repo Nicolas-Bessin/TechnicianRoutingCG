@@ -328,16 +328,6 @@ int count_used_routes_with_duplicates(const IntegerSolution& solution, const vec
 }
 
 
-double count_route_kilometres(const Route& route, const Instance& instance) {
-    double total_distance = 0;
-    for (int i = 0; i < route.id_sequence.size() - 1; i++) {
-        int id1 = route.id_sequence[i];
-        int id2 = route.id_sequence[i + 1];
-        total_distance += instance.distance_matrix[id1][id2];
-    }
-    return total_distance;
-}
-
 double count_kilometres_travelled(const IntegerSolution& solution, const vector<Route>& routes, const Instance& instance) {
     double total_distance = 0;
     for (int i = 0; i < routes.size(); i++) {

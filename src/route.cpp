@@ -67,6 +67,16 @@ bool operator==(const Route& lhs, const Route& rhs){
     return true;
 }
 
+double count_route_kilometres(const Route& route, const Instance& instance) {
+    double total_distance = 0;
+    for (int i = 0; i < route.id_sequence.size() - 1; i++) {
+        int id1 = route.id_sequence[i];
+        int id2 = route.id_sequence[i + 1];
+        total_distance += instance.distance_matrix[id1][id2];
+    }
+    return total_distance;
+}
+
 double compute_reduced_cost(const Route& route, const std::vector<double>& alphas, double beta, const Instance& instance) {
     const Vehicle& vehicle = instance.vehicles[route.vehicle_id];
     // Compute the reduced cost along the route by going through the nodes

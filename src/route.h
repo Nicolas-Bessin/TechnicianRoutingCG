@@ -27,12 +27,10 @@ struct Route {
     std::vector<int> id_sequence;
     // List of nodes in the route (1 if the node is in the route, 0 otherwise)
     std::vector<int> is_in_route;
-    // Start time of these interventions
-    std::vector<int> start_times;
     // Matrix of the travel path
     std::vector<std::vector<int>> route_edges;
     // Empty constructor
-    Route(int n_nodes) : is_in_route(n_nodes), start_times(n_nodes), route_edges(n_nodes, std::vector<int>(n_nodes, 0)) {}
+    Route(int n_nodes) : is_in_route(n_nodes), route_edges(n_nodes, std::vector<int>(n_nodes, 0)) {}
     // Constructor with all the attributes
     Route(
         int vehicle_id,
@@ -43,7 +41,6 @@ struct Route {
         int total_waiting_time,
         std::vector<int> id_sequence,
         std::vector<int> is_in_route,
-        std::vector<int> start_times,
         std::vector<std::vector<int>> route_edges
     ) : 
         vehicle_id(vehicle_id),
@@ -54,7 +51,6 @@ struct Route {
         total_waiting_time(total_waiting_time),
         id_sequence(id_sequence),
         is_in_route(is_in_route),
-        start_times(start_times),
         route_edges(route_edges) {}
 
 };
@@ -66,6 +62,9 @@ struct Route {
 // - the same sequence vector
 // - the same start times
 bool operator==(const Route& lhs, const Route& rhs);
+
+// Comutes the length of a route
+double count_route_kilometres(const Route& route, const Instance& instance);
 
 // Computes the reduced cost of a route given the dual values of the constraints
 double compute_reduced_cost(const Route& route, const std::vector<double>& alphas, double beta, const Instance& instance);
