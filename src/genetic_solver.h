@@ -34,7 +34,7 @@ GeneticSolution crossover(const GeneticSolution& parent1, const GeneticSolution&
 /*
     @brief Initializes a new GeneticSolution using the greedy heuristic
 */
-GeneticSolution greedy_heuristic(const Instance& instance);
+GeneticSolution greedy_initializer(const Instance& instance);
 
 
 /*

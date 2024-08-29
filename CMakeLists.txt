@@ -18,6 +18,13 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 endif()
 
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Release")
+endif()
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+
+
 if (NOT DEFINED ENV{GUROBI_HOME} AND NOT DEFINED GUROBI_DIR)
     message(FATAL_ERROR "No cache variable named GUROBI_DIR is defined, and GUROBI_HOME was not found in the environment variables. Please, define one of them.")
 endif ()
@@ -28,9 +35,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
 # Add the Gurobi headers from /opt/gurobi/include
 find_package(GUROBI REQUIRED)
-
-# Add OpenMP
-find_package(OpenMP REQUIRED)
 
 include_directories(${GUROBI_INCLUDE_DIRS})
 
@@ -91,13 +95,14 @@ set(
 
 add_library(technician_routing_lib ${SOURCE_FILES_LIB})
 #Link against the Gurobi library
-target_link_libraries(technician_routing_lib PUBLIC gurobi)
+target_link_libraries(technician_routing_lib PUBLIC ${GUROBI_LIBRARIES})
 #Link against the pathwyse core library
 target_link_libraries(technician_routing_lib PUBLIC pathwyse_core)
 #Link against Matplotplusplus
 target_link_libraries(technician_routing_lib PUBLIC matplot)
 # Add the necessary flag for parallelization
 target_compile_options(technician_routing_lib PUBLIC -ltbb)
+
 
 # Create the column generation executable
 add_executable(TRP_cg main.cpp)
@@ -110,15 +115,18 @@ add_executable(TRP_compact main_compact.cpp)
 # Link against the core library
 target_link_libraries(TRP_compact PUBLIC technician_routing_lib)
 
+
 # Create the branch & price executable
 add_executable(TRP_BP main_bp.cpp)
 # Link against the core library
 target_link_libraries(TRP_BP PUBLIC technician_routing_lib) 
 
+
 # Create an executable to test out predifined solutions
 add_executable(TRP_test_solutions main_route_testing.cpp)
 # Link against the core library
 target_link_libraries(TRP_test_solutions PUBLIC technician_routing_lib)
+
 
 # Create an executable to test the genetic algorithm
 add_executable(TRP_genetic main_genetic.cpp)

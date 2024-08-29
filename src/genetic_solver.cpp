@@ -15,7 +15,7 @@ double evaluate(const GeneticSolution& solution, const Instance& instance) {
     return objective;
 }
 
-// @brief Computes the delta in the route's length if we remove a given intervention
+// @brief Computes the delta in the route's cost if we remove a given intervention
 // @param route The route from which we want to remove the intervention
 // @param intervention The intervention we want to remove
 // @param instance The instance of the problem
@@ -30,7 +30,7 @@ double compute_delta(const Route& route, int intervention, const Instance& insta
     // We can now compute the delta
     double length_including = instance.distance_matrix[previous_intervention][intervention] + instance.distance_matrix[intervention][next_intervention];
     double length_excluding = instance.distance_matrix[previous_intervention][next_intervention];
-    return length_including - length_excluding;
+    return (length_including - length_excluding) * instance.cost_per_km;
 }
 
 
@@ -88,12 +88,21 @@ void repair(GeneticSolution& solution, const Instance& instance) {
         double delta2 = compute_delta(solution.routes[indexes[1]], intervention, instance);
         // Get the biggest relative increase in route objective coefficient 
         // Equivalent to the biggest delta in route length
-        double relative1 = delta1 / count_route_kilometres(solution.routes[indexes[0]], instance);
-        double relative2 = delta2 / count_route_kilometres(solution.routes[indexes[1]], instance);
+        double relative1 = delta1 / solution.routes[indexes[0]].total_cost;
+        double relative2 = delta2 / solution.routes[indexes[1]].total_cost;
         if (relative1 > relative2){
             delete_intervention(solution.routes[indexes[0]], intervention, instance);
         } else {
             delete_intervention(solution.routes[indexes[1]], intervention, instance);
+        }
+    }
+
+    // If after the deletion, we get an empty route, we remove it
+    for (auto it = solution.routes.begin(); it != solution.routes.end();){
+        if (it->id_sequence.size() == 2){
+            it = solution.routes.erase(it);
+        } else {
+            it++;
         }
     }
 }
@@ -136,7 +145,7 @@ GeneticSolution crossover(const GeneticSolution& parent1, const GeneticSolution&
 }
 
 
-GeneticSolution greedy_heuristic(const Instance& instance) {
+GeneticSolution greedy_initializer(const Instance& instance) {
     using std::vector;
     // First step : generate a random permutation of [|1, n_v|]
     vector<int> order(instance.number_vehicles);
@@ -157,4 +166,66 @@ GeneticSolution greedy_heuristic(const Instance& instance) {
     solution.objective = evaluate(solution, instance);
 
     return solution;
+}
+
+
+
+void genetic_algorithm(const Instance& instance) {
+    using std::vector;
+    using std::cout, std::endl;
+
+    // Define the population size
+    int population_size = 50;
+    int increase_population = 30;
+    // Define the number of generations
+    int number_generations = 10;
+
+    double best_objective = -1e9;
+
+    // Initialize the population
+    vector<GeneticSolution> population;
+    for (int i = 0; i < population_size; i++){
+        population.push_back(greedy_initializer(instance));
+    }
+
+    // Update the initial best objective
+    for (const GeneticSolution& solution : population){
+        if (solution.objective > best_objective){
+            best_objective = solution.objective;
+        }
+    }
+    cout << "Initial best objective : " << best_objective << endl;
+
+    // Perform the genetic algorithm
+    for (int generation = 0; generation < number_generations; generation++){
+        // Perform the crossover
+        int old_population_size = population.size();
+        // Pick two parents at random increase_population times
+        for (int i = 0; i < increase_population; i++){
+            std::random_device rd;
+            std::mt19937 gen(rd());
+            std::uniform_int_distribution<> dis(0, old_population_size - 1);
+            GeneticSolution parent1 = population[dis(gen)];
+            GeneticSolution parent2 = population[dis(gen)];
+            // Perform the crossover
+            GeneticSolution child = crossover(parent1, parent2, instance);
+            // Add the child to the population
+            population.push_back(child);
+        }
+
+        // Sort the population by objective value
+        std::sort(population.begin(), population.end(), [&instance](const GeneticSolution& a, const GeneticSolution& b){
+            return a.objective > b.objective;
+        });
+
+        // Keep the best solution
+        if (population[0].objective > best_objective){
+            best_objective = population[0].objective;
+        }
+
+        // Keep only the best population_size solutions
+        population.resize(population_size);
+
+        cout << "End of generation " << generation << " - Best objective : " << best_objective << endl;
+    }
 }
