@@ -90,7 +90,7 @@ void repair(GeneticSolution& solution, const Instance& instance) {
         // Equivalent to the biggest delta in route cost
         double relative1 = delta1 / solution.routes[indexes[0]].total_cost;
         double relative2 = delta2 / solution.routes[indexes[1]].total_cost;
-        if (relative1 < relative2){
+        if (relative1 > relative2){
             delete_intervention(solution.routes[indexes[0]], intervention, instance);
         } else {
             delete_intervention(solution.routes[indexes[1]], intervention, instance);

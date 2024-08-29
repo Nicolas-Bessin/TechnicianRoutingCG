@@ -95,7 +95,7 @@ set(
 
 add_library(technician_routing_lib ${SOURCE_FILES_LIB})
 #Link against the Gurobi library
-target_link_libraries(technician_routing_lib PUBLIC ${GUROBI_LIBRARIES})
+target_link_libraries(technician_routing_lib PUBLIC gurobi)
 #Link against the pathwyse core library
 target_link_libraries(technician_routing_lib PUBLIC pathwyse_core)
 #Link against Matplotplusplus
