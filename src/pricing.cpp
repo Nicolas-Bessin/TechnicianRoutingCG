@@ -300,6 +300,11 @@ Route solve_pricing_problem(
         cout << "Time limit reached for vehicle " << vehicle.id << endl;
         return EmptyRoute(instance.nodes.size());
     }
+    // Else, if the problem is infeasible, we return an empty vector
+    if (solver.getProblem()->getStatus() == PROBLEM_INFEASIBLE) {
+        //cout << "Problem is infeasible for vehicle " << vehicle.id << endl;
+        return EmptyRoute(instance.nodes.size());
+    }
     //solver.printBestSolution();
     // Get the solution we found
     Path path = solver.getBestSolution();

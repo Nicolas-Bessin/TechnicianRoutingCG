@@ -34,6 +34,10 @@ std::vector<Route> greedy_heuristic(
         const Vehicle& vehicle = instance.vehicles[v_id];
         // Transform the current vehicle to only consider the interventions that are not yet covered
         const Vehicle& v = vehicle_mask(vehicle, covered);
+        // If the vehicle has no interventions left, continue to the next vehicle
+        if (v.interventions.size() == 0) {
+            continue;
+        }
         // Create a pricing problem for the vehicle
         unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, v, true, forbidden_edges, required_edges);
         // Solve the pricing problem
@@ -57,7 +61,7 @@ std::vector<Route> greedy_heuristic(
     for (int i = 0; i < n_interventions; i++) {
         n_covered += covered[i];
     }
-    cout << "Greedy heuristic covered " << n_covered << " interventions" << endl;
+    //cout << "Greedy heuristic covered " << n_covered << " interventions" << endl;
 
     return routes;
 }

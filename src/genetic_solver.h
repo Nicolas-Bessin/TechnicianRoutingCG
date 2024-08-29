@@ -5,10 +5,8 @@
 
 
 struct GeneticSolution {
-    // List of routes in the solution
-    std::vector<Route> routes;
-    // Map from vehicle id to the index of the route in the routes vector
-    std::map<int, int> vehicle_to_route;
+    // Map vehicle id to route
+    std::map<int, Route> routes;
     // Objective value of the solution
     double objective;
 };

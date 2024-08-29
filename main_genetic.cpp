@@ -26,7 +26,7 @@ int main(int argc, char *argv[]){
     cout << "Technician Routing Problem using Column Generation" << endl;
     cout << "-----------------------------------" << endl;
     string default_filename = "../data/instance_1.json";
-    Instance instance = parse_file(default_filename, true);
+    Instance instance = parse_file(default_filename, false);
 
     // Only keep the first 20 nodes
     vector<int> kept_nodes = vector<int>(instance.number_interventions);
@@ -36,5 +36,8 @@ int main(int argc, char *argv[]){
     instance = cut_instance(instance, kept_nodes);
 
     preprocess_interventions(instance);
+
+
+    genetic_algorithm(instance);
 
 }
