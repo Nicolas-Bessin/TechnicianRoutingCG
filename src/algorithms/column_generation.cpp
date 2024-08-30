@@ -94,7 +94,7 @@ CGResult column_generation(
 
         double max_reduced_cost = 0;
 
-        std::vector<Route> new_routes = solve_pricing_problems_basic(
+        std::vector<Route> new_routes = solve_pricing_problems_diversification(
             solution,
             instance,
             using_cyclic_pricing,
@@ -105,6 +105,7 @@ CGResult column_generation(
         // We add the new routes to the global routes vector
         for (Route& new_route : new_routes){
             routes.push_back(new_route);
+            max_reduced_cost = std::max(max_reduced_cost, new_route.reduced_cost);
             node.active_routes.insert(routes.size() - 1);
         }
         
@@ -114,7 +115,6 @@ CGResult column_generation(
         pricing_time += diff_pricing;
         if (verbose) {
             cout << "Pricing sub problems solved in " << diff_pricing << " ms - Added " << n_added_routes << " routes";
-            cout << " - Optimized " << n_routes_changed << " routes\n";
             cout << " - Max reduced cost : " << setprecision(15) << max_reduced_cost << "\n";
         }
         // ----------------- Stop conditions -----------------
