@@ -29,6 +29,61 @@ if (NOT DEFINED ENV{GUROBI_HOME} AND NOT DEFINED GUROBI_DIR)
     message(FATAL_ERROR "No cache variable named GUROBI_DIR is defined, and GUROBI_HOME was not found in the environment variables. Please, define one of them.")
 endif ()
 
+#Source code
+set(
+    SOURCE_FILES_LIB
+
+    src/instance/constants.h
+    src/instance/instance.h
+    src/instance/instance.cpp
+    src/instance/parser.h
+    src/instance/parser.cpp
+    src/instance/preprocessing.h
+    src/instance/preprocessing.cpp
+
+    src/routes/route.h
+    src/routes/route.cpp
+    src/routes/route_optimizer.h
+    src/routes/route_optimizer.cpp
+
+    src/master_problem/master.h
+    src/master_problem/rmp_solver.h
+    src/master_problem/rmp_solver.cpp
+    src/master_problem/node.h 
+    src/master_problem/node.cpp
+
+    src/pricing_problem/pricing.h
+    src/pricing_problem/pricing.cpp 
+    src/pricing_problem/subproblem.h
+    src/pricing_problem/subproblem.cpp
+    src/pricing_problem/time_window_lunch.h
+    src/pricing_problem/time_window_lunch.cpp
+
+    src/compact_formulation/compact_solution.h 
+    src/compact_formulation/compact_solver.h
+    src/compact_formulation/compact_solver.cpp
+    src/compact_formulation/solution_converter.h
+    src/compact_formulation/solution_converter.cpp
+
+    src/algorithms/branch_and_price.h
+    src/algorithms/branch_and_price.cpp
+    src/algorithms/column_generation.h
+    src/algorithms/column_generation.cpp
+    src/algorithms/genetic_solver.h
+    src/algorithms/genetic_solver.cpp
+    src/algorithms/heuristics.h
+    src/algorithms/heuristics.cpp
+
+    src/data_analysis/analysis.h 
+    src/data_analysis/analysis.cpp
+    src/data_analysis/plot.h
+    src/data_analysis/plot.cpp
+)
+
+# Add the library
+add_library(technician_routing_lib ${SOURCE_FILES_LIB})
+# Add the include directory
+target_include_directories(technician_routing_lib PUBLIC src)
 
 # Add the cmake folder to the module path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
@@ -44,91 +99,44 @@ add_subdirectory(pathwyse)
 # Add Matplotplusplus
 add_subdirectory(matplotplusplus)
 
-#Source code
-set(
-    SOURCE_FILES_LIB
+# Add the TBB library
+add_library(tbb INTERFACE)
 
-    src/instance.h
-    src/instance.cpp
-    src/parser.h 
-    src/parser.cpp
-    src/preprocessing.h
-    src/preprocessing.cpp
-
-    src/route.h
-    src/route.cpp
-    src/analysis.h
-    src/analysis.cpp
-
-    src/route_optimizer.h
-    src/route_optimizer.cpp
-
-    src/master.h
-    src/RMP_solver.h
-    src/RMP_solver.cpp
-    src/pricing.h
-    src/pricing.cpp
-    src/column_generation.h
-    src/column_generation.cpp
-
-    src/time_window_lunch.h
-    src/time_window_lunch.cpp
-
-    src/compact_solver.h
-    src/compact_solver.cpp
-    src/solution_converter.h
-    src/solution_converter.cpp
-
-    src/branch_and_price.h
-    src/branch_and_price.cpp
-
-    src/heuristics.h
-    src/heuristics.cpp
-
-    src/genetic_solver.h
-    src/genetic_solver.cpp
-
-    src/plot.h
-    src/plot.cpp
-)
-
-
-add_library(technician_routing_lib ${SOURCE_FILES_LIB})
 #Link against the Gurobi library
 target_link_libraries(technician_routing_lib PUBLIC gurobi)
 #Link against the pathwyse core library
 target_link_libraries(technician_routing_lib PUBLIC pathwyse_core)
 #Link against Matplotplusplus
 target_link_libraries(technician_routing_lib PUBLIC matplot)
-# Add the necessary flag for parallelization
-target_compile_options(technician_routing_lib PUBLIC -ltbb)
+# Add the necessary library for parallel running
+target_link_libraries(technician_routing_lib PUBLIC tbb)
 
 
 # Create the column generation executable
-add_executable(TRP_cg main.cpp)
+add_executable(TRP_cg src/main_column_generation.cpp)
 # Link against the core library
 target_link_libraries(TRP_cg PUBLIC technician_routing_lib)
 
 
 # Also create a compact formulation executable
-add_executable(TRP_compact main_compact.cpp)
+add_executable(TRP_compact src/main_compact_formulation.cpp)
 # Link against the core library
 target_link_libraries(TRP_compact PUBLIC technician_routing_lib)
 
 
 # Create the branch & price executable
-add_executable(TRP_BP main_bp.cpp)
+add_executable(TRP_BP src/main_branch_price.cpp)
 # Link against the core library
 target_link_libraries(TRP_BP PUBLIC technician_routing_lib) 
 
 
 # Create an executable to test out predifined solutions
-add_executable(TRP_test_solutions main_route_testing.cpp)
+add_executable(TRP_test_solutions src/main_route_testing.cpp)
 # Link against the core library
 target_link_libraries(TRP_test_solutions PUBLIC technician_routing_lib)
 
 
 # Create an executable to test the genetic algorithm
-add_executable(TRP_genetic main_genetic.cpp)
+add_executable(TRP_genetic src/main_genetic_algorithm.cpp)
 # Link against the core library
 target_link_libraries(TRP_genetic PUBLIC technician_routing_lib)
