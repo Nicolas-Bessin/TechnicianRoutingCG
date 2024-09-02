@@ -28,7 +28,7 @@
 #define CYCLIC_PRICING true
 #define MAX_ITER 10000
 #define COMPUTE_INTEGER_SOL true
-#define N_INTERVENTIONS 50
+#define N_INTERVENTIONS 77
 
 int main(int argc, char *argv[]){
 
@@ -78,7 +78,7 @@ int main(int argc, char *argv[]){
     cout << "Starting the column generation algorithm" << endl;
     
 
-    int MAX_RESOURCES_DOMINANCE = 0;
+    int MAX_RESOURCES_DOMINANCE = instance.capacities_labels.size();
     // Create a root node for the algorithm
     BPNode root = RootNode(routes);
     CGResult result = column_generation(
