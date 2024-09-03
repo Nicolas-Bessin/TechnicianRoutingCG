@@ -21,7 +21,6 @@
 #include <chrono>
 
 #define TIME_LIMIT 300
-#define SOLVER_MODE IMPOSE_ROUTING
 #define THRESHOLD 1e-6
 #define VERBOSE true
 #define GREEDY_INIT false

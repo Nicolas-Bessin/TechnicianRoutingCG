@@ -47,6 +47,7 @@ set(
     src/routes/route_optimizer.cpp
 
     src/master_problem/master.h
+    src/master_problem/master.cpp
     src/master_problem/rmp_solver.h
     src/master_problem/rmp_solver.cpp
     src/master_problem/node.h 

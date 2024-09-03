@@ -29,7 +29,7 @@ std::unique_ptr<Problem> create_pricing_instance(
 // Update a pricing subproblem with the dual values given by the master problem
 void update_pricing_instance(
     std::unique_ptr<Problem> & pricing_problem, 
-    const MasterSolution& master_solution, 
+    const DualSolution& dual_solution, 
     const Instance &instance, 
     const Vehicle &vehicle
     );

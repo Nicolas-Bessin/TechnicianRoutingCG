@@ -8,7 +8,7 @@
 #include <vector>
 
 std::vector<Route> solve_pricing_problems_basic(
-    const MasterSolution & solution,
+    const DualSolution & solution,
     const Instance & instance,
     bool using_cyclic_pricing,
     int n_ressources_dominance,
@@ -23,7 +23,7 @@ std::vector<int> random_cycle(int n);
     Generates a new set of route based on the diversitication algorithm presented in Dupin et al. (2021) 
 */
 std::vector<Route> solve_pricing_problems_diversification(
-    const MasterSolution & solution,
+    const DualSolution & solution,
     const Instance & instance,
     bool using_cyclic_pricing,
     int n_ressources_dominance,

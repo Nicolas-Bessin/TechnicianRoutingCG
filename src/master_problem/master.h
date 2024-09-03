@@ -4,20 +4,27 @@
 #include <tuple>
 #include <map>
 
+// This represents a solution to the RMP dual problem
+struct DualSolution {
+    std::vector<double> alphas; // Intervention duals
+    std::vector<double> betas; // Vehicle duals
+    std::map<std::tuple<int, int, int>, double> upper_bound_duals;
+    std::map<std::tuple<int, int, int>, double> lower_bound_duals;
+};
+
+// Define convex combination of two dual solutions
+DualSolution operator+(const DualSolution &lhs, const DualSolution &rhs);
+
+DualSolution operator*(double scalar, const DualSolution &rhs);
+
 // Structure to represent a solution of the master problem
 struct MasterSolution {
     // Is this solution feasible
     bool is_feasible;
     // Coefficients of the variables in the master problem
     std::vector<double> coefficients;
-    // Dual values associated with the interventions
-    std::vector<double> alphas;
-    // Dual values associated with the vehicles
-    std::vector<double> betas;
-    // Dual values associated with the upper bound cuts
-    std::map<std::tuple<int, int, int>, double> upper_bound_duals;
-    // Dual values associated with the lower bound cuts
-    std::map<std::tuple<int, int, int>, double> lower_bound_duals;
+    // Dual solution
+    DualSolution dual_solution;
     // Objective value of the master problem
     double objective_value;
     // Empty constructor
@@ -32,10 +39,7 @@ struct MasterSolution {
         double objective_value
     ) : 
         coefficients(coefficients),
-        alphas(alphas),
-        betas(betas),
-        upper_bound_duals(upper_bound_duals),
-        lower_bound_duals(lower_bound_duals),
+        dual_solution({alphas, betas, upper_bound_duals, lower_bound_duals}),
         objective_value(objective_value),
         is_feasible(true)
     {}

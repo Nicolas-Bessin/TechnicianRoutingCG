@@ -225,7 +225,7 @@ unique_ptr<Problem> create_pricing_instance(
 
 void update_pricing_instance(
     unique_ptr<Problem> & pricing_problem, 
-    const MasterSolution& master_solution, 
+    const DualSolution& dual_solution, 
     const Instance& instance, 
     const Vehicle& vehicle) {
     // Get the number of nodes in the problem : equal to the number of available interventions + 2
@@ -237,11 +237,11 @@ void update_pricing_instance(
     // Put in the node costs : alpha_i - M * duration_i
     for (int i = 0; i < n_interventions_v; i++) {
         int true_i = vehicle.interventions[i];
-        double node_cost = master_solution.alphas[true_i] - instance.M * instance.nodes[true_i].duration;
+        double node_cost = dual_solution.alphas[true_i] - instance.M * instance.nodes[true_i].duration;
         objective->setNodeCost(i, node_cost);
     }
     // Add the arcs costs where applicable from the dual values of the cuts
-    for (const auto& [ijv, value] : master_solution.upper_bound_duals) {
+    for (const auto& [ijv, value] : dual_solution.upper_bound_duals) {
         int true_i = std::get<0>(ijv);
         int true_j = std::get<1>(ijv);
         int v = std::get<2>(ijv);
@@ -252,7 +252,7 @@ void update_pricing_instance(
         objective->setArcCost(i, j, arc_cost);
     }
     // Same thing with the lower bound duals
-    for (const auto& [ijv, value] : master_solution.lower_bound_duals) {
+    for (const auto& [ijv, value] : dual_solution.lower_bound_duals) {
         int true_i = std::get<0>(ijv);
         int true_j = std::get<1>(ijv);
         int v = std::get<2>(ijv);
@@ -264,7 +264,7 @@ void update_pricing_instance(
     }
     
     // Put in the fixed costs of the vehicle
-    double fixed_cost = master_solution.betas[vehicle.id] + vehicle.cost;
+    double fixed_cost = dual_solution.betas[vehicle.id] + vehicle.cost;
     objective->setNodeCost(origin, fixed_cost);
     return;
 }

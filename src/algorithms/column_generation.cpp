@@ -52,6 +52,7 @@ CGResult column_generation(
     // Main loop of the column generation algorithm
     int iteration = 0;
     bool stop = false;
+    DualSolution previous_dual_solution = DualSolution{};
     MasterSolution solution;
     // We stop if we don't improve the objective value
     double previous_solution_objective = -1000; 
@@ -74,16 +75,19 @@ CGResult column_generation(
         if (!solution.is_feasible){
             return CGResult{};
         }
+        // Extract the dual solution from the master solution
+        DualSolution& dual_solution = solution.dual_solution;
+
         if (verbose) {
             cout << "Iteration " << iteration << " - Objective value : " << solution.objective_value << "\n";
             cout << "Master problem solved in " << diff << " ms \n";
             cout << "Number of interventions covered : " << setprecision(2) << count_covered_interventions(solution, routes, instance);
             std::pair<double, int> used_vehicles = count_used_vehicles(solution, routes, instance);
             cout << " - Number of vehicles used : " << used_vehicles.first << " - Unique vehicles used : " << used_vehicles.second << "\n";
-            cout << "Min alpha : " << *std::min_element(solution.alphas.begin(), solution.alphas.end());
-            cout << " - Max alpha : " << *std::max_element(solution.alphas.begin(), solution.alphas.end());
-            cout << " - Min beta : " << *std::min_element(solution.betas.begin(), solution.betas.end());
-            cout << " - Max beta : " << *std::max_element(solution.betas.begin(), solution.betas.end()) << "\n";
+            cout << "Min alpha : " << *std::min_element(dual_solution.alphas.begin(), dual_solution.alphas.end());
+            cout << " - Max alpha : " << *std::max_element(dual_solution.alphas.begin(), dual_solution.alphas.end());
+            cout << " - Min beta : " << *std::min_element(dual_solution.betas.begin(), dual_solution.betas.end());
+            cout << " - Max beta : " << *std::max_element(dual_solution.betas.begin(), dual_solution.betas.end()) << "\n";
         }
         master_time += diff;
 
@@ -94,8 +98,15 @@ CGResult column_generation(
 
         double max_reduced_cost = 0;
 
+        // Compute with a convex combination of the previous dual solution and the current one
+        double alpha = 0.5;
+        DualSolution convex_dual_solution = dual_solution;
+        if (iteration > 0){
+            convex_dual_solution = alpha * dual_solution + (1 - alpha) * previous_dual_solution;
+        }
+
         std::vector<Route> new_routes = solve_pricing_problems_diversification(
-            solution,
+            convex_dual_solution,
             instance,
             using_cyclic_pricing,
             n_ressources_dominance,
@@ -149,6 +160,7 @@ CGResult column_generation(
             stop = true;
         }
         previous_solution_objective = solution.objective_value;
+        previous_dual_solution = dual_solution;
         iteration++;
     }
 
