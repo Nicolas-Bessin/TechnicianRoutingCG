@@ -1,6 +1,7 @@
 #include "column_generation.h"
 
 #include "master_problem/rmp_solver.h"
+#include "master_problem/integer_solution.h"
 #include "master_problem/node.h"
 
 #include "routes/route_optimizer.h"
@@ -234,7 +235,7 @@ CGResult column_generation(
         // cout << "After keeping the last used routes : " << routes.size() << endl;
         // Solve the integer version of the problem
         auto start_integer = chrono::steady_clock::now();
-        integer_solution = integer_RMP(instance, routes, node, false);
+        integer_solution = solve_integer_master_problem(instance, routes, node);
         auto end_integer = chrono::steady_clock::now();
         integer_time = chrono::duration_cast<chrono::milliseconds>(end_integer - start_integer).count();
         cout << "Integer RMP objective value : " << integer_solution.objective_value << endl;
