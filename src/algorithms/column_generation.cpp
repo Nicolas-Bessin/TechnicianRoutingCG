@@ -15,6 +15,29 @@
 #include <chrono>
 #include <execution>
 
+// Removes all but the N last used routes from the routes and last_used vectors
+// Returns a map from old index to new index, the new routes, and the new last_used vector
+std::tuple<
+    std::map<int, int>, 
+    std::vector<Route>, 
+    std::vector<int>
+> keep_last_used_routes(int N, std::vector<Route>& routes, std::vector<int>& last_used){
+    std::vector<int> indices(routes.size());
+    std::iota(indices.begin(), indices.end(), 0);
+    std::sort(indices.begin(), indices.end(), [&last_used](int i, int j){
+        return last_used[i] > last_used[j];
+    });
+    N = std::min(N, (int)routes.size());
+    std::vector<Route> new_routes(N);
+    std::vector<int> new_last_used(N);
+    std::map<int, int> old_to_new;
+    for (int i = 0; i < N; i++){
+        new_routes[i] = routes[indices[i]];
+        new_last_used[i] = last_used[indices[i]];
+        old_to_new[indices[i]] = i;
+    }
+    return std::make_tuple(old_to_new, new_routes, new_last_used);
+}
 
 
 
@@ -49,6 +72,9 @@ CGResult column_generation(
         max_resources_dominance = instance.capacities_labels.size() + 1;
     }
 
+    // Keep track of when each route was last used
+    vector<int> last_used(routes.size(), 0);
+
     // Main loop of the column generation algorithm
     int iteration = 0;
     bool stop = false;
@@ -68,6 +94,12 @@ CGResult column_generation(
         // Solve the master problem
         auto start = chrono::steady_clock::now();
         solution = relaxed_RMP(instance, routes, node);
+        // Update the last_used vector
+        for (int i = 0; i < routes.size(); i++){
+            if (solution.coefficients[i] > 0){
+                last_used[i] = iteration;
+            }
+        }
         auto end = chrono::steady_clock::now();
         int diff = chrono::duration_cast<chrono::milliseconds>(end - start).count();
         // At this point, if the solution is not feasible, it it because the cuts give a non feasible problem
@@ -119,7 +151,8 @@ CGResult column_generation(
             max_reduced_cost = std::max(max_reduced_cost, new_route.reduced_cost);
             node.active_routes.insert(routes.size() - 1);
         }
-        
+        // Resize the last_used vector
+        last_used.resize(routes.size(), 0);        
 
         auto end_pricing = chrono::steady_clock::now();
         int diff_pricing = chrono::duration_cast<chrono::milliseconds>(end_pricing - start_pricing).count();
@@ -184,6 +217,21 @@ CGResult column_generation(
     IntegerSolution integer_solution = IntegerSolution{};
     int integer_time = 0;
     if (compute_integer_solution) {
+        // // Keep the 1000 last used routes
+        // cout << "Before keeping the last used routes : " << routes.size() << endl;
+        // auto tuple = keep_last_used_routes(2500, routes, last_used);
+        // std::map<int, int> old_to_new = std::get<0>(tuple);
+        // routes = std::get<1>(tuple);
+        // last_used = std::get<2>(tuple);
+        // // We need to update the active routes in the node
+        // std::set <int> new_active_routes;
+        // for (int i : node.active_routes){
+        //     if (old_to_new.contains(i)){
+        //         new_active_routes.insert(old_to_new.at(i));
+        //     }
+        // }
+        // node.active_routes = new_active_routes;
+        // cout << "After keeping the last used routes : " << routes.size() << endl;
         // Solve the integer version of the problem
         auto start_integer = chrono::steady_clock::now();
         integer_solution = integer_RMP(instance, routes, node, false);

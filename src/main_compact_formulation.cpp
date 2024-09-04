@@ -15,9 +15,9 @@
 #include <iomanip>
 #include <memory>
 
-#define TIME_LIMIT 300
+#define TIME_LIMIT 345
 #define HEURISTIC_INIT false
-#define N_INTERVENTIONS 30
+#define N_INTERVENTIONS 77
 
 int main(int argc, char** argv) {
     using std::cout, std::endl;
