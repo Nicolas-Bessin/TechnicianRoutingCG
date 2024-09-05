@@ -1,6 +1,8 @@
 #include "instance/parser.h"
 #include "instance/preprocessing.h"
 
+#include "clustering/clustering.h"
+
 
 #include "master_problem/master.h"
 #include "master_problem/rmp_solver.h"
@@ -33,48 +35,53 @@ int main(int argc, char *argv[]){
     using std::unique_ptr;
     namespace chrono = std::chrono;
 
-    for (int j = 0; j < 5; j++){
-        // Test the random cycle generation
-        vector<int> cycle = random_cycle(10, j);
-        // Print the antecedents
-        for (int i = 0; i < 10; i++){
-            cout << i << " ";
+    // Parse the instance from a JSON file
+    auto start_parse = chrono::steady_clock::now();
+    cout << "Technician Routing Problem using Column Generation" << endl;
+    cout << "-----------------------------------" << endl;
+    string default_filename = "../data/agency1_19-01-2023_anonymized.json";
+    Instance instance = parse_file(default_filename, true);
+
+    //plot_instance(instance);
+
+    // // Only keep the first 25 nodes
+    // vector<int> kept_nodes = vector<int>(instance.number_interventions);
+    // for (int i = 0; i < N_INTERVENTIONS; i++){
+    //     kept_nodes[i] = 1;
+    // }
+    // instance = cut_instance(instance, kept_nodes);
+
+    // Plot the instance
+    // plot_instance(instance);
+
+    preprocess_interventions(instance);
+
+    auto end_parse = chrono::steady_clock::now();
+    int diff_parse = chrono::duration_cast<chrono::milliseconds>(end_parse - start_parse).count();
+
+    cout << "Total time spent parsing the instance : " << diff_parse << " ms" << endl;
+
+    // Get the clusters of vehicles
+
+    auto clusters = optimal_2_clustering(instance.similarity_matrix);
+
+    // Print the clusters
+    for (auto cluster : clusters){
+        cout << "Cluster : ";
+        for (auto v : cluster){
+            cout << v << " ";
         }
-        cout << endl;
-        // Print the cycle
-        for (int i = 0; i < 10; i++){
-            cout << cycle[i] << " ";
+        cout << "Distance : " << instance.similarity_matrix[cluster[0]][cluster[1]] << endl;
+        // Print the interventions in the cluster
+        for (auto v : cluster){
+            cout << "Vehicle " << v << " : ";
+            for (auto i : instance.vehicles[v].interventions){
+                cout << i << " ";
+            }
+            cout << endl;
         }
-        cout << endl;
         cout << endl;
     }
-
-
-    // // Parse the instance from a JSON file
-    // auto start_parse = chrono::steady_clock::now();
-    // cout << "Technician Routing Problem using Column Generation" << endl;
-    // cout << "-----------------------------------" << endl;
-    // string default_filename = "../data/agency1_19-01-2023_anonymized.json";
-    // Instance instance = parse_file(default_filename, true);
-
-    // //plot_instance(instance);
-
-    // // // Only keep the first 25 nodes
-    // // vector<int> kept_nodes = vector<int>(instance.number_interventions);
-    // // for (int i = 0; i < N_INTERVENTIONS; i++){
-    // //     kept_nodes[i] = 1;
-    // // }
-    // // instance = cut_instance(instance, kept_nodes);
-
-    // // Plot the instance
-    // // plot_instance(instance);
-
-    // preprocess_interventions(instance);
-
-    // auto end_parse = chrono::steady_clock::now();
-    // int diff_parse = chrono::duration_cast<chrono::milliseconds>(end_parse - start_parse).count();
-
-    // cout << "Total time spent parsing the instance : " << diff_parse << " ms" << endl;
 
     // vector<Route> routes = parse_routes_from_file("../routes/best_small.json", instance);
 

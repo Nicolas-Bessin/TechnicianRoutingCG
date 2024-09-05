@@ -162,7 +162,8 @@ struct Instance {
     std::vector<std::vector<int>> time_matrix;
     // distance between the different nodes
     std::vector<std::vector<int>> distance_matrix;
-
+    // Hamming similarity between vehicles (the lower the more similar)
+    std::vector<std::vector<int>> similarity_matrix;
     // Instance constructor
     Instance(
         int number_interventions,
@@ -175,7 +176,8 @@ struct Instance {
         std::vector<Vehicle> vehicles,
         std::vector<std::string> capacities_labels,
         std::vector<std::vector<int>> time_matrix,
-        std::vector<std::vector<int>> distance_matrix
+        std::vector<std::vector<int>> distance_matrix,
+        std::vector<std::vector<int>> similarity_matrix
     ) :
         number_interventions(number_interventions),
         number_warehouses(number_warehouses),
@@ -187,7 +189,8 @@ struct Instance {
         vehicles(vehicles),
         capacities_labels(capacities_labels),
         time_matrix(time_matrix),
-        distance_matrix(distance_matrix)
+        distance_matrix(distance_matrix),
+        similarity_matrix(similarity_matrix)
         {}
 };
 

@@ -1,5 +1,7 @@
 #include "instance.h"
 
+#include "clustering/clustering.h"
+
 #include <iostream>
 
 Vehicle vehicle_mask(const Vehicle& vehicle, const std::vector<int>& mask, bool mode){
@@ -122,6 +124,9 @@ Instance cut_instance(const Instance& instance, const std::vector<int>& mask) {
         }
     }
 
+    // Re-compute the similarity matrix
+    std::vector<std::vector<int>> new_similarity_matrix = compute_similarity_matrix(new_vehicles);
+
     return Instance{
         new_nodes.size() - instance.number_warehouses,
         instance.number_warehouses,
@@ -133,6 +138,7 @@ Instance cut_instance(const Instance& instance, const std::vector<int>& mask) {
         new_vehicles,
         instance.capacities_labels,
         new_time_matrix,
-        new_distance_matrix
+        new_distance_matrix,
+        new_similarity_matrix
     };
 }

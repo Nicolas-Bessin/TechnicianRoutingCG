@@ -1,6 +1,7 @@
 #include "parser.h"
 
 #include "instance/constants.h"
+#include "clustering/clustering.h"
 #include "../../nlohmann/json.hpp"
 
 #include <iostream>
@@ -277,6 +278,9 @@ Instance parse_file(string filename, bool verbose){
         }
     }
 
+    // Compute the similarity matrix between vehicles
+    vector<vector<int>> similarity_matrix = compute_similarity_matrix(vehicles);
+
     // Finally, compute the big M for the objective function
     // M is computed using : M = (END_DAY - min(durations .> 0)) * maxspeed * cost_per_km / gcd(durations)
     // We first put all the durations in a vector
@@ -333,7 +337,8 @@ Instance parse_file(string filename, bool verbose){
         vehicles,
         ressources,
         time_matrix,
-        distance_matrix
+        distance_matrix,
+        similarity_matrix
     );    
 
 }
