@@ -33,16 +33,20 @@ int main(int argc, char *argv[]){
     using std::unique_ptr;
     namespace chrono = std::chrono;
 
-    // Test the random cycle generation
-    vector<int> cycle = random_cycle(10);
-    // Print the antecedents
-    for (int i = 0; i < 10; i++){
-        cout << i << " ";
-    }
-    cout << endl;
-    // Print the cycle
-    for (int i = 0; i < 10; i++){
-        cout << cycle[i] << " ";
+    for (int j = 0; j < 5; j++){
+        // Test the random cycle generation
+        vector<int> cycle = random_cycle(10, j);
+        // Print the antecedents
+        for (int i = 0; i < 10; i++){
+            cout << i << " ";
+        }
+        cout << endl;
+        // Print the cycle
+        for (int i = 0; i < 10; i++){
+            cout << cycle[i] << " ";
+        }
+        cout << endl;
+        cout << endl;
     }
 
 

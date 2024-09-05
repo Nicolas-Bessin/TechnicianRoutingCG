@@ -52,12 +52,12 @@ std::vector<Route> solve_pricing_problems_basic(
     return new_routes;
 }
 
-std::vector<int> random_cycle(int n){
+std::vector<int> random_cycle(int n, int seed){
     using std::vector;
     using std::rand;
     
     std::random_device rd;
-    std::mt19937 gen(rd());
+    std::mt19937 gen(seed);
 
 
     vector<int> cycle(n);
@@ -87,13 +87,14 @@ std::vector<Route> solve_pricing_problems_diversification(
     const Instance & instance,
     bool using_cyclic_pricing,
     int n_ressources_dominance,
-    double reduced_cost_threshold
+    double reduced_cost_threshold,
+    int seed
 ) {
     using std::vector;
     using std::unique_ptr;
 
     // First step in generating a random cycle permutation of the vehicles
-    vector<int> permutation = random_cycle(instance.vehicles.size());
+    vector<int> permutation = random_cycle(instance.vehicles.size(), seed);
 
     // Initialize the new routes
     vector<Route> new_routes = {};

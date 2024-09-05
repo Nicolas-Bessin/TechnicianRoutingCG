@@ -15,14 +15,15 @@
 #include <memory>
 #include <chrono>
 #include <execution>
+#include <random>
 
 // Removes all but the N last used routes from the routes and last_used vectors
 // Returns a map from old index to new index, the new routes, and the new last_used vector
 std::tuple<
     std::map<int, int>, 
     std::vector<Route>, 
-    std::vector<int>
-> keep_last_used_routes(int N, std::vector<Route>& routes, std::vector<int>& last_used){
+    std::vector<int>> keep_last_used_routes(int N, std::vector<Route>& routes, std::vector<int>& last_used){
+
     std::vector<int> indices(routes.size());
     std::iota(indices.begin(), indices.end(), 0);
     std::sort(indices.begin(), indices.end(), [&last_used](int i, int j){
@@ -143,7 +144,8 @@ CGResult column_generation(
             instance,
             using_cyclic_pricing,
             n_ressources_dominance,
-            reduced_cost_threshold
+            reduced_cost_threshold,
+            std::rand()
         );
         n_added_routes = new_routes.size();
         // We add the new routes to the global routes vector
@@ -235,7 +237,7 @@ CGResult column_generation(
         // cout << "After keeping the last used routes : " << routes.size() << endl;
         // Solve the integer version of the problem
         auto start_integer = chrono::steady_clock::now();
-        integer_solution = solve_integer_master_problem(instance, routes, node);
+        integer_solution = integer_RMP(instance, routes, node);
         auto end_integer = chrono::steady_clock::now();
         integer_time = chrono::duration_cast<chrono::milliseconds>(end_integer - start_integer).count();
         cout << "Integer RMP objective value : " << integer_solution.objective_value << endl;

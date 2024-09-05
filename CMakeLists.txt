@@ -41,6 +41,9 @@ set(
     src/instance/preprocessing.h
     src/instance/preprocessing.cpp
 
+    src/clustering/clustering.h
+    src/clustering/clustering.cpp
+
     src/routes/route.h
     src/routes/route.cpp
     src/routes/route_optimizer.h
