@@ -2,6 +2,7 @@
 
 #include "pricing_problem/subproblem.h"
 #include "routes/route_optimizer.h"
+#include "clustering/clustering.h"
 
 #include <vector>
 #include <execution>
@@ -15,17 +16,11 @@ std::vector<Route> solve_pricing_problems_basic(
     const Instance & instance,
     bool using_cyclic_pricing,
     int n_ressources_dominance,
+    const std::vector<int> &vehicle_order,
     double reduced_cost_threshold
     ){
     using std::vector;
     using std::unique_ptr;
-
-    // Initialize the vehicle order
-    // Explore all the vehicles in order at each iteration
-    // We formulate it this way to allow for other orders of exploration 
-    // Or not exploring all vehicles at each iteration in the future
-    vector<int> vehicle_order(instance.vehicles.size());
-    std::iota(vehicle_order.begin(), vehicle_order.end(), 0);
 
     // Initialize the new routes
     vector<Route> new_routes = {};
@@ -52,60 +47,35 @@ std::vector<Route> solve_pricing_problems_basic(
     return new_routes;
 }
 
-std::vector<int> random_cycle(int n, int seed){
-    using std::vector;
-    using std::rand;
-    
-    std::random_device rd;
-    std::mt19937 gen(seed);
-
-
-    vector<int> cycle(n);
-    // Elements to visit
-    vector<int> available(n);
-    std::iota(available.begin(), available.end(), 0);
-    // Randomly select the first element
-    int current = std::uniform_int_distribution<int>(0, n-1)(gen);
-    int intial = current;
-    available.erase(available.begin() + current);
-    // Loop until the set of available elements is empty
-    while (!available.empty()){
-        // Select the next element
-        int next_id = std::uniform_int_distribution<int>(0, available.size()-1)(gen);
-        cycle[current] = available[next_id];
-        current = available[next_id];
-        available.erase(available.begin() + next_id);
-    }
-    cycle[current] = intial;
-    
-    return cycle;
-}
-
    
 std::vector<Route> solve_pricing_problems_diversification(
     const DualSolution & solution,
     const Instance & instance,
     bool using_cyclic_pricing,
     int n_ressources_dominance,
+    const std::vector<int> &vehicle_order,
     double reduced_cost_threshold,
     int seed
 ) {
     using std::vector;
     using std::unique_ptr;
 
-    // First step in generating a random cycle permutation of the vehicles
-    vector<int> permutation = random_cycle(instance.vehicles.size(), seed);
+    // First step in generating a random permutation of the vehicle order
+    // We do this by shuffling the indexes of the vehicles
+    vector<int> permutation(vehicle_order.size());
+    std::iota(permutation.begin(), permutation.end(), 0);
+    std::shuffle(permutation.begin(), permutation.end(), std::default_random_engine(seed));
 
     // Initialize the new routes
     vector<Route> new_routes = {};
 
     // Do the diversifying generation beginning from every vehicle
-    for (int initital_vehicle = 0; initital_vehicle < instance.vehicles.size(); initital_vehicle++){
+    for (int initital_vehicle_index = 0; initital_vehicle_index < vehicle_order.size(); initital_vehicle_index++){
         // Initially, no intervention is covered
         vector<int> covered_interventions = vector<int>(instance.nodes.size(), 0);
-        int current_vehicle = initital_vehicle;
         // Go through each vehicle in order of the permutation
-        for (int k = 0; k < instance.vehicles.size(); k++){
+        for (int k = 0; k < vehicle_order.size(); k++){
+            int current_vehicle = vehicle_order[(initital_vehicle_index + k) % vehicle_order.size()];
             const Vehicle& vehicle = vehicle_mask(instance.vehicles.at(current_vehicle), covered_interventions, KEEP_NON_COVERED);
             // If the vehicle has no interventions to cover, we skip it
             if (vehicle.interventions.size() == 0){
@@ -127,6 +97,39 @@ std::vector<Route> solve_pricing_problems_diversification(
             // Update the current vehicle
             current_vehicle = permutation[current_vehicle];
         }
+    }
+
+    return new_routes;
+}
+
+
+std::vector<Route> solve_pricing_problems_clustering(
+    const DualSolution & solution,
+    const Instance & instance,
+    bool using_cyclic_pricing,
+    int n_ressources_dominance,
+    const std::vector<int> &vehicle_order,
+    double reduced_cost_threshold,
+    int seed
+    ){
+    using std::vector;
+    using std::unique_ptr;
+
+    // Initialize the new routes
+    vector<Route> new_routes = {};
+
+    // Generate clusters
+    auto clusters = optimal_2_clustering(instance.similarity_matrix);
+    // Perform 5 swaps
+    for (int i = 0; i < 1; i++){
+        clusters = greedy_neighbor(instance.similarity_matrix, clusters, i + seed);
+    }
+
+    // Use the previous function to solve the pricing problems
+    for (auto cluster : clusters){
+        vector<int> vehicle_order = cluster;
+        vector<Route> new_routes_cluster = solve_pricing_problems_diversification(solution, instance, using_cyclic_pricing, n_ressources_dominance, vehicle_order, reduced_cost_threshold);
+        new_routes.insert(new_routes.end(), new_routes_cluster.begin(), new_routes_cluster.end());
     }
 
     return new_routes;

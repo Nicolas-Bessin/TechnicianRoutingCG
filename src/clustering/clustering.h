@@ -18,3 +18,18 @@ std::vector<std::vector<int>> compute_similarity_matrix(const std::vector<Vehicl
 
 // Computes the optimal 2-clustering of the vehicles (at most one vehicle is alone in a cluster)
 std::vector<std::vector<int>> optimal_2_clustering(std::vector<std::vector<int>> similarity_matrix);
+
+
+// Greedily compute a good neighbor of a given cluster repartition
+std::vector<std::vector<int>> greedy_neighbor(
+    const std::vector<std::vector<int>>& similarity_matrix, 
+    const std::vector<std::vector<int>>& clusters,
+    int seed = 0
+);
+
+
+// Compute the cost of a clustering
+int compute_clustering_cost(
+    const std::vector<std::vector<int>>& clusters,
+    const std::vector<std::vector<int>>& similarity_matrix
+);

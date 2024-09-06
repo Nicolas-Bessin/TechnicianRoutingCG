@@ -139,11 +139,16 @@ CGResult column_generation(
             convex_dual_solution = alpha * dual_solution + (1 - alpha) * previous_dual_solution;
         }
 
+        // Initialize the vehicle order
+        vector<int> vehicle_order(instance.vehicles.size());
+        std::iota(vehicle_order.begin(), vehicle_order.end(), 0);
+
         std::vector<Route> new_routes = solve_pricing_problems_diversification(
             convex_dual_solution,
             instance,
             using_cyclic_pricing,
             n_ressources_dominance,
+            vehicle_order,
             reduced_cost_threshold,
             std::rand()
         );

@@ -50,8 +50,9 @@ std::vector<std::vector<int>> optimal_2_clustering(std::vector<std::vector<int>>
     int n = similarity_matrix.size();
 
     // Create a model
-    GRBEnv env = GRBEnv();
+    GRBEnv env = GRBEnv(true);
     env.set(GRB_IntParam_OutputFlag, 0);
+    env.start();
     GRBModel model = GRBModel(env);
 
     // Create variables
@@ -114,4 +115,78 @@ std::vector<std::vector<int>> optimal_2_clustering(std::vector<std::vector<int>>
     }
 
     return clusters;
+}
+
+
+
+std::vector<std::vector<int>> greedy_neighbor(
+    const std::vector<std::vector<int>>& similarity_matrix, 
+    const std::vector<std::vector<int>>& initial_clusters,
+    int seed 
+    ){
+
+    using std::vector, std::map;
+
+    int n = similarity_matrix.size();
+    // Copy the initial clusters
+    vector<vector<int>> clusters = initial_clusters;
+    
+    // Create a map to store the correspondance between vehicles and their cluster
+    map<int, int> vehicle_to_cluster_id;
+
+    for (int i = 0; i < clusters.size(); i++){
+        for (int vehicle : clusters[i]){
+            vehicle_to_cluster_id[vehicle] = i;
+        }
+    }
+
+    // Pick a random vehicle and swap it with it's closest neighbor that is not in the same cluster
+    std::mt19937 gen(seed);
+    std::uniform_int_distribution<int> dis(0, n-1);
+
+    int vehicle = dis(gen);
+    int cluster = vehicle_to_cluster_id[vehicle];
+
+    // Find the closest neighbor that is not in the same cluster
+    int closest_neighbor = -1;
+    int min_distance = INT32_MAX;
+    for (int i = 0; i < n; i++){
+        if (i == vehicle){
+            continue;
+        }
+        if (vehicle_to_cluster_id[i] == cluster){
+            continue;
+        }
+        if (similarity_matrix[vehicle][i] < min_distance){
+            min_distance = similarity_matrix[vehicle][i];
+            closest_neighbor = i;
+        }
+    }
+
+    // Swap the vehicle and the closest neighbor
+    // Find the indexes of both vehicles in their respective clusters
+    auto it1 = std::find(clusters[cluster].begin(), clusters[cluster].end(), vehicle);
+    int cluster_neighbor = vehicle_to_cluster_id[closest_neighbor];
+    auto it2 = std::find(clusters[cluster_neighbor].begin(), clusters[cluster_neighbor].end(), closest_neighbor);
+    // Swap the vehicles
+    *it1 = closest_neighbor;
+    *it2 = vehicle;
+
+    return clusters;
+}
+
+
+int compute_clustering_cost(
+    const std::vector<std::vector<int>>& clusters,
+    const std::vector<std::vector<int>>& similarity_matrix
+){
+    int cost = 0;
+    for (const auto& cluster : clusters){
+        for (int i = 0; i < cluster.size(); i++){
+            for (int j = i+1; j < cluster.size(); j++){
+                cost += similarity_matrix[cluster[i]][cluster[j]];
+            }
+        }
+    }
+    return cost;
 }

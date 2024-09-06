@@ -18,6 +18,7 @@
 #include <iostream>
 #include <iomanip>
 #include <chrono>
+#include <random>
 
 #define TIME_LIMIT 120
 #define SOLVER_MODE IMPOSE_ROUTING
@@ -82,6 +83,13 @@ int main(int argc, char *argv[]){
         }
         cout << endl;
     }
+
+    cout << "Cost of the clustering : " << compute_clustering_cost(clusters, instance.similarity_matrix) << endl;
+
+    // Try a swap
+    auto new_clusters = greedy_neighbor(instance.similarity_matrix, clusters, std::random_device{}());
+
+    cout << "Cost after a swap : " << compute_clustering_cost(new_clusters, instance.similarity_matrix) << endl;
 
     // vector<Route> routes = parse_routes_from_file("../routes/best_small.json", instance);
 
