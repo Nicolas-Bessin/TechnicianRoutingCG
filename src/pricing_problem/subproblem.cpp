@@ -100,6 +100,9 @@ unique_ptr<Problem> create_pricing_instance(
         // First, we add the arcs that go to other interventions
         for (int j = 0; j < n_interventions_v; j++) {
             if (i == j) continue;
+            // Check if the arc is feasible
+            // bool feasible = is_edge_feasible(vehicle.interventions[i], vehicle.interventions[j], instance);
+            // if (!feasible) continue;
             // Check if the arc is forbidden
             bool forbidden = forbidden_edges.contains(std::make_tuple(vehicle.interventions[i], vehicle.interventions[j], vehicle.id));
             if (!forbidden) problem->setNetworkArc(i, j);

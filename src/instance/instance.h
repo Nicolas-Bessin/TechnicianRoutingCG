@@ -202,6 +202,11 @@ int symmetry_gap(const std::vector<std::vector<int>>& matrix);
 bool can_do_intervention(const Node& intervention, const Vehicle& vehicle);
 
 
+// Checks wether intervention j can follow intervention i (is the edge i->j feasible?)
+// We check this by looking at the time window of the interventions
+bool is_edge_feasible(int i, int j, const Instance& instance);
+
+
 // Generate a new instance from an existing one
 // @param mask : vector of size instance.number_interventions
 // mask[i] = 0 if the intervention i is removed from the new instance

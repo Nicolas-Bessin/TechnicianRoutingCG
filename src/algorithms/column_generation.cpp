@@ -143,13 +143,14 @@ CGResult column_generation(
         vector<int> vehicle_order(instance.vehicles.size());
         std::iota(vehicle_order.begin(), vehicle_order.end(), 0);
 
-        std::vector<Route> new_routes = solve_pricing_problems_clustering(
+        std::vector<Route> new_routes = solve_pricing_problems_diversification(
             convex_dual_solution,
             instance,
             using_cyclic_pricing,
             n_ressources_dominance,
             vehicle_order,
-            reduced_cost_threshold
+            reduced_cost_threshold,
+            iteration
         );
         // We add the new routes to the global routes vector
         for (Route& new_route : new_routes){
@@ -243,7 +244,7 @@ CGResult column_generation(
         // cout << "After keeping the last used routes : " << routes.size() << endl;
         // Solve the integer version of the problem
         auto start_integer = chrono::steady_clock::now();
-        integer_solution = integer_RMP(instance, routes, node);
+        integer_solution = integer_RMP(instance, routes, node, true);
         auto end_integer = chrono::steady_clock::now();
         integer_time = chrono::duration_cast<chrono::milliseconds>(end_integer - start_integer).count();
         cout << "Integer RMP objective value : " << integer_solution.objective_value << endl;

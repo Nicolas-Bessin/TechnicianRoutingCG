@@ -61,6 +61,17 @@ bool can_do_intervention(const Node& intervention, const Vehicle& vehicle){
     return true;
 }
 
+
+bool is_edge_feasible(int i, int j, const Instance& instance){
+    const Node& intervention_i = instance.nodes[i];
+    const Node& intervention_j = instance.nodes[j];
+
+    // Check the time window : can j be done if we depart from i at the last possible moment ?
+    int arrival_time = intervention_i.start_window + intervention_i.duration + instance.time_matrix[i][j];
+
+    return arrival_time + intervention_j.duration <= intervention_j.end_window;
+}
+
 Instance cut_instance(const Instance& instance, const std::vector<int>& mask) {
     // We only keep the interventions that are not masked
     // We need to remove the vehicles that cannot do any intervention
@@ -142,3 +153,4 @@ Instance cut_instance(const Instance& instance, const std::vector<int>& mask) {
         new_similarity_matrix
     };
 }
+
