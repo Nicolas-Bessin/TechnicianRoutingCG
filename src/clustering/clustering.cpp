@@ -44,7 +44,7 @@ std::vector<std::vector<int>> compute_similarity_matrix(const std::vector<Vehicl
 }
 
 
-std::vector<std::vector<int>> optimal_2_clustering(std::vector<std::vector<int>> similarity_matrix){
+std::vector<std::vector<int>> optimal_clustering_by_2(std::vector<std::vector<int>> similarity_matrix){
 
     using std::vector;
     int n = similarity_matrix.size();
@@ -111,6 +111,54 @@ std::vector<std::vector<int>> optimal_2_clustering(std::vector<std::vector<int>>
             if (x[i][j].get(GRB_DoubleAttr_X) > 0.5){
                 clusters.push_back({i, j});
             }
+        }
+    }
+
+    return clusters;
+}
+
+std::vector<std::vector<int>> optimal_2_clustering(std::vector<std::vector<int>> similarity_matrix){
+    using std::vector;
+    int n = similarity_matrix.size();
+    
+    // Create the model
+    GRBEnv env = GRBEnv(true);
+    env.set(GRB_IntParam_OutputFlag, 0);
+    env.start();
+    GRBModel model = GRBModel(env);
+    // Create the variables - for each variable, x indicates if the vehicle is in the first cluster, y if it is in the second
+    vector<GRBVar> x(n);
+    vector<GRBVar> y(n);
+    for (int i = 0; i < n; i++){
+        x[i] = model.addVar(0.0, 1.0, 0.0, GRB_BINARY);
+        y[i] = model.addVar(0.0, 1.0, 0.0, GRB_BINARY);
+    }
+
+    // Add the constraints
+    for (int i = 0; i < n; i++){
+        model.addConstr(x[i] + y[i] == 1);
+    }
+
+    // Objective function
+    GRBQuadExpr obj = 0;
+    for (int i = 0; i < n; i++){
+        for (int j = i+1; j < n; j++){
+            obj += similarity_matrix[i][j] * x[i] * y[j];
+        }
+    }
+
+    model.setObjective(obj, GRB_MINIMIZE);
+
+    // Optimize the model
+    model.optimize();
+
+    // Retrieve the solution
+    vector<vector<int>> clusters = {{}, {}};
+    for (int i = 0; i < n; i++){
+        if (x[i].get(GRB_DoubleAttr_X) > 0.5){
+            clusters[0].push_back(i);
+        } else {
+            clusters[1].push_back(i);
         }
     }
 

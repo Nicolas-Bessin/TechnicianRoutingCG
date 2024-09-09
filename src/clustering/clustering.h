@@ -16,7 +16,10 @@ int hamming_distance(const Vehicle& vehicle1, const Vehicle& vehicle2);
 std::vector<std::vector<int>> compute_similarity_matrix(const std::vector<Vehicle>& vehicles);
 
 
-// Computes the optimal 2-clustering of the vehicles (at most one vehicle is alone in a cluster)
+// Computes the optimal clustering of the vehicles into clusters of 2 (at most one vehicle is alone in a cluster)
+std::vector<std::vector<int>> optimal_clustering_by_2(std::vector<std::vector<int>> similarity_matrix);
+
+// Compute an optimal partition of the vehicles into 2 clusters
 std::vector<std::vector<int>> optimal_2_clustering(std::vector<std::vector<int>> similarity_matrix);
 
 

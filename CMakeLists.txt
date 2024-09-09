@@ -105,9 +105,6 @@ add_subdirectory(pathwyse)
 # Add Matplotplusplus
 add_subdirectory(matplotplusplus)
 
-# Add the TBB library
-add_library(tbb INTERFACE)
-
 #Link against the Gurobi library
 target_link_libraries(technician_routing_lib PUBLIC gurobi)
 #Link against the pathwyse core library

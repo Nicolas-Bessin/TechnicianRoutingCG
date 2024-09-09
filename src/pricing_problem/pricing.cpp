@@ -9,6 +9,7 @@
 #include <memory>
 #include <random>
 #include <iostream>
+#include <thread>
 
 
 std::vector<Route> solve_pricing_problems_basic(
@@ -21,30 +22,20 @@ std::vector<Route> solve_pricing_problems_basic(
     ){
     using std::vector;
     using std::unique_ptr;
-
-    // Initialize the new routes
-    vector<Route> new_routes = {};
-
-    double max_reduced_cost = 0;
-
-    // Parallelize the pricing sub problems
-    std::for_each(
-        std::execution::par_unseq,
-        vehicle_order.begin(),
-        vehicle_order.end(),
-        [&](int v){
+    
+    auto single_pricer = [&](int v){
             const Vehicle& vehicle = instance.vehicles.at(v);
             unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, vehicle, using_cyclic_pricing);
             update_pricing_instance(pricing_problem, solution, instance, vehicle);
             Route new_route = solve_pricing_problem(pricing_problem, instance, vehicle, n_ressources_dominance);
-            max_reduced_cost = std::max(max_reduced_cost, new_route.reduced_cost);
-            if (new_route.reduced_cost> reduced_cost_threshold){
-                new_routes.push_back(new_route);              
-            }
-        }
-    );
+            return new_route;
+        };
 
-    return new_routes;
+    // Solve the pricing problems in parallel
+    vector<Route> new_routes_parallel = vector<Route>(vehicle_order.size());
+    std::transform(std::execution::par, vehicle_order.begin(), vehicle_order.end(), new_routes_parallel.begin(), single_pricer);
+
+    return new_routes_parallel;
 }
 
    
@@ -60,11 +51,17 @@ std::vector<Route> solve_pricing_problems_diversification(
     using std::vector;
     using std::unique_ptr;
 
+    // Randomize the seed
+    if (seed == RANDOM_SEED){
+        seed = std::chrono::system_clock::now().time_since_epoch().count();
+    }
+
     // First step in generating a random permutation of the vehicle order
     // We do this by shuffling the indexes of the vehicles
     vector<int> permutation(vehicle_order.size());
     std::iota(permutation.begin(), permutation.end(), 0);
-    std::shuffle(permutation.begin(), permutation.end(), std::default_random_engine(seed));
+    std::shuffle(permutation.begin(), permutation.end(), std::mt19937(seed));
+
 
     // Initialize the new routes
     vector<Route> new_routes = {};
@@ -75,11 +72,10 @@ std::vector<Route> solve_pricing_problems_diversification(
         vector<int> covered_interventions = vector<int>(instance.nodes.size(), 0);
         // Go through each vehicle in order of the permutation
         for (int k = 0; k < vehicle_order.size(); k++){
-            int current_vehicle = vehicle_order[(initital_vehicle_index + k) % vehicle_order.size()];
+            int current_vehicle = vehicle_order[permutation[(initital_vehicle_index + k) % vehicle_order.size()]];
             const Vehicle& vehicle = vehicle_mask(instance.vehicles.at(current_vehicle), covered_interventions, KEEP_NON_COVERED);
             // If the vehicle has no interventions to cover, we skip it
             if (vehicle.interventions.size() == 0){
-                current_vehicle = permutation[current_vehicle];
                 continue;
             }
             // Solve the pricing problem for the vehicle
@@ -94,8 +90,6 @@ std::vector<Route> solve_pricing_problems_diversification(
                     covered_interventions[new_route.id_sequence[i]] = 1;
                 }
             }
-            // Update the current vehicle
-            current_vehicle = permutation[current_vehicle];
         }
     }
 
@@ -114,6 +108,12 @@ std::vector<Route> solve_pricing_problems_clustering(
     ){
     using std::vector;
     using std::unique_ptr;
+
+    // Randomize the seed
+    if (seed == RANDOM_SEED){
+        seed = std::chrono::system_clock::now().time_since_epoch().count();
+    }
+
 
     // Initialize the new routes
     vector<Route> new_routes = {};

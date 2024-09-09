@@ -143,21 +143,22 @@ CGResult column_generation(
         vector<int> vehicle_order(instance.vehicles.size());
         std::iota(vehicle_order.begin(), vehicle_order.end(), 0);
 
-        std::vector<Route> new_routes = solve_pricing_problems_diversification(
+        std::vector<Route> new_routes = solve_pricing_problems_clustering(
             convex_dual_solution,
             instance,
             using_cyclic_pricing,
             n_ressources_dominance,
             vehicle_order,
-            reduced_cost_threshold,
-            std::rand()
+            reduced_cost_threshold
         );
-        n_added_routes = new_routes.size();
         // We add the new routes to the global routes vector
         for (Route& new_route : new_routes){
-            routes.push_back(new_route);
-            max_reduced_cost = std::max(max_reduced_cost, new_route.reduced_cost);
-            node.active_routes.insert(routes.size() - 1);
+            if (new_route.reduced_cost > reduced_cost_threshold) {
+                routes.push_back(new_route);
+                max_reduced_cost = std::max(max_reduced_cost, new_route.reduced_cost);
+                node.active_routes.insert(routes.size() - 1);
+                n_added_routes++;
+            }
         }
         // Resize the last_used vector
         last_used.resize(routes.size(), 0);        

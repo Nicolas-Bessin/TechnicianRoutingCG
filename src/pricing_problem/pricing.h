@@ -8,6 +8,8 @@
 #include <vector>
 #include <random>
 
+#define RANDOM_SEED -1
+
 std::vector<Route> solve_pricing_problems_basic(
     const DualSolution & solution,
     const Instance & instance,
@@ -28,7 +30,7 @@ std::vector<Route> solve_pricing_problems_diversification(
     int n_ressources_dominance,
     const std::vector<int> & vehicle_order,
     double reduced_cost_threshold = 1e-6,
-    int seed = 0
+    int seed = RANDOM_SEED
 );
 
 
@@ -39,5 +41,5 @@ std::vector<Route> solve_pricing_problems_clustering(
     int n_ressources_dominance,
     const std::vector<int> &vehicle_order,
     double reduced_cost_threshold,
-    int seed
+    int seed = RANDOM_SEED
     );
