@@ -149,8 +149,7 @@ CGResult column_generation(
             using_cyclic_pricing,
             n_ressources_dominance,
             vehicle_order,
-            reduced_cost_threshold,
-            iteration
+            reduced_cost_threshold
         );
         // We add the new routes to the global routes vector
         for (Route& new_route : new_routes){
@@ -227,24 +226,8 @@ CGResult column_generation(
     IntegerSolution integer_solution = IntegerSolution{};
     int integer_time = 0;
     if (compute_integer_solution) {
-        // // Keep the 1000 last used routes
-        // cout << "Before keeping the last used routes : " << routes.size() << endl;
-        // auto tuple = keep_last_used_routes(2500, routes, last_used);
-        // std::map<int, int> old_to_new = std::get<0>(tuple);
-        // routes = std::get<1>(tuple);
-        // last_used = std::get<2>(tuple);
-        // // We need to update the active routes in the node
-        // std::set <int> new_active_routes;
-        // for (int i : node.active_routes){
-        //     if (old_to_new.contains(i)){
-        //         new_active_routes.insert(old_to_new.at(i));
-        //     }
-        // }
-        // node.active_routes = new_active_routes;
-        // cout << "After keeping the last used routes : " << routes.size() << endl;
-        // Solve the integer version of the problem
         auto start_integer = chrono::steady_clock::now();
-        integer_solution = integer_RMP(instance, routes, node, true);
+        integer_solution = integer_RMP(instance, routes, node, 300, true);
         auto end_integer = chrono::steady_clock::now();
         integer_time = chrono::duration_cast<chrono::milliseconds>(end_integer - start_integer).count();
         cout << "Integer RMP objective value : " << integer_solution.objective_value << endl;

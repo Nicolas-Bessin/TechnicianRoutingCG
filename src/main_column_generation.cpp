@@ -27,7 +27,7 @@
 #define CYCLIC_PRICING true
 #define MAX_ITER 10000
 #define COMPUTE_INTEGER_SOL true
-#define N_INTERVENTIONS 75
+#define N_INTERVENTIONS 150
 
 int main(int argc, char *argv[]){
 
@@ -42,7 +42,7 @@ int main(int argc, char *argv[]){
     auto start_parse = chrono::steady_clock::now();
     cout << "Technician Routing Problem using Column Generation" << endl;
     cout << "-----------------------------------" << endl;
-    string default_filename = "../data/instance_1.json";
+    string default_filename = "../data/instance_2.json";
     Instance instance = parse_file(default_filename, true);
 
     // Only keep the first 25 nodes

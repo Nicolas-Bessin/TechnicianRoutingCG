@@ -71,7 +71,8 @@ std::vector<Route> solve_pricing_problems_diversification(
         // Initially, no intervention is covered
         vector<int> covered_interventions = vector<int>(instance.nodes.size(), 0);
         // Go through each vehicle in order of the permutation
-        for (int k = 0; k < vehicle_order.size(); k++){
+        int explore = std::min((int)vehicle_order.size(), 10);
+        for (int k = 0; k < explore; k++){
             int current_vehicle = vehicle_order[permutation[(initital_vehicle_index + k) % vehicle_order.size()]];
             const Vehicle& vehicle = vehicle_mask(instance.vehicles.at(current_vehicle), covered_interventions, KEEP_NON_COVERED);
             // If the vehicle has no interventions to cover, we skip it
