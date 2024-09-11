@@ -50,6 +50,9 @@ bool operator==(const Route& lhs, const Route& rhs);
 // Comutes the length of a route
 double count_route_kilometres(const Route& route, const Instance& instance);
 
+// Comptues the total duration of interventions along a route
+int count_route_duration(const Route& route, const Instance& instance);
+
 // Computes the reduced cost of a route given the dual values of the constraints
 double compute_reduced_cost(const Route& route, const std::vector<double>& alphas, double beta, const Instance& instance);
 

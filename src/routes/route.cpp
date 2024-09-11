@@ -53,6 +53,18 @@ double count_route_kilometres(const Route& route, const Instance& instance) {
     return total_distance;
 }
 
+int count_route_duration(const Route& route, const Instance& instance) {
+    if (route.id_sequence.size() <= 2) {
+        return 0;
+    }
+    int total_duration = 0;
+    for (int i = 1; i < route.id_sequence.size() - 1; i++) {
+        int id = route.id_sequence[i];
+        total_duration += instance.nodes.at(id).duration;
+    }
+    return total_duration;
+}
+
 double compute_reduced_cost(const Route& route, const std::vector<double>& alphas, double beta, const Instance& instance) {
     const Vehicle& vehicle = instance.vehicles[route.vehicle_id];
     // Compute the reduced cost along the route by going through the nodes
