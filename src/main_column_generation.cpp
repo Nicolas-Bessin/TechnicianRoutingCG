@@ -20,14 +20,15 @@
 #include <iomanip>
 #include <chrono>
 
-#define TIME_LIMIT 300
+#define TIME_LIMIT 600
 #define THRESHOLD 1e-6
 #define VERBOSE true
 #define GREEDY_INIT false
 #define CYCLIC_PRICING true
 #define MAX_ITER 10000
 #define COMPUTE_INTEGER_SOL true
-#define N_INTERVENTIONS 150
+#define N_INTERVENTIONS 75
+#define INSTANCE_FILE "../data/instance_1.json"
 
 int main(int argc, char *argv[]){
 
@@ -42,10 +43,10 @@ int main(int argc, char *argv[]){
     auto start_parse = chrono::steady_clock::now();
     cout << "Technician Routing Problem using Column Generation" << endl;
     cout << "-----------------------------------" << endl;
-    string default_filename = "../data/instance_2.json";
+    string default_filename = INSTANCE_FILE;
     Instance instance = parse_file(default_filename, true);
 
-    // Only keep the first 25 nodes
+    // Only keep the first N_INTERVENTIONS nodes
     vector<int> kept_nodes = vector<int>(instance.number_interventions);
     for (int i = 0; i < N_INTERVENTIONS; i++){
         kept_nodes[i] = 1;
@@ -77,7 +78,7 @@ int main(int argc, char *argv[]){
     cout << "Starting the column generation algorithm" << endl;
     
 
-    int MAX_RESOURCES_DOMINANCE = instance.capacities_labels.size();
+    int MAX_RESOURCES_DOMINANCE = instance.capacities_labels.size() + 1;
     // Create a root node for the algorithm
     BPNode root = RootNode(routes);
     CGResult result = column_generation(

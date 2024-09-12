@@ -143,7 +143,7 @@ CGResult column_generation(
         vector<int> vehicle_order(instance.vehicles.size());
         std::iota(vehicle_order.begin(), vehicle_order.end(), 0);
 
-        std::vector<Route> new_routes = solve_pricing_problems_diversification(
+        std::vector<Route> new_routes = solve_pricing_problems_basic(
             convex_dual_solution,
             instance,
             using_cyclic_pricing,
@@ -227,7 +227,7 @@ CGResult column_generation(
     int integer_time = 0;
     if (compute_integer_solution) {
         auto start_integer = chrono::steady_clock::now();
-        integer_solution = integer_RMP(instance, routes, node, 300, true);
+        integer_solution = integer_RMP(instance, routes, node, 300, false);
         auto end_integer = chrono::steady_clock::now();
         integer_time = chrono::duration_cast<chrono::milliseconds>(end_integer - start_integer).count();
         cout << "Integer RMP objective value : " << integer_solution.objective_value << endl;

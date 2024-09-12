@@ -64,6 +64,8 @@ set(
     src/pricing_problem/subproblem.cpp
     src/pricing_problem/time_window_lunch.h
     src/pricing_problem/time_window_lunch.cpp
+    src/pricing_problem/tabu.h
+    src/pricing_problem/tabu.cpp
 
     src/compact_formulation/compact_solution.h 
     src/compact_formulation/compact_solver.h

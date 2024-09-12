@@ -364,3 +364,20 @@ Route solve_pricing_problem(
     return new_route;
 }
 
+Route solve_pricing_problem(
+    const Instance &instance, 
+    const Vehicle &vehicle,
+    const DualSolution &dual_solution,
+    bool use_cyclic_pricing,
+    int n_res_dom,
+    const std::set<std::tuple<int, int, int>> &forbidden_edges,
+    const std::set<std::tuple<int, int, int>> &required_edges
+    ) {
+    // Create the pricing problem
+    unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, vehicle, use_cyclic_pricing, forbidden_edges, required_edges);
+    // Update the pricing problem with the dual values
+    update_pricing_instance(pricing_problem, dual_solution, instance, vehicle);
+    // Solve the pricing problem
+    return solve_pricing_problem(pricing_problem, instance, vehicle, n_res_dom);
+}
+

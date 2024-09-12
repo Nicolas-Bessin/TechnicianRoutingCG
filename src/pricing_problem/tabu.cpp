@@ -94,11 +94,11 @@ std::vector<Route> tabu_search(
         }
     }
     vector<GRBVar> u(n_interventions);
-    for (int i = 0; i < n_nodes; i++){
+    for (int i = 0; i < n_interventions; i++){
         u[i] = model.addVar(0.0, n_nodes, 0.0, GRB_INTEGER);
     }
     vector<GRBVar> z(n_interventions);
-    for (int i = 0; i < n_nodes; i++){
+    for (int i = 0; i < n_interventions; i++){
         z[i] = model.addVar(0.0, 1.0, 0.0, GRB_BINARY);
     }
     // Constraints
@@ -146,7 +146,7 @@ std::vector<Route> tabu_search(
         model.addConstr(u[i] + duration + time_in * x[i][reduced_depot] <= END_DAY);
     }
     // Objective function
-    GRBLinExpr obj = -vehicle.cost;
+    GRBLinExpr obj = 0;
     for (int i = 0; i < n_nodes; i++){
         for (int j = 0; j < n_nodes; j++){
             int true_i = i == reduced_depot ? vehicle.depot : vehicle.interventions[i];
@@ -184,50 +184,56 @@ std::vector<Route> tabu_search(
                 }
             }
         }
-        model.addConstr(no_good_cuts <= n_nodes * n_nodes - 1);
+        model.addConstr(no_good_cuts >= 1);
         // Add the "at most K modifications" constraint
-        auto modifications = model.addConstr(no_good_cuts <= max_modifications);
+        // auto modifications = model.addConstr(no_good_cuts <= max_modifications);
         // Optimize
         model.optimize();
-        // Extract the solution
-        double obj_val = model.get(GRB_DoubleAttr_ObjVal);
-        // Extract the local edge matrix
-        vector<vector<int>> local_matrix(n_nodes, vector<int>(n_nodes, 0));
-        for (int i = 0; i < n_nodes; i++){
-            for (int j = 0; j < n_nodes; j++){
-                local_matrix[i][j] = x[i][j].get(GRB_DoubleAttr_X);
+        try {
+            // Extract the solution
+            double obj_val = model.get(GRB_DoubleAttr_ObjVal);
+            // Extract the local edge matrix
+            vector<vector<int>> local_matrix(n_nodes, vector<int>(n_nodes, 0));
+            for (int i = 0; i < n_nodes; i++){
+                for (int j = 0; j < n_nodes; j++){
+                    local_matrix[i][j] = x[i][j].get(GRB_DoubleAttr_X);
+                }
             }
+            // Convert the local matrix to a sequence
+            vector<int> sequence = local_matrix_to_seq(local_matrix, vehicle);
+            // Convert the local matrix to a global matrix
+            vector<vector<int>> global_matrix = local_matrix_to_global(local_matrix, vehicle, instance);
+            // Also get the covered interventions
+            vector<int> is_in_route = sequence_to_mask(sequence, vehicle, instance);
+            // Compute the reduced cost
+            double reduced_cost = obj_val - vehicle.cost - solution.betas[vehicle.id];
+            Route new_route = Route{
+                vehicle.id,
+                -1,
+                reduced_cost,
+                -1,
+                sequence,
+                is_in_route,
+                global_matrix
+            };
+            // Update the route cost and duration
+            new_route.total_cost = count_route_kilometres(new_route, instance) * instance.cost_per_km + vehicle.cost;
+            new_route.total_duration = count_route_duration(new_route, instance);
+
+            // Update the tabu list & previous route
+            if (new_route.reduced_cost > 1e-6){
+                tabu_list.push_back(new_route);
+            }
+            previous_route = new_route;
+        } catch (GRBException e) {
+            std::cout << "Error code = " << e.getErrorCode() << std::endl;
+            std::cout << e.getMessage() << std::endl;
         }
-        // Convert the local matrix to a sequence
-        vector<int> sequence = local_matrix_to_seq(local_matrix, vehicle);
-        // Convert the local matrix to a global matrix
-        vector<vector<int>> global_matrix = local_matrix_to_global(local_matrix, vehicle, instance);
-        // Also get the covered interventions
-        vector<int> is_in_route = sequence_to_mask(sequence, vehicle, instance);
-        // Compute the reduced cost
-        double reduced_cost = -obj_val - vehicle.cost;
-        Route new_route = Route{
-            vehicle.id,
-            -1,
-            reduced_cost,
-            -1,
-            sequence,
-            is_in_route,
-            global_matrix
-        };
-        // Update the route cost and duration
-        new_route.total_cost = count_route_kilometres(new_route, instance) * instance.cost_per_km + vehicle.cost;
-        new_route.total_duration = count_route_duration(new_route, instance);
 
         // Remove the modifications constraint
-        model.remove(modifications);
+        // model.remove(modifications);
 
-        // Update the tabu list & previous route
-        if (new_route.reduced_cost > 1e-6){
-            tabu_list.push_back(new_route);
-        }
-        previous_route = new_route;
-
+        iteration++;
     }
 
     return tabu_list;
