@@ -14,6 +14,8 @@ public:
     Solver();
     // Custom constructor to load specified parameters from a file
     Solver(std::string file_path);
+    // Custom constructor to load specified parameters from a given mode of operation
+    Solver(int mode);
     ~Solver();
 
     //General solver methods
@@ -23,6 +25,7 @@ public:
 
     //Setup
     void readConfiguration(std::string file_path = "");
+    void setConfigurationFromMode(int mode);
     void setupOutput();
 
     //Additional interfaces
@@ -118,7 +121,7 @@ private:
     //Data collection
     DataCollector collector;
 
-    // If the problem is shared, the solver will not delete it
+    // If the problem is shared or does not belong to the solver, it will not be deleted
     bool shared_problem;
 
 };

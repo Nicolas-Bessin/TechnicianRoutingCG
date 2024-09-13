@@ -46,6 +46,9 @@ std::vector<Route> solve_pricing_problems_basic(
     vector<Route> new_routes_parallel(vehicle_order.size());
     for (int i = 0; i < tasks.size(); i++){
         threads[i] = std::thread(std::move(tasks[i]), vehicle_order[i]);
+    }
+
+    for (int i = 0; i < tasks.size(); i++){
         threads[i].join();
         new_routes_parallel[i] = futures[i].get();
     }

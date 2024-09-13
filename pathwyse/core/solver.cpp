@@ -34,6 +34,22 @@ Solver::Solver(std::string file_path) {
 }
 
 /**
+ * Custom Solver Constructor. Builds the solver with specified parameters.
+ * 
+ * @param mode - Mode of operation.
+ */
+Solver::Solver(int mode) {
+    setStatus(SOLVER_START);
+    solver_version = "0.1";
+    optimization_round = 0;
+    problem = nullptr;
+    main_algorithm = nullptr;
+    setConfigurationFromMode(mode);
+    setupOutput();
+    printWelcome();
+}
+
+/**
  * Solver Deconstructor. Destroys the solver.
  */
 Solver::~Solver() {
@@ -65,6 +81,19 @@ void Solver::printWelcome() {
  */
 void Solver::readConfiguration(std::string file_path){
     Parameters::readParameters(file_path);
+    default_instance = Parameters::getInstancePath();
+    main_algorithm_name = Parameters::getMainAlgorithmName();
+    ensemble_algorithms_names = Parameters::getEnsembleNames();
+    use_ensemble = Parameters::isEnsembleUsed();
+}
+
+/**
+ * Sets up solver configuration from a given mode of operation.
+ * 
+ * @param mode - Mode of operation.
+ */
+void Solver::setConfigurationFromMode(int mode){
+    Parameters::setParametersFromMode(mode);
     default_instance = Parameters::getInstancePath();
     main_algorithm_name = Parameters::getMainAlgorithmName();
     ensemble_algorithms_names = Parameters::getEnsembleNames();

@@ -183,6 +183,56 @@ void Parameters::readParameters(std::string param_path) {
         output_write = false;
 }
 
+void Parameters::setParametersFromMode(int mode){
+    // Default parameters, shared by all modes
+    verbosity = -1;
+    memory_threshold = 10000;
+    coord_distance_scaling = 9.6;
+    coord_scaling = 1/1e6;
+    scaling_override = false;
+    scaling_value = 1.0;
+    scaling_target = "objective";
+    ensemble_algorithms_names = {"PWDefaultRelaxDom","PWDefaultRelaxQueue"};
+    use_ensemble = false;
+    collection_level = -1;
+    output_write = false;
+    // Main algorithm parameters
+    main_algorithm_name = "PWDefault";
+    // Mode specific configurations
+    if (mode == DEFAULT_ACYCLIC_PARAM_MODE) {
+        default_autoconfig = false;
+        default_timelimit = 0;
+        default_parallel = false;
+        default_bidirectional = false;
+        default_split = 0.5;
+        default_reserve = 10000000;
+        default_use_visited = true;
+        default_compare_unreachables = false;
+        default_dssr = DSSR_STANDARD;
+        default_ng = NG_STANDARD;
+        default_ng_size = 8;
+        default_candidate_type = CANDIDATE_NODE;
+        default_join_type = JOIN_ORDERED;
+    } else if (mode == DEFAULT_CYCLE_PARAM_MODE) {
+        default_autoconfig = true;
+        default_timelimit = 5;
+        default_parallel = false;
+        default_bidirectional = false;
+        default_split = 0.5;
+        default_reserve = 10000000;
+        default_use_visited = true;
+        default_compare_unreachables = false;
+        default_dssr = DSSR_STANDARD;
+        default_ng = NG_STANDARD;
+        default_ng_size = 8;
+        default_candidate_type = CANDIDATE_NODE;
+        default_join_type = JOIN_ORDERED;
+    } else {
+        std::cout << "Warning: Mode not recognized, using default parameters." << std::endl;
+    }
+
+}
+
 //Output path setup
 void Parameters::setupCollectionPath(){
     collection_path = collection_folder + "/" + timestamp;

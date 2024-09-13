@@ -20,7 +20,7 @@
 #include <iomanip>
 #include <chrono>
 
-#define TIME_LIMIT 600
+#define TIME_LIMIT 300
 #define THRESHOLD 1e-6
 #define VERBOSE true
 #define GREEDY_INIT false

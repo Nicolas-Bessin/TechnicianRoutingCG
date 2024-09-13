@@ -7,10 +7,15 @@
 #include <fstream>
 #include "constants.h"
 
+#define DEFAULT_ACYCLIC_PARAM_MODE 0
+#define DEFAULT_CYCLE_PARAM_MODE 1
+
 
 struct Parameters {
 
     static void readParameters(std::string param_path);
+
+    static void setParametersFromMode(int mode);
 
     /**Solver Parameters**/
     static std::string getInstancePath(){return instance_path;}

@@ -284,11 +284,11 @@ Route solve_pricing_problem(
     int destination = problem->getDestination();
     // We now want to solve the problem
     // We give the solver a different set of parameters depending on the problem
-    string params = "../pathwyse.set";
+    int param_mode = DEFAULT_ACYCLIC_PARAM_MODE;
     if (problem->isGraphCyclic()) {
-        params = "../pathwyse_cyclic.set";
+        param_mode = DEFAULT_CYCLE_PARAM_MODE;
     }
-    Solver solver = Solver(params);
+    Solver solver = Solver(param_mode);
     solver.setCustomProblem(*problem, true);
     solver.setupAlgorithms();
     // Set the dominance test
