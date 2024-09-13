@@ -14,7 +14,7 @@
 
 
 Route EmptyRoute(int n_nodes) {
-    Route route;
+    Route route{};
     route.is_in_route = std::vector<int>(n_nodes, 0);
     route.route_edges = std::vector<std::vector<int>>(n_nodes, std::vector<int>(n_nodes, 0));
     return route;

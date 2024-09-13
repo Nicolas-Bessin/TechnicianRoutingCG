@@ -1,6 +1,7 @@
 #include "pricing.h"
 
 #include "pricing_problem/subproblem.h"
+#include "routes/route.h"
 #include "routes/route_optimizer.h"
 #include "clustering/clustering.h"
 #include "tabu.h"
@@ -23,7 +24,6 @@ std::vector<Route> solve_pricing_problems_basic(
     double reduced_cost_threshold
     ){
     using std::vector;
-    using std::unique_ptr;
     using std::packaged_task;
     using std::future;
     
@@ -67,7 +67,8 @@ std::vector<Route> solve_pricing_problems_diversification(
     int seed
 ) {
     using std::vector;
-    using std::unique_ptr;
+    using std::packaged_task;
+    using std::future;
 
     // Randomize the seed
     if (seed == RANDOM_SEED){
@@ -80,12 +81,8 @@ std::vector<Route> solve_pricing_problems_diversification(
     std::iota(permutation.begin(), permutation.end(), 0);
     std::shuffle(permutation.begin(), permutation.end(), std::mt19937(seed));
 
-
-    // Initialize the new routes
-    vector<Route> new_routes = {};
-
-    // Do the diversifying generation beginning from every vehicle
-    for (int initital_vehicle_index = 0; initital_vehicle_index < vehicle_order.size(); initital_vehicle_index++){
+    auto single_diversifier = [&](int initital_vehicle_index){
+        vector<Route> private_new_routes = {};
         // Initially, no intervention is covered
         vector<int> covered_interventions = vector<int>(instance.nodes.size(), 0);
         // Go through each vehicle in order of the permutation
@@ -98,20 +95,51 @@ std::vector<Route> solve_pricing_problems_diversification(
                 continue;
             }
             // Solve the pricing problem for the vehicle
-            unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, vehicle, using_cyclic_pricing);
-            update_pricing_instance(pricing_problem, solution, instance, vehicle);
-            Route new_route = solve_pricing_problem(pricing_problem, instance, vehicle, n_ressources_dominance);
+            Route new_route = solve_pricing_problem(instance, vehicle, solution, using_cyclic_pricing, n_ressources_dominance);
             // If the reduced cost is greater than the threshold, we add the route
             if (new_route.reduced_cost > reduced_cost_threshold){
-                new_routes.push_back(new_route);
+                if (new_route.id_sequence.size() <= 2){
+                    continue;
+                }
+                private_new_routes.push_back(new_route);
                 // Update the covered interventions (interventions only, not warehouses)
                 for (int i = 1; i < new_route.id_sequence.size() - 1; i++){
                     covered_interventions[new_route.id_sequence[i]] = 1;
                 }
             }
         }
-    }
+        return private_new_routes;
+    };
 
+
+    // We create the tasks
+    vector<std::packaged_task<vector<Route>(int)>> tasks;
+    for (int i = 0; i < vehicle_order.size(); i++){
+        tasks.push_back(packaged_task<vector<Route>(int)>(single_diversifier));
+    }
+    vector<future<vector<Route>>> futures;
+    for (auto& task : tasks){
+        futures.push_back(task.get_future());
+    }
+    // Multi-threaded execution
+    vector<std::thread> threads(tasks.size());
+    vector<vector<Route>> new_routes_parallel(vehicle_order.size());
+    for (int i = 0; i < tasks.size(); i++){
+        threads[i] = std::thread(std::move(tasks[i]), i);
+    }
+    // Get the results
+    for (int i = 0; i < tasks.size(); i++){
+        threads[i].join();
+        new_routes_parallel[i] = futures[i].get();
+    }
+    // Build the final list of routes
+    vector<Route> new_routes;
+    for (auto routes : new_routes_parallel){
+        if (routes.size() == 0){
+            continue;
+        }
+        new_routes.insert(new_routes.end(), routes.begin(), routes.end());
+    }
     return new_routes;
 }
 
