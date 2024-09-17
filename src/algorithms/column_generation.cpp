@@ -113,8 +113,8 @@ CGResult column_generation(
         DualSolution& dual_solution = solution.dual_solution;
 
         if (verbose) {
-            cout << "Iteration " << iteration << " - Objective value : " << solution.objective_value << "\n";
-            cout << "Master problem solved in " << diff << " ms \n";
+            cout << "Iteration " << iteration << " - Objective value : " << solution.objective_value;
+            cout << " - Master problem solved in " << diff << " ms \n";
             cout << "Number of interventions covered : " << setprecision(2) << count_covered_interventions(solution, routes, instance);
             std::pair<double, int> used_vehicles = count_used_vehicles(solution, routes, instance);
             cout << " - Number of vehicles used : " << used_vehicles.first << " - Unique vehicles used : " << used_vehicles.second << "\n";
@@ -143,7 +143,7 @@ CGResult column_generation(
         vector<int> vehicle_order(instance.vehicles.size());
         std::iota(vehicle_order.begin(), vehicle_order.end(), 0);
 
-        std::vector<Route> new_routes = solve_pricing_problems_basic(
+        std::vector<Route> new_routes = solve_pricing_problems_diversification(
             convex_dual_solution,
             instance,
             using_cyclic_pricing,

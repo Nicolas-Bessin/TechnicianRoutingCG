@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD 23)
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 	set(CMAKE_CXX_FLAGS  "/O2 /w  /DNDEBUG")
 else()
-	set(CMAKE_CXX_FLAGS  " -w -pthread -DNDEBUG")
+	set(CMAKE_CXX_FLAGS  " -w  -O3 -pthread -DNDEBUG")
 endif()
 
 

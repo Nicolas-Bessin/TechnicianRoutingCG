@@ -143,7 +143,7 @@ std::vector<std::vector<int>> optimal_2_clustering(std::vector<std::vector<int>>
     GRBQuadExpr obj = 0;
     for (int i = 0; i < n; i++){
         for (int j = i+1; j < n; j++){
-            obj += similarity_matrix[i][j] * x[i] * y[j];
+            obj += similarity_matrix[i][j] * x[i] * y[i] + similarity_matrix[i][j] * x[j] * y[j];
         }
     }
 

@@ -460,12 +460,12 @@ void print_route(const Route & route, const Instance & instance, const MasterSol
     for (int i = 0; i < route.id_sequence.size() - 1; i++) {
         cout << setw(col_width) << instance.time_matrix[route.id_sequence[i]][route.id_sequence[i + 1]] << ", ";
     }
-    cout << setw(col_width) << " -, " << endl;
+    cout << setw(col_width) << "   -, " << endl;
     cout << "Travel length:|";
     for (int i = 0; i < route.id_sequence.size() - 1; i++) {
         cout << setw(col_width) << instance.distance_matrix[route.id_sequence[i]][route.id_sequence[i + 1]] << ", ";
     }
-    cout << setw(col_width) << " -, " << endl;
+    cout << setw(col_width) << "   -, " << endl;
     // Only print the RC information if a MasterSolution is provided
     if (solution.is_feasible) {
         cout << "Accu RC       |";

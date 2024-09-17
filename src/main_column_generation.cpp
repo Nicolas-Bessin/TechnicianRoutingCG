@@ -128,8 +128,10 @@ int main(int argc, char *argv[]){
     cout << "-----------------------------------" << endl;
     //print_used_routes(integer_solution, routes, instance);
 
-    IntegerSolution optimized_solution = optimize_routes(integer_solution, routes, instance);
-    cout << "Objective value of the optimized solution : " << optimized_solution.objective_value << endl;
+    // IntegerSolution optimized_solution = optimize_routes(integer_solution, routes, instance);
+    // cout << "Objective value of the optimized solution : " << optimized_solution.objective_value << endl;
+
+    print_used_routes(integer_solution, routes, instance);
 
     
 

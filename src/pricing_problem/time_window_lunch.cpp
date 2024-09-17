@@ -27,6 +27,7 @@ void CustomTimeWindow::init(int origin, int destination) {
 
     // The upper bound also has to respect the time window of the destination node
     upper_bound = std::min(upper_bound, node_upper_bound[destination]);
+    upper_bound = std::min(upper_bound, END_DAY);
 }
 
 int CustomTimeWindow::extend(int current_value, int i, int j, bool direction) {
@@ -46,8 +47,17 @@ int CustomTimeWindow::extend(int current_value, int i, int j, bool direction) {
         }
     }
     else {
-        current_time += data->getNodeCost(j) + data->getArcCost(i, j);
-        current_time = std::max(current_time, upper_bound - (node_upper_bound[i] + data->getNodeCost(i)));    //bw: time between departure from j to arrival at destination
+        current_time += data->getArcCost(i, j);
+        // If this departure time from i is too late, it means we wait after the time window closes
+        if (current_time < upper_bound - node_upper_bound[i]) {
+            current_time = upper_bound - node_upper_bound[i];
+        }
+        current_time += data->getNodeCost(i);
+        // If this overlaps with the lunch break, we offset the time such that we do it entirely before the break
+        bool is_lunch_break = current_time >= upper_bound - MID_DAY && current_time < upper_bound - MID_DAY + data->getNodeCost(i);
+        if(has_lunch_constraint[i] && is_lunch_break) {
+            current_time = upper_bound - MID_DAY + data->getNodeCost(i);
+        }
     }
 
     return current_time;
@@ -70,7 +80,7 @@ bool CustomTimeWindow::isFeasible(int current_value, int current_node, double bo
             feasible_value = node_upper_bound[current_node];
         }
         else {
-            feasible_value = upper_bound - (node_lower_bound[current_node] + data->getNodeCost(current_node));
+            feasible_value = upper_bound - (node_lower_bound[current_node]);
         }
         if(current_value > feasible_value) return false;
     }
