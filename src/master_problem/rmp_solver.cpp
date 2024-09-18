@@ -26,16 +26,21 @@ MasterSolution relaxed_RMP(const Instance& instance, const std::vector<Route>& r
         }
         // Only activate the variables that are active in the node
         for (int r : node.active_routes){
-            variables[r].set(GRB_DoubleAttr_UB, 1.0);
+            variables[r].set(GRB_DoubleAttr_UB, GRB_INFINITY);
         }
-        // Create the intervention constraints (each intervention is visited at most once)
+        // Is the intervention postponed / outsourced ?
+        vector<GRBVar> y;
+        for (int i = 0; i < instance.number_interventions; i++){
+            y.push_back(master.addVar(0.0, 1.0, 0.0, GRB_CONTINUOUS));
+        }
+        // Create the intervention constraints (each intervention is visited or postponed exactly once)
         vector<GRBConstr> intervention_constraints;
         for (int i = 0; i < instance.number_interventions; i++){
-            GRBLinExpr expr = 0;
+            GRBLinExpr expr = y[i];
             for (int r = 0; r < routes.size(); r++){
                 expr += routes[r].is_in_route[i] * variables[r];
             }
-            intervention_constraints.push_back(master.addConstr(expr <= 1));
+            intervention_constraints.push_back(master.addConstr(expr == 1));
         }
         // And the vehicle constraints (each vehicle is used at most once)
         vector<GRBConstr> vehicle_constraints;
@@ -74,11 +79,14 @@ MasterSolution relaxed_RMP(const Instance& instance, const std::vector<Route>& r
 
         // Finally, we set the objective function
         GRBLinExpr obj = 0;
-        for (int r = 0; r < routes.size(); r++){
-            double coef = instance.M * routes[r].total_duration - routes[r].total_cost;
-            obj += coef * variables[r];
+        for (int i = 0; i < instance.number_interventions; i++){
+            obj += instance.nodes[i].duration * instance.M * y[i];
         }
-        master.setObjective(obj, GRB_MAXIMIZE);
+        for (int r = 0; r < routes.size(); r++){
+            obj += routes[r].total_cost * variables[r];
+        }
+
+        master.setObjective(obj, GRB_MINIMIZE);
 
         // Solve the master problem
         master.optimize();
@@ -149,14 +157,18 @@ IntegerSolution integer_RMP(const Instance& instance, const std::vector<Route>& 
         for (int r : node.active_routes){
             variables[r].set(GRB_DoubleAttr_UB, GRB_INFINITY);
         }
+        vector<GRBVar> y;
+        for (int i = 0; i < instance.number_interventions; i++){
+            y.push_back(master.addVar(0.0, 1.0, 0.0, GRB_BINARY));
+        }
         // Create the intervention constraints (each intervention is visited at most once)
         vector<GRBConstr> intervention_constraints;
         for (int i = 0; i < instance.number_interventions; i++){
-            GRBLinExpr expr = 0;
+            GRBLinExpr expr = y[i];
             for (int r = 0; r < routes.size(); r++){
                 expr += routes[r].is_in_route[i] * variables[r];
             }
-            intervention_constraints.push_back(master.addConstr(expr <= 1));
+            intervention_constraints.push_back(master.addConstr(expr == 1));
         }
         // And the vehicle constraints (each vehicle is used at most once)
         vector<GRBConstr> vehicle_constraints;
@@ -195,11 +207,13 @@ IntegerSolution integer_RMP(const Instance& instance, const std::vector<Route>& 
 
         // Finally, we set the objective function
         GRBLinExpr obj = 0;
-        for (int r = 0; r < routes.size(); r++){
-            double coef = instance.M * routes[r].total_duration - routes[r].total_cost;
-            obj += coef * variables[r];
+        for (int i = 0; i < instance.number_interventions; i++){
+            obj += instance.nodes[i].duration * instance.M * y[i];
         }
-        master.setObjective(obj, GRB_MAXIMIZE);
+        for (int r = 0; r < routes.size(); r++){
+            obj += routes[r].total_cost * variables[r];
+        }
+        master.setObjective(obj, GRB_MINIMIZE);
 
         // Solve the master problem
         master.optimize();

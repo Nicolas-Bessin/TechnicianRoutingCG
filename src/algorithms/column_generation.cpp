@@ -130,7 +130,7 @@ CGResult column_generation(
         int n_added_routes = 0;
         int n_routes_changed = 0;
 
-        double max_reduced_cost = 0;
+        double min_reduced_cost = 0;
 
         // Compute with a convex combination of the previous dual solution and the current one
         double alpha = 0.5;
@@ -153,9 +153,9 @@ CGResult column_generation(
         );
         // We add the new routes to the global routes vector
         for (Route& new_route : new_routes){
-            if (new_route.reduced_cost > reduced_cost_threshold) {
+            if (new_route.reduced_cost < -reduced_cost_threshold) {
                 routes.push_back(new_route);
-                max_reduced_cost = std::max(max_reduced_cost, new_route.reduced_cost);
+                min_reduced_cost = std::min(min_reduced_cost, new_route.reduced_cost);
                 node.active_routes.insert(routes.size() - 1);
                 n_added_routes++;
             }
@@ -168,7 +168,7 @@ CGResult column_generation(
         pricing_time += diff_pricing;
         if (verbose) {
             cout << "Pricing sub problems solved in " << diff_pricing << " ms - Added " << n_added_routes << " routes";
-            cout << " - Max reduced cost : " << setprecision(15) << max_reduced_cost << "\n";
+            cout << " - Min reduced cost : " << setprecision(15) << min_reduced_cost << "\n";
         }
         // ----------------- Stop conditions -----------------
         // If we added no routes but are not using the cyclic pricing yet, we switch to it
@@ -216,6 +216,14 @@ CGResult column_generation(
     cout << "End of the column generation after " << iteration << " iterations" << endl;
     cout << "Relaxed RMP objective value : " << setprecision(3) << solution.objective_value << endl;
 
+    // Convert the value from the minimum formulation to the maximum formulation
+    double total_outsource_cost = 0;
+    for (int i = 0; i < instance.number_interventions; i++){
+        total_outsource_cost += instance.nodes[i].duration * instance.M;
+    }
+    int relaxed_maximum_objective = total_outsource_cost - solution.objective_value;
+    cout << "Relaxed RMP maximum formulation objective value : " << setprecision(3) << relaxed_maximum_objective << endl;
+
     // Update the node's upper bound
     node.upper_bound = solution.objective_value;
     // If the upper bound is lower than the lower bound, it isn't worth computing the integer solution
@@ -231,7 +239,10 @@ CGResult column_generation(
         auto end_integer = chrono::steady_clock::now();
         integer_time = chrono::duration_cast<chrono::milliseconds>(end_integer - start_integer).count();
         cout << "Integer RMP objective value : " << integer_solution.objective_value << endl;
-        double gap = (solution.objective_value - integer_solution.objective_value) / integer_solution.objective_value;
+        // Compute the maximum formulation objective value
+        int integer_maximum_objective = total_outsource_cost - integer_solution.objective_value;
+        cout << "Integer RMP maximum formulation objective value : " << setprecision(3) << integer_maximum_objective << endl;
+        double gap = std::abs(solution.objective_value - integer_solution.objective_value) / integer_solution.objective_value;
         cout << "Gap between the relaxed and integer RMP : " << setprecision(3) << gap << endl;
     }
 

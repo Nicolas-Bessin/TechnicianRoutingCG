@@ -240,7 +240,7 @@ void update_pricing_instance(
     // Put in the node costs : alpha_i - M * duration_i
     for (int i = 0; i < n_interventions_v; i++) {
         int true_i = vehicle.interventions[i];
-        double node_cost = dual_solution.alphas[true_i] - instance.M * instance.nodes[true_i].duration;
+        double node_cost = - dual_solution.alphas[true_i];
         objective->setNodeCost(i, node_cost);
     }
     // Add the arcs costs where applicable from the dual values of the cuts
@@ -267,7 +267,7 @@ void update_pricing_instance(
     }
     
     // Put in the fixed costs of the vehicle
-    double fixed_cost = dual_solution.betas[vehicle.id] + vehicle.cost;
+    double fixed_cost = - dual_solution.betas[vehicle.id] + vehicle.cost;
     objective->setNodeCost(origin, fixed_cost);
     return;
 }
@@ -314,7 +314,7 @@ Route solve_pricing_problem(
     //cout << "Solver found " << solver.getNumberOfSolutions() << " solutions" << endl;
     // Convert the Path object to a Route object
     // Get the sequence as a vector of integers
-    double reduced_cost = - path.getObjective(); // (We got the max reduced cost by minimizing the opposite of the reduced cost)
+    double reduced_cost = path.getObjective(); // (We got the max reduced cost by minimizing the opposite of the reduced cost)
     list<int> tour_list = path.getTour();
     vector<int> tour(tour_list.begin(), tour_list.end());
     // Check that we found an elementary path

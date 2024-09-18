@@ -203,7 +203,7 @@ void Parameters::setParametersFromMode(int mode){
         default_autoconfig = false;
         default_timelimit = 0;
         default_parallel = true;
-        default_bidirectional = true;
+        default_bidirectional = false;
         default_split = 0.5;
         default_reserve = 10000000;
         default_use_visited = true;
@@ -217,7 +217,7 @@ void Parameters::setParametersFromMode(int mode){
         default_autoconfig = true;
         default_timelimit = 5;
         default_parallel = true;
-        default_bidirectional = true;
+        default_bidirectional = false;
         default_split = 0.5;
         default_reserve = 10000000;
         default_use_visited = true;

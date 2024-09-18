@@ -24,7 +24,7 @@
 #define TIME_LIMIT 120
 #define SOLVER_MODE IMPOSE_ROUTING
 #define THRESHOLD 1e-6
-#define VERBOSE false
+#define VERBOSE true
 #define GREEDY_INIT false
 #define N_INTERVENTIONS 25
 
@@ -41,11 +41,22 @@ int main(int argc, char *argv[]){
     auto start_parse = chrono::steady_clock::now();
     cout << "Technician Routing Problem using Column Generation" << endl;
     cout << "-----------------------------------" << endl;
-    string default_filename = "../data/instance_2.json";
+    string default_filename = "../data/instance_1.json";
     Instance instance = parse_file(default_filename, true);
 
-    // Check the triangular inequality
-    check_triangular_inequality(instance);
+    vector<Route> routes = vector<Route>();
+    routes.push_back(EmptyRoute(instance.nodes.size()));
+    auto root_node = RootNode(routes);
+
+    auto interger_solution = relaxed_RMP(instance, routes, root_node);
 
 
+    // Manually compute the expected objective value
+    double expected_objective = 0;
+    for (int i = 0; i < instance.number_interventions; i++){
+        expected_objective += instance.nodes[i].duration * instance.M;
+    }
+
+    cout << "Expected objective value : " << expected_objective << endl;
+    cout << "Objective value : " << interger_solution.objective_value << endl;
 }
