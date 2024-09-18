@@ -41,19 +41,11 @@ int main(int argc, char *argv[]){
     auto start_parse = chrono::steady_clock::now();
     cout << "Technician Routing Problem using Column Generation" << endl;
     cout << "-----------------------------------" << endl;
-    string default_filename = "../data/instance_1.json";
+    string default_filename = "../data/instance_2.json";
     Instance instance = parse_file(default_filename, true);
 
-    auto begin = chrono::steady_clock::now();
-    // Create the pricing problems for each vehicle
-    vector<unique_ptr<Problem>> pricing_problems;
-    for (const Vehicle &vehicle : instance.vehicles){
-        auto pricing_problem = create_pricing_instance(instance, vehicle);
-        pricing_problems.push_back(std::move(pricing_problem));
-    }
-    auto end = chrono::steady_clock::now();
-    int diff = chrono::duration_cast<chrono::milliseconds>(end - begin).count();
-    cout << "Total time spent building the pricing problems : " << diff << " ms" << endl;
+    // Check the triangular inequality
+    check_triangular_inequality(instance);
 
 
 }

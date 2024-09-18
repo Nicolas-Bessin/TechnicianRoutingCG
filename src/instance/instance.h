@@ -206,6 +206,8 @@ bool can_do_intervention(const Node& intervention, const Vehicle& vehicle);
 // We check this by looking at the time window of the interventions
 bool is_edge_feasible(int i, int j, const Instance& instance);
 
+void check_triangular_inequality(const Instance& instance);
+
 
 // Generate a new instance from an existing one
 // @param mask : vector of size instance.number_interventions
