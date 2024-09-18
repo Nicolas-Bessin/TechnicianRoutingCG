@@ -44,19 +44,22 @@ int main(int argc, char *argv[]){
     string default_filename = "../data/instance_1.json";
     Instance instance = parse_file(default_filename, true);
 
-    vector<Route> routes = vector<Route>();
-    routes.push_back(EmptyRoute(instance.nodes.size()));
-    auto root_node = RootNode(routes);
 
-    auto interger_solution = relaxed_RMP(instance, routes, root_node);
+    check_triangular_inequality(instance);
+
+    // vector<Route> routes = vector<Route>();
+    // routes.push_back(EmptyRoute(instance.nodes.size()));
+    // auto root_node = RootNode(routes);
+
+    // auto interger_solution = relaxed_RMP(instance, routes, root_node);
 
 
-    // Manually compute the expected objective value
-    double expected_objective = 0;
-    for (int i = 0; i < instance.number_interventions; i++){
-        expected_objective += instance.nodes[i].duration * instance.M;
-    }
+    // // Manually compute the expected objective value
+    // double expected_objective = 0;
+    // for (int i = 0; i < instance.number_interventions; i++){
+    //     expected_objective += instance.nodes[i].duration * instance.M;
+    // }
 
-    cout << "Expected objective value : " << expected_objective << endl;
-    cout << "Objective value : " << interger_solution.objective_value << endl;
+    // cout << "Expected objective value : " << expected_objective << endl;
+    // cout << "Objective value : " << interger_solution.objective_value << endl;
 }

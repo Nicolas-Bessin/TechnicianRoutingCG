@@ -75,8 +75,8 @@ bool is_edge_feasible(int i, int j, const Instance& instance){
 void check_triangular_inequality(const Instance& instance) {
     using std::cout, std::endl;
     // First, we check that the distance matrix verifies the triangular inequality
-    for (int i = 0; i < instance.nodes.size(); i++){
-        for (int j = 0; j < instance.nodes.size(); j++){
+    for (int i = 0; i < instance.number_interventions; i++){
+        for (int j = 0; j < instance.number_interventions; j++){
             for (int k = 0; k < instance.number_interventions; k++){
                 if (instance.distance_matrix[i][j] > instance.distance_matrix[i][k] + instance.distance_matrix[k][j]){
                     cout << "Distance matrix does not verify the triangular inequality" << endl;
@@ -88,8 +88,8 @@ void check_triangular_inequality(const Instance& instance) {
     }
 
     // Then, we check that the time matrix verifies the triangular inequality
-    for (int i = 0; i < instance.nodes.size(); i++){
-        for (int j = 0; j < instance.nodes.size(); j++){
+    for (int i = 0; i < instance.number_interventions; i++){
+        for (int j = 0; j < instance.number_interventions; j++){
             for (int k = 0; k < instance.number_interventions; k++){
                 if (instance.time_matrix[i][j] > instance.time_matrix[i][k] + instance.time_matrix[k][j] + instance.nodes[k].duration){
                     cout << "Time matrix does not verify the triangular inequality" << endl;

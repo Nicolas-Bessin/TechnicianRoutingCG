@@ -6,6 +6,7 @@
 #include <bits/stdc++.h>
 
 #include "algorithms/heuristics.h"
+#include "repair/repair.h"
 
 double evaluate(const GeneticSolution& solution, const Instance& instance) {
     double objective = 0;
@@ -14,50 +15,6 @@ double evaluate(const GeneticSolution& solution, const Instance& instance) {
     }
     return objective;
 }
-
-// @brief Computes the delta in the route's cost if we remove a given intervention
-// @param route The route from which we want to remove the intervention
-// @param intervention The intervention we want to remove
-// @param instance The instance of the problem
-// The delta is defined as : cost(route) - cost(route without intervention)
-// Thus, the bigger the delta, the more advantageous it is to remove the intervention
-double compute_delta(const Route& route, int intervention, const Instance& instance){
-    // First, we need to find the intervention in the route
-    auto it = std::find(route.id_sequence.begin(), route.id_sequence.end(), intervention);
-    // Since the sequence necessarily begins and ends with the depot, we know that it +- 1 is always a valid index
-    int previous_intervention = *(it - 1);
-    int next_intervention = *(it + 1);
-    // We can now compute the delta
-    double length_including = instance.distance_matrix[previous_intervention][intervention] + instance.distance_matrix[intervention][next_intervention];
-    double length_excluding = instance.distance_matrix[previous_intervention][next_intervention];
-    return (length_including - length_excluding) * instance.cost_per_km;
-}
-
-
-// @brief Deletes a given intervention from a route
-// @param route The route from which we want to remove the intervention
-// @param intervention The intervention we want to remove
-void delete_intervention(Route& route, int intervention, const Instance& instance){
-    // First, we need to find the intervention in the route
-    auto it = std::find(route.id_sequence.begin(), route.id_sequence.end(), intervention);
-    // Since the sequence necessarily begins and ends with the depot, we know that it +- 1 is always a valid index
-    int previous_intervention = *(it - 1);
-    int next_intervention = *(it + 1);
-    // We can now delete the intervention
-    route.id_sequence.erase(it);
-    route.is_in_route[intervention] = 0;
-    // Update the edge matrix
-    route.route_edges[previous_intervention][intervention] = 0;
-    route.route_edges[intervention][next_intervention] = 0;
-    route.route_edges[previous_intervention][next_intervention] = 1;
-    // Update the total duration of the route
-    route.total_duration -= instance.nodes[intervention].duration;
-    // Update the total cost of the route
-    int distance_deleted = instance.distance_matrix[previous_intervention][intervention] + instance.distance_matrix[intervention][next_intervention];
-    int distance_added = instance.distance_matrix[previous_intervention][next_intervention];
-    route.total_cost += (distance_added - distance_deleted) * instance.cost_per_km;
-}
-
 
 void repair(GeneticSolution& solution, const Instance& instance) {
     // Each intervention can be covered at most twice

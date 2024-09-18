@@ -75,3 +75,8 @@ DualSolution operator*(double scalar, const DualSolution &rhs) {
     result.lower_bound_duals = scalar * rhs.lower_bound_duals;
     return result;
 }
+
+IntegerSolution AllOnesSolution(int n_interventions) {
+    std::vector<int> coefficients(n_interventions, 1);
+    return IntegerSolution(coefficients, 0.);
+}

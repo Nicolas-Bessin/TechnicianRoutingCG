@@ -9,6 +9,8 @@
 
 #include "routes/route_optimizer.h"
 
+#include "repair/repair.h"
+
 #include "algorithms/column_generation.h"
 
 #include "data_analysis/analysis.h"
@@ -109,6 +111,10 @@ int main(int argc, char *argv[]){
         cout << "The integer solution is not feasible" << endl;
         return 1;
     }
+
+    // Repair the integer solution
+    routes = repair_routes(routes, integer_solution, instance);
+    integer_solution = AllOnesSolution(routes.size());
 
     // Print the routes in the integer solution (in detail)
     // full_analysis(integer_solution, routes, instance);

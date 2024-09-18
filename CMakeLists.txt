@@ -67,6 +67,9 @@ set(
     src/pricing_problem/tabu.h
     src/pricing_problem/tabu.cpp
 
+    src/repair/repair.h
+    src/repair/repair.cpp
+
     src/compact_formulation/compact_solution.h 
     src/compact_formulation/compact_solver.h
     src/compact_formulation/compact_solver.cpp

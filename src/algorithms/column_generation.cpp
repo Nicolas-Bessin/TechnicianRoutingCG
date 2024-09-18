@@ -221,7 +221,7 @@ CGResult column_generation(
     for (int i = 0; i < instance.number_interventions; i++){
         total_outsource_cost += instance.nodes[i].duration * instance.M;
     }
-    int relaxed_maximum_objective = total_outsource_cost - solution.objective_value;
+    double relaxed_maximum_objective = total_outsource_cost - solution.objective_value;
     cout << "Relaxed RMP maximum formulation objective value : " << setprecision(3) << relaxed_maximum_objective << endl;
 
     // Update the node's upper bound
@@ -240,7 +240,7 @@ CGResult column_generation(
         integer_time = chrono::duration_cast<chrono::milliseconds>(end_integer - start_integer).count();
         cout << "Integer RMP objective value : " << integer_solution.objective_value << endl;
         // Compute the maximum formulation objective value
-        int integer_maximum_objective = total_outsource_cost - integer_solution.objective_value;
+        double integer_maximum_objective = total_outsource_cost - integer_solution.objective_value;
         cout << "Integer RMP maximum formulation objective value : " << setprecision(3) << integer_maximum_objective << endl;
         double gap = std::abs(solution.objective_value - integer_solution.objective_value) / integer_solution.objective_value;
         cout << "Gap between the relaxed and integer RMP : " << setprecision(3) << gap << endl;
