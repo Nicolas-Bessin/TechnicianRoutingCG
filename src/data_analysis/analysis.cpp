@@ -289,7 +289,6 @@ int count_routes_with_duplicates(const vector<Route>& routes) {
     for (int i = 0; i < nb_routes; i++) {
         for (int j = i + 1; j < nb_routes; j++) {
             if (routes[i] == routes[j]) {
-                has_duplicate[i] = 1;
                 has_duplicate[j] = 1;
             }
         }

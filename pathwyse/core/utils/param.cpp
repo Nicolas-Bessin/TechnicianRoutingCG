@@ -202,7 +202,7 @@ void Parameters::setParametersFromMode(int mode){
     if (mode == DEFAULT_ACYCLIC_PARAM_MODE) {
         default_autoconfig = false;
         default_timelimit = 0;
-        default_parallel = false;
+        default_parallel = true;
         default_bidirectional = true;
         default_split = 0.5;
         default_reserve = 10000000;
@@ -216,7 +216,7 @@ void Parameters::setParametersFromMode(int mode){
     } else if (mode == DEFAULT_CYCLE_PARAM_MODE) {
         default_autoconfig = true;
         default_timelimit = 5;
-        default_parallel = false;
+        default_parallel = true;
         default_bidirectional = true;
         default_split = 0.5;
         default_reserve = 10000000;

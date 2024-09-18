@@ -135,15 +135,15 @@ CGResult column_generation(
         // Compute with a convex combination of the previous dual solution and the current one
         double alpha = 0.5;
         DualSolution convex_dual_solution = dual_solution;
-        if (iteration > 0){
-            convex_dual_solution = alpha * dual_solution + (1 - alpha) * previous_dual_solution;
-        }
+        // if (iteration > 0){
+        //     convex_dual_solution = alpha * dual_solution + (1 - alpha) * previous_dual_solution;
+        // }
 
         // Initialize the vehicle order
         vector<int> vehicle_order(instance.vehicles.size());
         std::iota(vehicle_order.begin(), vehicle_order.end(), 0);
 
-        std::vector<Route> new_routes = solve_pricing_problems_diversification(
+        std::vector<Route> new_routes = solve_pricing_problems_basic(
             convex_dual_solution,
             instance,
             using_cyclic_pricing,
