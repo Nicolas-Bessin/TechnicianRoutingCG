@@ -24,15 +24,15 @@
 #include <chrono>
 #include <format>
 
-#define TIME_LIMIT 15
+#define TIME_LIMIT 600
 #define THRESHOLD 1e-6
 #define VERBOSE true
 #define GREEDY_INIT false
 #define CYCLIC_PRICING true
 #define MAX_ITER 10000
 #define COMPUTE_INTEGER_SOL true
-#define N_INTERVENTIONS 75
-#define INSTANCE_FILE "instance_1"
+#define N_INTERVENTIONS 150
+#define INSTANCE_FILE "instance_2"
 
 int main(int argc, char *argv[]){
 
@@ -50,8 +50,6 @@ int main(int argc, char *argv[]){
     string fileprefix = INSTANCE_FILE;
     string filename = "../data/" + fileprefix + ".json";
     Instance instance = parse_file(filename, true);
-    // Add the name of the instance to the instance object
-    instance.name = fileprefix;
 
     // Only keep the first N_INTERVENTIONS nodes
     vector<int> kept_nodes = vector<int>(instance.number_interventions);
@@ -59,6 +57,9 @@ int main(int argc, char *argv[]){
         kept_nodes[i] = 1;
     }
     instance = cut_instance(instance, kept_nodes);
+
+    // Add the name of the instance to the instance object
+    instance.name = fileprefix;
 
     preprocess_interventions(instance);
 
@@ -123,6 +124,7 @@ int main(int argc, char *argv[]){
     routes = repair_routes(routes, integer_solution, instance);
     integer_solution = AllOnesSolution(routes.size());
     integer_solution.objective_value = compute_integer_objective(integer_solution, routes, instance);
+    cout << "Objective value of the repaired solution : " << integer_solution.objective_value << endl;
 
     // Print the routes in the integer solution (in detail)
     // full_analysis(integer_solution, routes, instance);
@@ -141,12 +143,15 @@ int main(int argc, char *argv[]){
 
     cout << "-----------------------------------" << endl;
 
+    //print_used_routes(integer_solution, routes, instance);
+
     // Dump the results to a file
     // Append the time to the filename
     const auto now = chrono::zoned_time(std::chrono::current_zone(), chrono::system_clock::now());
     string date = std::format("{:%Y-%m-%d-%H-%M-%OS}", now);
     string output_filename = "../results/" + fileprefix + "_" + date + ".json";
-    export_solution(output_filename, instance, integer_solution, routes, elapsed_time);
+    double seconds = elapsed_time / 1000.0;
+    export_solution(output_filename, instance, integer_solution, routes, seconds);
     
 
     return 0;

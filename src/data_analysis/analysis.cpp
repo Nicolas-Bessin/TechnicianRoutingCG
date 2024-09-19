@@ -607,6 +607,12 @@ void full_analysis(const IntegerSolution& integer_solution, const vector<Route>&
 
     // Check that all used routes are feasible
     bool all_feasible = true;
+    auto covered = covered_interventions(integer_solution, routes, instance, true);
+    for (int i : covered ) {
+        if (i > 1) {
+            all_feasible = false;
+        }
+    }
     for (int i = 0; i < routes.size(); i++){
         const Route& route = routes.at(i);
         if (integer_solution.coefficients[i] > 0 && !is_route_feasible(route, instance)){

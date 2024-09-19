@@ -40,7 +40,7 @@ MasterSolution relaxed_RMP(const Instance& instance, const std::vector<Route>& r
             for (int r = 0; r < routes.size(); r++){
                 expr += routes[r].is_in_route[i] * variables[r];
             }
-            intervention_constraints.push_back(master.addConstr(expr == 1));
+            intervention_constraints.push_back(master.addConstr(expr >= 1));
         }
         // And the vehicle constraints (each vehicle is used at most once)
         vector<GRBConstr> vehicle_constraints;

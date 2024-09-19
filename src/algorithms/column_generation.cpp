@@ -243,7 +243,10 @@ CGResult column_generation(
         double integer_maximum_objective = total_outsource_cost - integer_solution.objective_value;
         cout << "Integer RMP maximum formulation objective value : " << setprecision(3) << integer_maximum_objective << endl;
         double gap = std::abs(solution.objective_value - integer_solution.objective_value) / integer_solution.objective_value;
-        cout << "Gap between the relaxed and integer RMP : " << setprecision(3) << gap << endl;
+        cout << "Gap between the relaxed and integer RMP : " << setprecision(5) << gap << endl;
+
+        double gap_max = std::abs(relaxed_maximum_objective - integer_maximum_objective) / integer_maximum_objective;
+        cout << "Gap between the relaxed and integer RMP (maximum formulation) : " << setprecision(5) << gap_max << endl;
     }
 
 
