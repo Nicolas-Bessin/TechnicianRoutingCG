@@ -89,6 +89,8 @@ set(
     src/data_analysis/analysis.cpp
     src/data_analysis/plot.h
     src/data_analysis/plot.cpp
+    src/data_analysis/export.h
+    src/data_analysis/export.cpp
 )
 
 # Add the library

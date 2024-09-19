@@ -14,6 +14,7 @@
 #include "algorithms/column_generation.h"
 
 #include "data_analysis/analysis.h"
+#include "data_analysis/export.h"
 
 #include "algorithms/heuristics.h"
 
@@ -21,8 +22,9 @@
 #include <iostream>
 #include <iomanip>
 #include <chrono>
+#include <format>
 
-#define TIME_LIMIT 60
+#define TIME_LIMIT 15
 #define THRESHOLD 1e-6
 #define VERBOSE true
 #define GREEDY_INIT false
@@ -30,7 +32,7 @@
 #define MAX_ITER 10000
 #define COMPUTE_INTEGER_SOL true
 #define N_INTERVENTIONS 75
-#define INSTANCE_FILE "../data/instance_1.json"
+#define INSTANCE_FILE "instance_1"
 
 int main(int argc, char *argv[]){
 
@@ -45,8 +47,11 @@ int main(int argc, char *argv[]){
     auto start_parse = chrono::steady_clock::now();
     cout << "Technician Routing Problem using Column Generation" << endl;
     cout << "-----------------------------------" << endl;
-    string default_filename = INSTANCE_FILE;
-    Instance instance = parse_file(default_filename, true);
+    string fileprefix = INSTANCE_FILE;
+    string filename = "../data/" + fileprefix + ".json";
+    Instance instance = parse_file(filename, true);
+    // Add the name of the instance to the instance object
+    instance.name = fileprefix;
 
     // Only keep the first N_INTERVENTIONS nodes
     vector<int> kept_nodes = vector<int>(instance.number_interventions);
@@ -113,8 +118,11 @@ int main(int argc, char *argv[]){
     }
 
     // Repair the integer solution
+    cout << "-----------------------------------" << endl;
+    cout << "Repairing the integer solution" << endl;
     routes = repair_routes(routes, integer_solution, instance);
     integer_solution = AllOnesSolution(routes.size());
+    integer_solution.objective_value = compute_integer_objective(integer_solution, routes, instance);
 
     // Print the routes in the integer solution (in detail)
     // full_analysis(integer_solution, routes, instance);
@@ -132,13 +140,13 @@ int main(int argc, char *argv[]){
     cout << "True cost of the integer solution : " << compute_integer_objective(integer_solution, routes, instance) << endl;
 
     cout << "-----------------------------------" << endl;
-    //print_used_routes(integer_solution, routes, instance);
 
-    // IntegerSolution optimized_solution = optimize_routes(integer_solution, routes, instance);
-    // cout << "Objective value of the optimized solution : " << optimized_solution.objective_value << endl;
-
-    //print_used_routes(integer_solution, routes, instance);
-
+    // Dump the results to a file
+    // Append the time to the filename
+    const auto now = chrono::zoned_time(std::chrono::current_zone(), chrono::system_clock::now());
+    string date = std::format("{:%Y-%m-%d-%H-%M-%OS}", now);
+    string output_filename = "../results/" + fileprefix + "_" + date + ".json";
+    export_solution(output_filename, instance, integer_solution, routes, elapsed_time);
     
 
     return 0;

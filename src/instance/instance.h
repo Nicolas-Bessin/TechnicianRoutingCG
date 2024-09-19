@@ -145,6 +145,7 @@ Vehicle vehicle_mask(const Vehicle& vehicle, const std::vector<int>& mask, bool 
     @brief Represents an instance of the problem
 */
 struct Instance {
+    std::string name;
     int number_interventions;
     int number_warehouses;
     int number_vehicles;
@@ -179,6 +180,7 @@ struct Instance {
         std::vector<std::vector<int>> distance_matrix,
         std::vector<std::vector<int>> similarity_matrix
     ) :
+        name(""),
         number_interventions(number_interventions),
         number_warehouses(number_warehouses),
         number_vehicles(number_vehicles),

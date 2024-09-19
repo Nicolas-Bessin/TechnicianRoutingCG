@@ -53,10 +53,10 @@ std::vector<Route> repair_routes(const std::vector<Route>& routes, const Integer
 
 
     // Then, for every intervention, build a vector of the routes that cover it
-    int n_nodes = used_routes.at(0).is_in_route.size();
-    vector<vector<int>> routes_covering_intervention = vector<vector<int>>(n_nodes);
+    int n_interventions = instance.number_interventions;
+    vector<vector<int>> routes_covering_intervention = vector<vector<int>>(n_interventions);
     for (int r = 0; r < used_routes.size(); r++){
-        for (int i = 0; i < used_routes[r].is_in_route.size(); i++){
+        for (int i = 0; i < n_interventions; i++){
             if (used_routes[r].is_in_route[i] > 0){
                 routes_covering_intervention[i].push_back(r);
             }
@@ -64,7 +64,7 @@ std::vector<Route> repair_routes(const std::vector<Route>& routes, const Integer
     }
 
     // Finally, process the routes that cover it and remove the intervention where adventageous
-    for (int i = 0; i < n_nodes; i++){
+    for (int i = 0; i < n_interventions; i++){
         if (routes_covering_intervention[i].size() > 1){
             // If there are multiple routes covering the intervention, compute the "delta" of removing the intervention from each route
             vector<double> delta = vector<double>(routes_covering_intervention[i].size());
