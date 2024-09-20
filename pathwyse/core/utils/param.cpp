@@ -215,7 +215,7 @@ void Parameters::setParametersFromMode(int mode){
         default_join_type = JOIN_ORDERED;
     } else if (mode == DEFAULT_CYCLE_PARAM_MODE) {
         default_autoconfig = true;
-        default_timelimit = 5;
+        default_timelimit = 10;
         default_parallel = true;
         default_bidirectional = false;
         default_split = 0.5;
