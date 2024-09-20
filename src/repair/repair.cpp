@@ -75,7 +75,7 @@ std::vector<Route> repair_routes(const std::vector<Route>& routes, const Integer
             // Sort the routes by the delta
             vector<int> indexes(routes_covering_intervention[i].size());
             std::iota(indexes.begin(), indexes.end(), 0);
-            std::sort(indexes.begin(), indexes.end(), [&delta](int i1, int i2) {return delta[i1] < delta[i2];});
+            std::sort(indexes.begin(), indexes.end(), [&delta](int i1, int i2) {return delta[i1] > delta[i2];});
 
             // Remove the intervention from all the routes except the one with the highest delta
             for (int j = 0; j < indexes.size() - 1; j++){

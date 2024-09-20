@@ -24,15 +24,15 @@
 #include <chrono>
 #include <format>
 
-#define TIME_LIMIT 600
+#define TIME_LIMIT 60
 #define THRESHOLD 1e-6
 #define VERBOSE true
 #define GREEDY_INIT false
 #define CYCLIC_PRICING true
 #define MAX_ITER 10000
 #define COMPUTE_INTEGER_SOL true
-#define N_INTERVENTIONS 150
-#define INSTANCE_FILE "instance_2"
+#define N_INTERVENTIONS 75
+#define INSTANCE_FILE "instance_1"
 
 int main(int argc, char *argv[]){
 
@@ -118,6 +118,9 @@ int main(int argc, char *argv[]){
         return 1;
     }
 
+    int n_routes_generated = routes.size();
+    cout << "Number of routes generated : " << n_routes_generated;
+    cout << " - Average time to generate a route : " << pricing_time / n_routes_generated << " ms" << endl;
     // Repair the integer solution
     cout << "-----------------------------------" << endl;
     cout << "Repairing the integer solution" << endl;

@@ -92,7 +92,7 @@ CGResult column_generation(
     // Initially, while using the acyclic pricing, we can use all the resources for the dominance test
     int n_ressources_dominance = 0;
 
-    while (!stop && master_time + pricing_time < time_limit_ms){
+    while (!stop && master_time + pricing_time < time_limit_ms && iteration < 65){
         // Solve the master problem
         auto start = chrono::steady_clock::now();
         solution = relaxed_RMP(instance, routes, node);

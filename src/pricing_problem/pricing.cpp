@@ -97,10 +97,7 @@ std::vector<Route> solve_pricing_problems_diversification(
             // Solve the pricing problem for the vehicle
             Route new_route = solve_pricing_problem(instance, vehicle, solution, using_cyclic_pricing, n_ressources_dominance);
             // If the reduced cost is greater than the threshold, we add the route
-            if (new_route.reduced_cost > reduced_cost_threshold){
-                if (new_route.id_sequence.size() <= 2){
-                    continue;
-                }
+            if (new_route.reduced_cost < -reduced_cost_threshold && new_route.id_sequence.size() > 2){
                 private_new_routes.push_back(new_route);
                 // Update the covered interventions (interventions only, not warehouses)
                 for (int i = 1; i < new_route.id_sequence.size() - 1; i++){
