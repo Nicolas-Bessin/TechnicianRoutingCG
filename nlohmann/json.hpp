@@ -18118,6 +18118,15 @@ class serializer
               const unsigned int indent_step,
               const unsigned int current_indent = 0)
     {
+        // If the data type is an array of int or strings, force pretty print to false
+        bool pretty_print_array = pretty_print;
+        if (val.is_array() && val.size() > 0)
+        {
+            if (val.front().is_string() || val.front().is_number_integer())
+            {
+                pretty_print_array = false;
+            }
+        }
         switch (val.m_data.m_type)
         {
             case value_t::object:
@@ -18201,7 +18210,7 @@ class serializer
                     return;
                 }
 
-                if (pretty_print)
+                if (pretty_print_array)
                 {
                     o->write_characters("[\n", 2);
 
@@ -18239,7 +18248,7 @@ class serializer
                             i != val.m_data.m_value.array->cend() - 1; ++i)
                     {
                         dump(*i, false, ensure_ascii, indent_step, current_indent);
-                        o->write_character(',');
+                        o->write_characters(", ", 2);
                     }
 
                     // last element

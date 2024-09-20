@@ -36,7 +36,7 @@ double count_covered_interventions(const MasterSolution& solution, const vector<
 
 
 // Returns a vector of size n_interventions, with a 1 at the index of each intervention that is covered by the solution
-std::vector<int> covered_interventions(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance) {
+std::vector<int> covered_interventions(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance, bool details) {
     using std::cout, std::endl;
     
     int nb_routes = routes.size();
@@ -50,7 +50,7 @@ std::vector<int> covered_interventions(const IntegerSolution& solution, const st
             // If the intervention is covered more than once, there is a problem
             const Route& route = routes[r];
             if (solution.coefficients[r] > 0 && is_covered[i] > 0 && route.is_in_route[i] > 0) {
-                cout << "Intervention " << i << " is covered more than once" << endl;
+                if (details) cout << "Intervention " << i << " is covered more than once" << endl;
                 is_covered[i] += 1;
             }
             // If the intervention is covered, mark it as covered
@@ -341,12 +341,20 @@ double count_kilometres_travelled(const IntegerSolution& solution, const vector<
 double compute_integer_objective(const IntegerSolution& solution, const vector<Route>& routes, const Instance& instance) {
     double value = 0;
     assert (solution.coefficients.size() == routes.size());
+    // First, count the total cost of the routes
     for (int r = 0; r < routes.size(); r++) {
         if (solution.coefficients[r] > 0) {
-            double coef = instance.M * routes[r].total_duration;
+            double coef = 0;
             coef -= instance.cost_per_km * count_route_kilometres(routes[r], instance);
             coef -= instance.vehicles[routes[r].vehicle_id].cost;
             value += coef;
+        }
+    }
+    // Then, count the value of the covered interventions
+    auto covered = covered_interventions(solution, routes, instance);
+    for (int i = 0; i < covered.size(); i++) {
+        if (covered[i] > 0) {
+            value += instance.nodes[i].duration * instance.M;
         }
     }
     return value;
@@ -599,6 +607,12 @@ void full_analysis(const IntegerSolution& integer_solution, const vector<Route>&
 
     // Check that all used routes are feasible
     bool all_feasible = true;
+    auto covered = covered_interventions(integer_solution, routes, instance, true);
+    for (int i : covered ) {
+        if (i > 1) {
+            all_feasible = false;
+        }
+    }
     for (int i = 0; i < routes.size(); i++){
         const Route& route = routes.at(i);
         if (integer_solution.coefficients[i] > 0 && !is_route_feasible(route, instance)){

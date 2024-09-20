@@ -58,3 +58,5 @@ struct IntegerSolution {
         coefficients(coefficients), objective_value(objective_value), is_feasible(true) {}
 };
 
+IntegerSolution AllOnesSolution(int n_interventions);
+

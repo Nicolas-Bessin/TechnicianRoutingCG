@@ -145,6 +145,7 @@ Vehicle vehicle_mask(const Vehicle& vehicle, const std::vector<int>& mask, bool 
     @brief Represents an instance of the problem
 */
 struct Instance {
+    std::string name;
     int number_interventions;
     int number_warehouses;
     int number_vehicles;
@@ -179,6 +180,7 @@ struct Instance {
         std::vector<std::vector<int>> distance_matrix,
         std::vector<std::vector<int>> similarity_matrix
     ) :
+        name(""),
         number_interventions(number_interventions),
         number_warehouses(number_warehouses),
         number_vehicles(number_vehicles),
@@ -205,6 +207,8 @@ bool can_do_intervention(const Node& intervention, const Vehicle& vehicle);
 // Checks wether intervention j can follow intervention i (is the edge i->j feasible?)
 // We check this by looking at the time window of the interventions
 bool is_edge_feasible(int i, int j, const Instance& instance);
+
+void check_triangular_inequality(const Instance& instance);
 
 
 // Generate a new instance from an existing one

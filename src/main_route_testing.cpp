@@ -24,7 +24,7 @@
 #define TIME_LIMIT 120
 #define SOLVER_MODE IMPOSE_ROUTING
 #define THRESHOLD 1e-6
-#define VERBOSE false
+#define VERBOSE true
 #define GREEDY_INIT false
 #define N_INTERVENTIONS 25
 
@@ -44,16 +44,22 @@ int main(int argc, char *argv[]){
     string default_filename = "../data/instance_1.json";
     Instance instance = parse_file(default_filename, true);
 
-    auto begin = chrono::steady_clock::now();
-    // Create the pricing problems for each vehicle
-    vector<unique_ptr<Problem>> pricing_problems;
-    for (const Vehicle &vehicle : instance.vehicles){
-        auto pricing_problem = create_pricing_instance(instance, vehicle);
-        pricing_problems.push_back(std::move(pricing_problem));
-    }
-    auto end = chrono::steady_clock::now();
-    int diff = chrono::duration_cast<chrono::milliseconds>(end - begin).count();
-    cout << "Total time spent building the pricing problems : " << diff << " ms" << endl;
+
+    check_triangular_inequality(instance);
+
+    // vector<Route> routes = vector<Route>();
+    // routes.push_back(EmptyRoute(instance.nodes.size()));
+    // auto root_node = RootNode(routes);
+
+    // auto interger_solution = relaxed_RMP(instance, routes, root_node);
 
 
+    // // Manually compute the expected objective value
+    // double expected_objective = 0;
+    // for (int i = 0; i < instance.number_interventions; i++){
+    //     expected_objective += instance.nodes[i].duration * instance.M;
+    // }
+
+    // cout << "Expected objective value : " << expected_objective << endl;
+    // cout << "Objective value : " << interger_solution.objective_value << endl;
 }

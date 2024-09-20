@@ -68,7 +68,6 @@ int compute_total_waiting_time(const Route& route, const Instance& instance);
 // Computes the total travelling time along a route
 int compute_total_travelling_time(const Route& route, const Instance& instance);
 
-
 // Build a vector of pairs (vehicle_id, intervention_id) from the routes in an IntegerSolution
 std::vector<std::pair<int, int>> imposed_routings_from_routes(const std::vector<Route>& routes, const IntegerSolution& integer_solution);
 

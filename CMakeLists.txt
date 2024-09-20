@@ -67,6 +67,9 @@ set(
     src/pricing_problem/tabu.h
     src/pricing_problem/tabu.cpp
 
+    src/repair/repair.h
+    src/repair/repair.cpp
+
     src/compact_formulation/compact_solution.h 
     src/compact_formulation/compact_solver.h
     src/compact_formulation/compact_solver.cpp
@@ -86,6 +89,8 @@ set(
     src/data_analysis/analysis.cpp
     src/data_analysis/plot.h
     src/data_analysis/plot.cpp
+    src/data_analysis/export.h
+    src/data_analysis/export.cpp
 )
 
 # Add the library

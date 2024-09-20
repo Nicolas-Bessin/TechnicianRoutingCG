@@ -13,7 +13,7 @@ int count_zeros(const std::vector<double>& vector);
 double count_covered_interventions(const MasterSolution& solution, const std::vector<Route>& routes, const Instance& instance);
 
 // Returns a vector of size n_interventions, with a 1 at the index of each intervention that is covered by the solution
-std::vector<int> covered_interventions(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
+std::vector<int> covered_interventions(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance, bool details = false);
 
 int count_covered_interventions(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
 
