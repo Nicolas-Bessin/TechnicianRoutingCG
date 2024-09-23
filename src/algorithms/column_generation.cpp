@@ -41,6 +41,32 @@ std::tuple<
     return std::make_tuple(old_to_new, new_routes, new_last_used);
 }
 
+// Returns list of the vehicles to expore given the previous best reduced costs
+// We base our list on a probability distrbution of the form:
+// p(v) = floor + (best_v - best) / (worst - best) * (1 - floor)
+// We can further adapt the floor to be higher when reduced costs are bad (with a floor of 1, we explore all vehicles)
+std::vector<int> get_vehicles_to_explore(const std::vector<double> previous_best_reduced_costs) {
+    using std::vector;
+    // Floor is defined such that if the best reduced cost is > -100, we explore all vehicles
+    // And if the best reduced cost is < -20000, we get a floor of 0.5
+    double best = *std::min_element(previous_best_reduced_costs.begin(), previous_best_reduced_costs.end());
+    double worst = *std::max_element(previous_best_reduced_costs.begin(), previous_best_reduced_costs.end());
+    double floor = std::max(1 - 0.5 * (best + 100) / 19900, 0.5);
+
+
+    vector<int> explore_list;
+    for (int v = 0; v < previous_best_reduced_costs.size(); v++){
+        double reduced_cost = previous_best_reduced_costs[v];
+        double proba = floor + (reduced_cost - best) / (worst - best) * (1 - floor);
+        double random = (double)rand() / RAND_MAX;
+        if (random < proba){
+            explore_list.push_back(v);
+        }
+    }
+
+    return explore_list;
+}
+
 
 
 CGResult column_generation(
@@ -74,9 +100,6 @@ CGResult column_generation(
         max_resources_dominance = instance.capacities_labels.size() + 1;
     }
 
-    // Keep track of when each route was last used
-    vector<int> last_used(routes.size(), 0);
-
     // Main loop of the column generation algorithm
     int iteration = 0;
     bool stop = false;
@@ -89,19 +112,16 @@ CGResult column_generation(
     // We begin with the acyclic pricing which is so much faster
     // We switch to the cyclic pricing when we don't add any routes
     bool using_cyclic_pricing = false;
-    // Initially, while using the acyclic pricing, we can use all the resources for the dominance test
-    int n_ressources_dominance = 0;
+    // We switch to the cyclic pricing when we don't add any routes
+    int n_ressources_dominance = instance.capacities_labels.size() + 1;
+
+    // Keep the last best reduced cost for each vehicle
+    vector<double> best_reduced_costs(instance.vehicles.size(), 0);
 
     while (!stop && master_time + pricing_time < time_limit_ms){
         // Solve the master problem
         auto start = chrono::steady_clock::now();
         solution = relaxed_RMP(instance, routes, node);
-        // Update the last_used vector
-        for (int i = 0; i < routes.size(); i++){
-            if (solution.coefficients[i] > 0){
-                last_used[i] = iteration;
-            }
-        }
         auto end = chrono::steady_clock::now();
         int diff = chrono::duration_cast<chrono::milliseconds>(end - start).count();
         // At this point, if the solution is not feasible, it it because the cuts give a non feasible problem
@@ -118,10 +138,6 @@ CGResult column_generation(
             cout << "Number of interventions covered : " << setprecision(2) << count_covered_interventions(solution, routes, instance);
             std::pair<double, int> used_vehicles = count_used_vehicles(solution, routes, instance);
             cout << " - Number of vehicles used : " << used_vehicles.first << " - Unique vehicles used : " << used_vehicles.second << "\n";
-            cout << "Min alpha : " << *std::min_element(dual_solution.alphas.begin(), dual_solution.alphas.end());
-            cout << " - Max alpha : " << *std::max_element(dual_solution.alphas.begin(), dual_solution.alphas.end());
-            cout << " - Min beta : " << *std::min_element(dual_solution.betas.begin(), dual_solution.betas.end());
-            cout << " - Max beta : " << *std::max_element(dual_solution.betas.begin(), dual_solution.betas.end()) << "\n";
         }
         master_time += diff;
 
@@ -129,8 +145,6 @@ CGResult column_generation(
         auto start_pricing = chrono::steady_clock::now();
         int n_added_routes = 0;
         int n_routes_changed = 0;
-
-        double min_reduced_cost = 0;
 
         // Compute with a convex combination of the previous dual solution and the current one
         double alpha = 0.5;
@@ -142,6 +156,12 @@ CGResult column_generation(
         // Initialize the vehicle order
         vector<int> vehicle_order(instance.vehicles.size());
         std::iota(vehicle_order.begin(), vehicle_order.end(), 0);
+
+        // Reset the best reduced costs
+        double min_reduced_cost = 0;
+        for (int i = 0; i < instance.vehicles.size(); i++){
+            best_reduced_costs[i] = 0;
+        }
 
         std::vector<Route> new_routes = solve_pricing_problems_basic(
             convex_dual_solution,
@@ -155,13 +175,12 @@ CGResult column_generation(
         for (Route& new_route : new_routes){
             if (new_route.reduced_cost < -reduced_cost_threshold) {
                 routes.push_back(new_route);
+                best_reduced_costs[new_route.vehicle_id] = std::min(best_reduced_costs[new_route.vehicle_id], new_route.reduced_cost);
                 min_reduced_cost = std::min(min_reduced_cost, new_route.reduced_cost);
                 node.active_routes.insert(routes.size() - 1);
                 n_added_routes++;
             }
-        }
-        // Resize the last_used vector
-        last_used.resize(routes.size(), 0);        
+        }        
 
         auto end_pricing = chrono::steady_clock::now();
         int diff_pricing = chrono::duration_cast<chrono::milliseconds>(end_pricing - start_pricing).count();
