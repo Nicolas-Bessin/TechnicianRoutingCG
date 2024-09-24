@@ -198,39 +198,28 @@ void Parameters::setParametersFromMode(int mode){
     output_write = false;
     // Main algorithm parameters
     main_algorithm_name = "PWDefault";
+    default_autoconfig = false;
+    default_timelimit = 0;
+    default_parallel = true;
+    default_bidirectional = false;
+    default_split = 0.5;
+    default_reserve = 10000000;
+    default_use_visited = true;
+    default_compare_unreachables = false;
+    default_dssr = DSSR_RESTRICTED;
+    default_ng = NG_RESTRICTED;
+    default_ng_size = 8;
+    default_candidate_type = CANDIDATE_NODE;
+    default_join_type = JOIN_ORDERED;
     // Mode specific configurations
     if (mode == DEFAULT_ACYCLIC_PARAM_MODE) {
-        default_autoconfig = false;
-        default_timelimit = 0;
-        default_parallel = true;
-        default_bidirectional = false;
-        default_split = 0.5;
-        default_reserve = 10000000;
-        default_use_visited = true;
         default_compare_unreachables = false;
-        default_dssr = DSSR_STANDARD;
-        default_ng = NG_STANDARD;
-        default_ng_size = 8;
-        default_candidate_type = CANDIDATE_NODE;
-        default_join_type = JOIN_ORDERED;
     } else if (mode == DEFAULT_CYCLE_PARAM_MODE) {
-        default_autoconfig = true;
         default_timelimit = 5;
-        default_parallel = true;
-        default_bidirectional = false;
-        default_split = 0.5;
-        default_reserve = 10000000;
-        default_use_visited = true;
-        default_compare_unreachables = false;
-        default_dssr = DSSR_STANDARD;
-        default_ng = NG_STANDARD;
-        default_ng_size = 8;
-        default_candidate_type = CANDIDATE_NODE;
-        default_join_type = JOIN_ORDERED;
+        default_compare_unreachables = true;
     } else {
         std::cout << "Warning: Mode not recognized, using default parameters." << std::endl;
     }
-
 }
 
 //Output path setup

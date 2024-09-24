@@ -24,7 +24,7 @@
 #include <chrono>
 #include <format>
 
-#define TIME_LIMIT 300
+#define TIME_LIMIT 60
 #define THRESHOLD 1e-6
 #define VERBOSE true
 #define GREEDY_INIT false
@@ -86,7 +86,7 @@ int main(int argc, char *argv[]){
     cout << "Starting the column generation algorithm" << endl;
     
 
-    int MAX_RESOURCES_DOMINANCE = instance.capacities_labels.size() + 1;
+    int MAX_RESOURCES_DOMINANCE = instance.capacities_labels.size();
     // Create a root node for the algorithm
     BPNode root = RootNode(routes);
     CGResult result = column_generation(

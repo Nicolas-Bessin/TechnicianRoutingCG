@@ -38,7 +38,7 @@ public:
     double getSplit() {return split_ratio;}
 
     //Incumbent
-    int getIncumbent(){return incumbent;}
+    double getIncumbent(){return incumbent;}
     void setIncumbent(int incumbent){this->incumbent = incumbent;}
 
     //Queries

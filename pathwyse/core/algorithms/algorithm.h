@@ -39,7 +39,7 @@ public:
     //Solution process
     bool updateIncumbent(double value);
     void setIncumbent(double value){incumbent = value;}
-    int getIncumbent(){return incumbent;}
+    double getIncumbent(){return incumbent;}
 
     bool updateLowerBound(double value);
     void setLowerBound(double value){lower_bound = value;}
