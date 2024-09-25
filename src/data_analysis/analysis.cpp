@@ -97,6 +97,16 @@ vector<int> used_vehicles(const IntegerSolution& solution, const vector<Route>& 
     return is_used;
 }
 
+double fixed_cost(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance) {
+    double total_cost = 0;
+    for (int i = 0; i < routes.size(); i++) {
+        if (solution.coefficients[i] > 0) {
+            total_cost += instance.vehicles[routes[i].vehicle_id].cost;
+        }
+    }
+    return total_cost;
+}
+
 int count_used_vehicles(const IntegerSolution& solution, const vector<Route>& routes, const Instance& instance) {
     using std::cout, std::endl;
 
@@ -617,6 +627,7 @@ void full_analysis(const IntegerSolution& integer_solution, const vector<Route>&
         const Route& route = routes.at(i);
         if (integer_solution.coefficients[i] > 0 && !is_route_feasible(route, instance)){
             cout << "Route " << i << " is not feasible" << endl;
+            print_route(route, instance);
             cout << "-----" << endl;
             all_feasible = false;
         }

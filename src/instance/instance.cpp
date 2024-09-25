@@ -3,6 +3,8 @@
 #include "clustering/clustering.h"
 
 #include <iostream>
+#include <bits/stdc++.h>
+#include <algorithm>
 
 Vehicle vehicle_mask(const Vehicle& vehicle, const std::vector<int>& mask, bool mode){
     std::vector<int> new_interventions;
@@ -168,6 +170,7 @@ Instance cut_instance(const Instance& instance, const std::vector<int>& mask) {
     std::vector<std::vector<int>> new_similarity_matrix = compute_similarity_matrix(new_vehicles);
 
     return Instance{
+        instance.name,
         new_nodes.size() - instance.number_warehouses,
         instance.number_warehouses,
         new_vehicles.size(),
@@ -183,3 +186,98 @@ Instance cut_instance(const Instance& instance, const std::vector<int>& mask) {
     };
 }
 
+
+double compute_M_naive(const Instance& instance) {
+    using std::__gcd;
+    using std::vector;
+    // Finally, compute the big M for the objective function
+    // M is computed using : M = (END_DAY - min(durations .> 0)) * maxspeed * cost_per_km / gcd(durations)
+    // We first put all the durations in a vector
+    vector<int> durations = vector<int>();
+    // Enumerate through the nodes
+    for (int i = 0; i < instance.number_interventions; i++){
+        // Only keep the durations that are greater than 0
+        if (instance.nodes[i].duration > 0){
+            durations.push_back(instance.nodes[i].duration);
+        }
+    }
+    int min_duration = *min_element(durations.begin(), durations.end());
+    // We now compute the gcd of the durations
+    int gcd_durations = durations[0];
+    for (int i = 1; i < durations.size(); i++){
+        gcd_durations = __gcd(gcd_durations, durations[i]);
+    }
+    // We finally compute the maximum speed using the ditance and time matrices
+    // Only among the pairs of node that we parsed previously
+    double max_speed = 0;
+    std::pair<int, int> max_speed_pair = std::make_pair(0, 0);
+    for (int i = 0; i < instance.nodes.size(); i++){
+        for (int j = 0; j < instance.nodes.size(); j++){
+            if (instance.time_matrix[i][j] > 0){
+                double speed = instance.distance_matrix[i][j] / (double) instance.time_matrix[i][j];
+                if (speed > max_speed){
+                    max_speed = speed;
+                    max_speed_pair = std::make_pair(i, j);
+                }
+            }
+        }
+    }
+
+    double M = (END_DAY - min_duration) * max_speed * instance.cost_per_km / gcd_durations;
+
+    return M;
+}
+
+double compute_M_perV(const Instance& instance) {
+    using std::__gcd;
+    using std::vector;
+
+    // Finally, compute the big M for the objective function
+    // M is computed using : M = (END_DAY - min(durations .> 0)) * maxspeed * cost_per_km / gcd(durations)
+    // We first put all the durations in a vector
+    vector<int> durations = vector<int>();
+    // Enumerate through the nodes
+    for (int i = 0; i < instance.number_interventions; i++){
+        // Only keep the durations that are greater than 0
+        if (instance.nodes[i].duration > 0){
+            durations.push_back(instance.nodes[i].duration);
+        }
+    }
+    int min_duration = *min_element(durations.begin(), durations.end());
+    // We now compute the gcd of the durations
+    int gcd_durations = durations[0];
+    for (int i = 1; i < durations.size(); i++){
+        gcd_durations = __gcd(gcd_durations, durations[i]);
+    }
+    // We finally compute the maximum speed using the ditance and time matrices
+    // Only among the pairs of node that we parsed previously
+    double max_speed = 0;
+    std::pair<int, int> max_speed_pair = std::make_pair(0, 0);
+    for (int i = 0; i < instance.nodes.size(); i++){
+        for (int j = 0; j < instance.nodes.size(); j++){
+            if (instance.time_matrix[i][j] > 0){
+                double speed = instance.distance_matrix[i][j] / (double) instance.time_matrix[i][j];
+                if (speed > max_speed){
+                    max_speed = speed;
+                    max_speed_pair = std::make_pair(i, j);
+                }
+            }
+        }
+    }
+    // Min cost per vehicle
+    double min_vehicle_fixed_cost = 0;
+    for (const Vehicle& vehicle : instance.vehicles){
+        min_vehicle_fixed_cost = std::min(min_vehicle_fixed_cost, vehicle.cost);
+    }
+    double max_fixed_expect_one = 0;
+    for (const Vehicle& vehicle : instance.vehicles){
+        max_fixed_expect_one += vehicle.cost;
+    }
+    max_fixed_expect_one -= min_vehicle_fixed_cost;
+
+    // We finally compute the big M
+    double M = ( instance.number_vehicles * (END_DAY - min_duration) * max_speed * instance.cost_per_km
+        + max_fixed_expect_one ) / gcd_durations;
+
+    return M;
+}

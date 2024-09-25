@@ -42,11 +42,17 @@ void export_solution(const std::string& filename, const Instance& instance, cons
         {"cost_per_km", instance.cost_per_km}
     };
 
-    // Add the objective value
-    j["objective_value"] = solution.objective_value;
-
-    // Add the elapsed time
-    j["time_to_compute"] = elapsed_time;
+    j["solution"] = {
+        {"objective_value", compute_integer_objective(solution, routes, instance)},
+        {"number_covered_interventions", count_covered_interventions(solution, routes, instance)},
+        {"number_used_vehicles", count_used_vehicles(solution, routes, instance)},
+        {"total_fixed_cost", fixed_cost(solution, routes, instance)},
+        {"total_working_time", time_spent_working(solution, routes, instance)},
+        {"total_travel_time", time_spent_travelling(solution, routes, instance)},
+        {"total_waiting_time", time_spent_waiting(solution, routes, instance)},
+        {"total_kilometres_travelled", count_kilometres_travelled(solution, routes, instance)},
+        {"time_to_compute", elapsed_time}
+    };
 
     // Add the routes
     j["routes"] = json::array();

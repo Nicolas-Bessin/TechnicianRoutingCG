@@ -49,7 +49,7 @@ int main(int argc, char *argv[]){
     cout << "-----------------------------------" << endl;
     string fileprefix = INSTANCE_FILE;
     string filename = "../data/" + fileprefix + ".json";
-    Instance instance = parse_file(filename, true);
+    Instance instance = parse_file(filename, fileprefix, true);
 
     // Only keep the first N_INTERVENTIONS nodes
     vector<int> kept_nodes = vector<int>(instance.number_interventions);
@@ -57,9 +57,6 @@ int main(int argc, char *argv[]){
         kept_nodes[i] = 1;
     }
     instance = cut_instance(instance, kept_nodes);
-
-    // Add the name of the instance to the instance object
-    instance.name = fileprefix;
 
     preprocess_interventions(instance);
 

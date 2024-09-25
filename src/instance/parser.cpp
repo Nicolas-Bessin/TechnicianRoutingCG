@@ -85,7 +85,7 @@ Technician parse_technician(json data){
 
 
 // Parse a JSON file to return a Instance object
-Instance parse_file(string filename, bool verbose){
+Instance parse_file(string filename, string instance_name, bool verbose){
     if (verbose){
         cout << "Parsing file " << filename << endl;
     }
@@ -281,65 +281,27 @@ Instance parse_file(string filename, bool verbose){
     // Compute the similarity matrix between vehicles
     vector<vector<int>> similarity_matrix = compute_similarity_matrix(vehicles);
 
-    // Finally, compute the big M for the objective function
-    // M is computed using : M = (END_DAY - min(durations .> 0)) * maxspeed * cost_per_km / gcd(durations)
-    // We first put all the durations in a vector
-    vector<int> durations = vector<int>();
-    // Enumerate through the nodes
-    for (int i = 0; i < nb_interventions; i++){
-        // Only keep the durations that are greater than 0
-        if (nodes[i].duration > 0){
-            durations.push_back(nodes[i].duration);
-        }
-    }
-    int min_duration = *min_element(durations.begin(), durations.end());
-    // We now compute the gcd of the durations
-    int gcd_durations = durations[0];
-    for (int i = 1; i < durations.size(); i++){
-        gcd_durations = __gcd(gcd_durations, durations[i]);
-    }
-    // We finally compute the maximum speed using the ditance and time matrices
-    // Only among the pairs of node that we parsed previously
-    double max_speed = 0;
-    std::pair<int, int> max_speed_pair = std::make_pair(0, 0);
-    for (int i = 0; i < nodes.size(); i++){
-        for (int j = 0; j < nodes.size(); j++){
-            if (time_matrix[i][j] > 0){
-                double speed = distance_matrix[i][j] / (double) time_matrix[i][j];
-                if (speed > max_speed){
-                    max_speed = speed;
-                    max_speed_pair = std::make_pair(i, j);
-                }
-            }
-        }
-    }
 
-    double M = (END_DAY - min_duration) * max_speed * cost_per_km / gcd_durations;
-
-    if (verbose){
-        // Print the values of the constants
-        cout << "GCD is " << gcd_durations << endl;
-        cout << "Max speed is " << max_speed << endl;
-        cout << "Max speed is between " << max_speed_pair.first << " and " << max_speed_pair.second << endl;
-        // Print the value of M
-        cout << "Big M: " << M << endl;
-    }
 
     // We can now build the instance object
-    return Instance(
+    auto instance = Instance(
+        instance_name,
         nb_interventions,
         nb_warehouses,
         nb_vehicles,
         cost_per_km,
         tech_cost,
-        M,
+        0,
         nodes,
         vehicles,
         ressources,
         time_matrix,
         distance_matrix,
         similarity_matrix
-    );    
+    );
 
+    instance.M = compute_M_naive(instance);
+
+    return instance;
 }
     

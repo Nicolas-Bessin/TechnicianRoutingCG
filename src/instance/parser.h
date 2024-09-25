@@ -4,4 +4,4 @@
 #include "instance/instance.h"
 
 
-Instance parse_file(std::string filename, bool verbose = false);
+Instance parse_file(std::string filename, std::string instance_name, bool verbose = false);

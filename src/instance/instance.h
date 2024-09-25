@@ -167,6 +167,7 @@ struct Instance {
     std::vector<std::vector<int>> similarity_matrix;
     // Instance constructor
     Instance(
+        std::string name,
         int number_interventions,
         int number_warehouses,
         int number_vehicles,
@@ -180,7 +181,7 @@ struct Instance {
         std::vector<std::vector<int>> distance_matrix,
         std::vector<std::vector<int>> similarity_matrix
     ) :
-        name(""),
+        name(name),
         number_interventions(number_interventions),
         number_warehouses(number_warehouses),
         number_vehicles(number_vehicles),
@@ -215,3 +216,12 @@ void check_triangular_inequality(const Instance& instance);
 // @param mask : vector of size instance.number_interventions
 // mask[i] = 0 if the intervention i is removed from the new instance
 Instance cut_instance(const Instance& instance, const std::vector<int>& mask);
+
+
+// Compute the naive oursourcing cost M for a given instance
+double compute_M_naive(const Instance& instance);
+
+
+// Compute the oursourcing cost M for a given instance
+// Use the "per vehicle" formulation
+double compute_M_perV(const Instance& instance);

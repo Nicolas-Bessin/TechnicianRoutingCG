@@ -200,14 +200,14 @@ void Parameters::setParametersFromMode(int mode){
     main_algorithm_name = "PWDefault";
     default_autoconfig = false;
     default_timelimit = 0;
-    default_parallel = true;
+    default_parallel = false;
     default_bidirectional = false;
     default_split = 0.5;
     default_reserve = 10000000;
     default_use_visited = true;
     default_compare_unreachables = false;
-    default_dssr = DSSR_RESTRICTED;
-    default_ng = NG_RESTRICTED;
+    default_dssr = DSSR_STANDARD;
+    default_ng = NG_STANDARD;
     default_ng_size = 8;
     default_candidate_type = CANDIDATE_NODE;
     default_join_type = JOIN_ORDERED;
