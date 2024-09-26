@@ -3,6 +3,7 @@
 #include "instance/constants.h"
 #include "pricing_problem/time_window_lunch.h"
 #include "../../pathwyse/core/solver.h"
+#include "pulse/pulse.h"
 
 #include <map>
 #include <iostream>
@@ -379,5 +380,32 @@ Route solve_pricing_problem(
     update_pricing_instance(pricing_problem, dual_solution, instance, vehicle);
     // Solve the pricing problem
     return solve_pricing_problem(pricing_problem, instance, vehicle, n_res_dom);
+}
+
+
+Route solve_pricing_problem(
+    const Instance &instance, 
+    const Vehicle &vehicle,
+    const DualSolution &dual_solution,
+    bool use_cyclic_pricing,
+    int n_res_dom,
+    const std::set<std::tuple<int, int, int>> &forbidden_edges,
+    const std::set<std::tuple<int, int, int>> &required_edges
+    ) {
+    // Create the pricing problem
+    unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, vehicle, use_cyclic_pricing, forbidden_edges, required_edges);
+    // Update the pricing problem with the dual values
+    update_pricing_instance(pricing_problem, dual_solution, instance, vehicle);
+    // Create the pulse algorithm
+    PulseAlgorithm pulse_algorithm = PulseAlgorithm(pricing_problem.get());
+    // Get the partial path
+    int delta = 15;
+    PartialPath partial_path = pulse_algorithm.solve(delta);
+
+    // Transform the partial path into a Route object
+    
+
+
+    return
 }
 

@@ -2,6 +2,7 @@
 
 #include "../../pathwyse/core/data/problem.h"
 #include "pricing_problem/time_window_lunch.h"
+#include "routes/route.h"
 
 #include <array>
 #include <vector>
@@ -24,11 +25,11 @@ PartialPath extend_path(const PartialPath& path, const int vertex) {
     return new_path;
 }
 
-class PulseSolver {
+class PulseAlgorithm {
 
 public :
     // Constructor 
-    PulseSolver(Problem* problem);
+    PulseAlgorithm(Problem* problem);
 
     // Reset the best path and best objective value (Used during the bounding phase)
     void reset();
@@ -42,7 +43,11 @@ public :
     // Returns true if the bound is respected, that is, if we might reach a better solution
     bool check_bounds(int v, int t, double r);
 
-    bool rollback(int v, int t, double r, PartialPath p);
+    // If going through the last vertex in p was a mistake, we rollback the choice
+    bool rollback(int v, PartialPath p);
+
+    // Full solving procedure
+    PartialPath solve(int delta);
 
 private :
     // Underlying problem

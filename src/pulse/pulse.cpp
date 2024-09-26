@@ -6,7 +6,7 @@
 #define FORWARD true
 
 // Constructor
-PulseSolver::PulseSolver(Problem* problem) {
+PulseAlgorithm::PulseAlgorithm(Problem* problem) {
     this->problem = problem;
     this->origin = problem->getOrigin();
     this->destination = problem->getDestination();
@@ -21,13 +21,13 @@ PulseSolver::PulseSolver(Problem* problem) {
     this->objective = dynamic_cast<DefaultCost*>(problem->getObj());
 }
 
-void PulseSolver::reset() {
+void PulseAlgorithm::reset() {
     best_objective = std::numeric_limits<double>::infinity();
     best_path = EmptyPath(N);
 }
 
 
-void PulseSolver::bound(int delta) {
+void PulseAlgorithm::bound(int delta) {
     this->delta = delta;
 
     // Initialize the bounds matrix
@@ -76,22 +76,47 @@ void PulseSolver::bound(int delta) {
 }
 
 
-bool PulseSolver::check_bounds(int v, int t, double r) {
+bool PulseAlgorithm::check_bounds(int v, int t, double r) {
     // We want to find the lowest j such that END_DAY - (j-1) * delta <= t
     // That is, j = ceil((END_DAY - t) / delta) - 1
     int j = ceil((END_DAY - t) / delta) - 1;
     if (j < 0) {
         return false;
     }
+    // We there is no bound available for this vertex, we return true (this means that the time consumption is too low for now)
+    if (j >= bounds[v].size()) {
+        return true;
+    }
     // We return true if the value along the current path + the lowest we can achieve to the destination is less than the best objective
     // That is, we return true if we can potentially improve the best objective starting from the current path
     return r + bounds[v][j] < best_objective;
 }
 
-void PulseSolver::pulse(int v, int t, std::vector<int>q, double r, PartialPath& p) {
+bool PulseAlgorithm::rollback(int v, PartialPath p) {
+    // First step is checking the lenght of the path - rollback is only possible for pathes of length at least 2
+    if (p.sequence.size() < 2) {
+        return false;
+    }
+    // By construction, the ony thing we need to check is wether removing the last vertex of the path gives a better cost
+    // - Thanks to the triangular inequality, the time along the path when removing the last vertex is lower
+    // - By construction, the resource consumptions are also lower
+    // - By construction, the rollback path is strictly included in the longer path
+    int v_last = p.sequence[p.sequence.size() - 1];
+    int v_prev = p.sequence[p.sequence.size() - 2];
+    // Compute the cost of going from v_prev to v directly
+    int r_new = objective->getArcCost(v_prev, v);
+    // Compute the cost of going from v_prev to v_last and then to v
+    int r_old = objective->getArcCost(v_prev, v_last) + objective->getNodeCost(v_last) + objective->getArcCost(v_last, v);
+    // If the cost is better, we want to rollback the choice of going throug v_last
+    return r_new <= r_old;
+}
+
+void PulseAlgorithm::pulse(int v, int t, std::vector<int>q, double r, PartialPath& p) {
     using std::vector;
     // Check the feasibility of the partial path
     bool feasible = true;
+    // Is the path elementary ?
+    feasible = feasible && p.is_visited[v] == 0;
     for (int c = 0; c < capacities.size(); c++) {
         feasible = feasible && capacities[c]->isFeasible(q[c]);
     }
@@ -102,7 +127,7 @@ void PulseSolver::pulse(int v, int t, std::vector<int>q, double r, PartialPath& 
     if (!check_bounds(v, t, r) ) {
         return;
     }
-    if (rollback(v, t, r, p)) {
+    if (rollback(v, p)) {
         return;
     }
 
@@ -123,7 +148,7 @@ void PulseSolver::pulse(int v, int t, std::vector<int>q, double r, PartialPath& 
         return;
     }
 
-    // Pulse from all the forward neighbors
+    // Pulse from all the forward neighborsj
     auto neighbors = problem->getNeighbors(v, FORWARD);
     for (int i = 0; i < neighbors.size(); i++) {
         int r_new = objective->extend(r, v, neighbors[i], FORWARD);
@@ -132,4 +157,19 @@ void PulseSolver::pulse(int v, int t, std::vector<int>q, double r, PartialPath& 
     }
 
     return;
+}
+
+PartialPath PulseAlgorithm::solve(int delta) {
+
+    // Launch the bounding phase
+    reset();
+    bound(delta);
+
+    // Launch the pulse from the origin
+    reset();
+    PartialPath p = EmptyPath(N);
+    pulse(origin, 0, std::vector<int>(capacities.size(), 0), 0, p);
+
+    // Return the best path found
+    return best_path;
 }
