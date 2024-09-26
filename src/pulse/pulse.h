@@ -30,8 +30,16 @@ public :
     // Constructor 
     PulseSolver(Problem* problem);
 
+    // Reset the best path and best objective value (Used during the bounding phase)
+    void reset();
+
+    // Main pulse algorithm
     void pulse(int v, int t, std::vector<int> q, double r, PartialPath& p);
 
+    // Bounding phase
+    void bound(int delta);
+
+    // Returns true if the bound is respected, that is, if we might reach a better solution
     bool check_bounds(int v, int t, double r);
 
     bool rollback(int v, int t, double r, PartialPath p);
@@ -50,4 +58,15 @@ private :
     CustomTimeWindow *time;
     // Objective
     DefaultCost* objective;
+
+    // Best path and best objective value
+    PartialPath best_path;
+    double best_objective;
+
+    // Delta definition for the bounding matrix
+    int delta = 5;
+
+    // Matrix of bounds
+    // bounds[i][j] is a lower bound on the best path from v_i to the destination using less than (j-1)*delta units of time
+    std::vector<std::vector<double>> bounds;
 };
