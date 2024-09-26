@@ -40,13 +40,13 @@ public:
     void printStatus();
 
     //Number of nodes
-    int getNumNodes(){return n_nodes;}
+    int getNumNodes() const {return n_nodes;}
 
     //Origin and Destination
     void setOrigin(int origin){ this->origin = origin;}
-    int getOrigin() {return origin;}
+    int getOrigin() const {return origin;} 
     void setDestination(int destination){ this->destination = destination;}
-    int getDestination() {return destination;}
+    int getDestination() const {return destination;}
 
     //Cycles
     bool isGraphCyclic(){return cycles;}

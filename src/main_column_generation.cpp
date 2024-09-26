@@ -83,7 +83,7 @@ int main(int argc, char *argv[]){
     cout << "Starting the column generation algorithm" << endl;
     
 
-    int MAX_RESOURCES_DOMINANCE = instance.capacities_labels.size();
+    int MAX_RESOURCES_DOMINANCE = instance.capacities_labels.size() + 1;
     // Create a root node for the algorithm
     BPNode root = RootNode(routes);
     CGResult result = column_generation(
