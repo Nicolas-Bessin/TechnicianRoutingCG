@@ -14,16 +14,9 @@ struct PartialPath {
 };
 
 // Return an empty path corresponding to a graph with N vertices
-PartialPath EmptyPath(const int N) {
-    return PartialPath {std::vector<int>(N, 0), std::vector<int>()};
-}
+PartialPath EmptyPath(const int N);
 
-PartialPath extend_path(const PartialPath& path, const int vertex) {
-    PartialPath new_path = path;
-    new_path.is_visited[vertex] = 1;
-    new_path.sequence.push_back(vertex);
-    return new_path;
-}
+PartialPath extend_path(const PartialPath& path, const int vertex);
 
 class PulseAlgorithm {
 
@@ -35,19 +28,23 @@ public :
     void reset();
 
     // Main pulse algorithm
-    void pulse(int v, int t, std::vector<int> q, double r, PartialPath& p);
+    void pulse(int vertex, int time, std::vector<int> quantities, double cost, PartialPath& path);
 
     // Bounding phase
     void bound(int delta);
 
     // Returns true if the bound is respected, that is, if we might reach a better solution
-    bool check_bounds(int v, int t, double r);
+    bool check_bounds(int vertex, int time, double cost);
 
     // If going through the last vertex in p was a mistake, we rollback the choice
-    bool rollback(int v, PartialPath p);
+    bool rollback(int vertex, PartialPath path);
 
-    // Full solving procedure
-    PartialPath solve(int delta);
+    // Full solving procedure, returns an error code (0 if everything went well)
+    int solve(int delta);
+
+    // Getters
+    PartialPath get_best_path() {return best_path;}
+    double get_best_objective() {return best_objective;}
 
 private :
     // Underlying problem
@@ -57,12 +54,14 @@ private :
     int destination;
     // Number of nodes
     int N;
-    // Capacity resources
-    std::vector<Capacity*> capacities;
-    // Time resource
-    CustomTimeWindow *time;
-    // Objective
-    DefaultCost* objective;
+    // Number of capacities
+    int K;
+    // // Capacity resources
+    // std::vector<Capacity*> capacities;
+    // // Time resource
+    // CustomTimeWindow *time;
+    // // Objective
+    // DefaultCost* objective;
 
     // Best path and best objective value
     PartialPath best_path;

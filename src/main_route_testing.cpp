@@ -21,45 +21,56 @@
 #include <chrono>
 #include <random>
 
-#define TIME_LIMIT 120
-#define SOLVER_MODE IMPOSE_ROUTING
+#define TIME_LIMIT 60
 #define THRESHOLD 1e-6
 #define VERBOSE true
-#define GREEDY_INIT false
-#define N_INTERVENTIONS 25
+#define N_INTERVENTIONS 10
+#define INSTANCE_FILE "instance_1"
 
 int main(int argc, char *argv[]){
 
     using std::cout, std::endl;
     using std::setprecision, std::fixed;
     using std::vector, std::string, std::to_string, std::pair;
-    using std::tuple, std::set;
-    using std::unique_ptr;
     namespace chrono = std::chrono;
 
     // Parse the instance from a JSON file
-    auto start_parse = chrono::steady_clock::now();
     cout << "Technician Routing Problem using Column Generation" << endl;
     cout << "-----------------------------------" << endl;
-    string default_filename = "../data/instance_1.json";
-    Instance instance = parse_file(default_filename, true);
+    string fileprefix = INSTANCE_FILE;
+    string filename = "../data/" + fileprefix + ".json";
+    Instance instance = parse_file(filename, fileprefix, true);
 
+    // Only keep the first N_INTERVENTIONS nodes
+    vector<int> kept_nodes = vector<int>(instance.number_interventions);
+    for (int i = 0; i < N_INTERVENTIONS; i++){
+        kept_nodes[i] = 1;
+    }
+    instance = cut_instance(instance, kept_nodes);
 
-    check_triangular_inequality(instance);
+    preprocess_interventions(instance);
 
-    // vector<Route> routes = vector<Route>();
-    // routes.push_back(EmptyRoute(instance.nodes.size()));
-    // auto root_node = RootNode(routes);
+    // Create a "fake" dual solution filled with zeros
+    int n_inter = instance.number_interventions;
+    int n_vehicles = instance.vehicles.size();
+    DualSolution dual_solution = DualSolution{
+        vector<double>(n_inter, 0.0),
+        vector<double>(n_vehicles, 0.0),
+    };
 
-    // auto interger_solution = relaxed_RMP(instance, routes, root_node);
+    // Solve the pricing problem for the first vehicle
+    cout << "Solving the first pricing problem -- Pathwyse" << endl;
+    Vehicle vehicle = instance.vehicles[0];
+    Route route = solve_pricing_problem(instance, vehicle, dual_solution);
 
+    // Print the route
+    print_route(route, instance);
 
-    // // Manually compute the expected objective value
-    // double expected_objective = 0;
-    // for (int i = 0; i < instance.number_interventions; i++){
-    //     expected_objective += instance.nodes[i].duration * instance.M;
-    // }
+    // Solve it using the pulse algorithm
+    cout << "Solving the first pricing problem -- Pulse" << endl;
+    Route route_pulse = solve_pricing_problem_pulse(instance, vehicle, dual_solution);
 
-    // cout << "Expected objective value : " << expected_objective << endl;
-    // cout << "Objective value : " << interger_solution.objective_value << endl;
+    // Print the route
+    print_route(route_pulse, instance);
+
 }

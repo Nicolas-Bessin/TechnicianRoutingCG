@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD 23)
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 	set(CMAKE_CXX_FLAGS  "/O2 /w  /DNDEBUG")
 else()
-	set(CMAKE_CXX_FLAGS  " -w  -O3 -pthread -DNDEBUG")
+	set(CMAKE_CXX_FLAGS  " -w  -pthread")
 endif()
 
 
@@ -57,6 +57,9 @@ set(
     src/master_problem/node.cpp
     src/master_problem/integer_solution.h
     src/master_problem/integer_solution.cpp
+
+    src/pulse/pulse.h
+    src/pulse/pulse.cpp
 
     src/pricing_problem/pricing.h
     src/pricing_problem/pricing.cpp 

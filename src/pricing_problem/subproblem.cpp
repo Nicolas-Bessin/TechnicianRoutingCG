@@ -383,7 +383,7 @@ Route solve_pricing_problem(
 }
 
 
-Route solve_pricing_problem(
+Route solve_pricing_problem_pulse(
     const Instance &instance, 
     const Vehicle &vehicle,
     const DualSolution &dual_solution,
@@ -399,13 +399,62 @@ Route solve_pricing_problem(
     // Create the pulse algorithm
     PulseAlgorithm pulse_algorithm = PulseAlgorithm(pricing_problem.get());
     // Get the partial path
-    int delta = 15;
-    PartialPath partial_path = pulse_algorithm.solve(delta);
+    int delta = 50;
+    int error = pulse_algorithm.solve(delta);
+
+    if (error != 0) {
+        cout << "Error in solving the pulse algorithm" << endl;
+        return EmptyRoute(instance.nodes.size());
+    }
 
     // Transform the partial path into a Route object
-    
+
+    PartialPath best_path = pulse_algorithm.get_best_path();
+    double reduced_cost = pulse_algorithm.get_best_objective();
+
+    // Get all the info we need to build a Route object
+    double total_cost = vehicle.cost;
+    int total_duration = 0;
+    vector<int> id_sequence;
+    vector<int> is_in_route(instance.nodes.size(), 0);
+    vector<vector<int>> route_edges(instance.nodes.size(), vector<int>(instance.nodes.size(), 0));
+
+    // Sequence in terms of the vehicle's interventions (not the true node ids)
+    auto tour = best_path.sequence;    
+
+    for (int i = 0; i < tour.size() - 1; i++) {
+        int true_i = i == 0 ? vehicle.depot : vehicle.interventions[tour[i]];
+        int true_j = i+1 == tour.size()-1 ? vehicle.depot : vehicle.interventions[tour[i + 1]];
+        // Update the sequence of interventions
+        id_sequence.push_back(true_i);
+        // Update the edge matrix
+        route_edges[true_i][true_j] = 1;
+        // Update the is_in_route
+        is_in_route[true_i] = 1;
+        // Get the duration, and distance between the two interventions
+        int duration = instance.nodes[true_i].duration;
+        int distance = instance.distance_matrix[true_i][true_j];
+        // Update the running total cost & duration
+        total_cost += instance.cost_per_km * distance;
+        total_duration += duration;        
+    }
+    // Add the checks related to the last intervention
+    int true_last = vehicle.depot;
+    id_sequence.push_back(true_last);
+    is_in_route[true_last] = 1;
+
+    // Create the Route object
+    Route new_route = Route{
+        vehicle.id,
+        total_cost,
+        reduced_cost,
+        total_duration,
+        id_sequence,
+        is_in_route,
+        route_edges
+    };
 
 
-    return
+    return new_route;
 }
 
