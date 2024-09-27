@@ -74,7 +74,7 @@ int main(int argc, char *argv[]){
 
     auto start_pulse = chrono::high_resolution_clock::now();
     // Solve it using the pulse algorithm
-    int delta = 10;
+    int delta = 12;
     cout << "Solving to optimality using Pulse with delta = " << delta << endl;
     Route route_pulse = solve_pricing_problem_pulse(instance, vehicle, dual_solution, delta);
 

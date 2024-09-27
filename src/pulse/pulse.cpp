@@ -37,11 +37,21 @@ PulseAlgorithm::PulseAlgorithm(Problem* problem) {
     this->K = problem->getNumRes() - 1;
 }
 
+// Destructor
+PulseAlgorithm::~PulseAlgorithm() {
+    // Nothing to do
+    std::cout << "Destructor called" << std::endl;
+}
+
 void PulseAlgorithm::reset() {
     best_objective = std::numeric_limits<double>::infinity();
     best_path = EmptyPath(N);
 }
 
+
+int get_bound_index(int time, int delta) {
+    return ceil( (double) (END_DAY - time) / (double) delta) - 1;
+}
 
 void PulseAlgorithm::bound(int delta) {
     this->delta = delta;
@@ -50,7 +60,7 @@ void PulseAlgorithm::bound(int delta) {
     // We have one bounding level in terms of time for each END_DAY - (j-1) * delta
     // Thus, bound[v][j] is the best objective value that can be achieved starting from vertex v with available time (j+) * delta
     // Or equivalently, the best objective value that can be achieved starting from vertex v at time END_DAY - (j + 1) * delta
-    int num_bounds = ceil( (double) END_DAY / delta) - 1;
+    int num_bounds = get_bound_index(0, delta);
 
     if (num_bounds <= 0) {
         std::cerr << "Error: delta is too large" << std::endl;
@@ -89,10 +99,6 @@ void PulseAlgorithm::bound(int delta) {
 
 }
 
-int get_bound_index(int time, int delta) {
-    return ceil( (double) (END_DAY - time) / (double) delta) - 1;
-}
-
 bool PulseAlgorithm::check_bounds(int vertex, int time, double cost) {
     using std::cout, std::endl;
     // We want to find the lowest j such that END_DAY - (j-1) * delta <= t
@@ -107,7 +113,7 @@ bool PulseAlgorithm::check_bounds(int vertex, int time, double cost) {
     }
     // We return true if the value along the current path + the lowest we can achieve to the destination is less than the best objective
     // That is, we return true if we can potentially improve the best objective starting from the current path
-    return cost + bounds[vertex].at(j) < best_objective;
+    return cost + bounds[vertex][j] < best_objective;
 }
 
 bool PulseAlgorithm::rollback(int vertex, const PartialPath & path) {

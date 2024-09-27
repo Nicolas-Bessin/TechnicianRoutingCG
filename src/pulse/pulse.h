@@ -23,6 +23,8 @@ class PulseAlgorithm {
 public :
     // Constructor 
     PulseAlgorithm(Problem* problem);
+    // Destructor
+    ~PulseAlgorithm();
 
     // Reset the best path and best objective value (Used during the bounding phase)
     void reset();
