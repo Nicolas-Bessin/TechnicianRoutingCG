@@ -28,7 +28,7 @@ public :
     void reset();
 
     // Main pulse algorithm
-    void pulse(int vertex, int time, std::vector<int> quantities, double cost, PartialPath& path);
+    void pulse(int vertex, int time, std::vector<int> quantities, double cost, const PartialPath& path);
 
     // Bounding phase
     void bound(int delta);
@@ -37,7 +37,7 @@ public :
     bool check_bounds(int vertex, int time, double cost);
 
     // If going through the last vertex in p was a mistake, we rollback the choice
-    bool rollback(int vertex, PartialPath path);
+    bool rollback(int vertex, const PartialPath & path);
 
     // Full solving procedure, returns an error code (0 if everything went well)
     int solve(int delta);

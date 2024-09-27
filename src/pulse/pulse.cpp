@@ -107,10 +107,10 @@ bool PulseAlgorithm::check_bounds(int vertex, int time, double cost) {
     }
     // We return true if the value along the current path + the lowest we can achieve to the destination is less than the best objective
     // That is, we return true if we can potentially improve the best objective starting from the current path
-    return cost + bounds[vertex][j] < best_objective;
+    return cost + bounds[vertex].at(j) < best_objective;
 }
 
-bool PulseAlgorithm::rollback(int vertex, PartialPath path) {
+bool PulseAlgorithm::rollback(int vertex, const PartialPath & path) {
     // First step is checking the lenght of the path - rollback is only possible for pathes of length at least 2
     if (path.sequence.size() < 2) {
         return false;
@@ -132,7 +132,7 @@ bool PulseAlgorithm::rollback(int vertex, PartialPath path) {
     return r_new <= r_old;
 }
 
-void PulseAlgorithm::pulse(int vertex, int time, std::vector<int>quantities, double cost, PartialPath& path) {
+void PulseAlgorithm::pulse(int vertex, int time, std::vector<int>quantities, double cost, const PartialPath& path) {
     using std::vector;
     using std::cout, std::endl;
     // Check the feasibility of the partial path
@@ -195,8 +195,8 @@ int PulseAlgorithm::solve(int delta) {
     bound(delta);
 
     // Launch the pulse from the origin
-    std::cout << "-----------------------------------" << std::endl;
-    std::cout << " Solving starting from the origin" << std::endl;
+    // std::cout << "-----------------------------------" << std::endl;
+    // std::cout << "Solving starting from the origin" << std::endl;
     reset();
     PartialPath p = EmptyPath(N);
     pulse(origin, 0, std::vector<int>(K, 0), 0, p);

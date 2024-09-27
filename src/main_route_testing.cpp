@@ -24,7 +24,7 @@
 #define TIME_LIMIT 60
 #define THRESHOLD 1e-6
 #define VERBOSE true
-#define N_INTERVENTIONS 10
+#define N_INTERVENTIONS 25
 #define INSTANCE_FILE "instance_1"
 
 int main(int argc, char *argv[]){
@@ -50,25 +50,37 @@ int main(int argc, char *argv[]){
 
     preprocess_interventions(instance);
 
-    // Create a "fake" dual solution filled with zeros
-    int n_inter = instance.number_interventions;
-    int n_vehicles = instance.vehicles.size();
-    DualSolution dual_solution = DualSolution{
-        vector<double>(n_inter, 0.0),
-        vector<double>(n_vehicles, 0.0),
-    };
-
-    // Solve the pricing problem for the first vehicle
-    cout << "Solving the first pricing problem -- Pathwyse" << endl;
+    // Get the DualSolution from the first RMP
+    vector<Route> routes = {EmptyRoute(instance.nodes.size())};
+    BPNode node = RootNode(routes);
+    MasterSolution master_solution = relaxed_RMP(instance, routes, node);
+    DualSolution dual_solution = master_solution.dual_solution;
     Vehicle vehicle = instance.vehicles[0];
-    Route route = solve_pricing_problem(instance, vehicle, dual_solution);
 
-    // Print the route
-    print_route(route, instance);
 
+    // auto start = chrono::high_resolution_clock::now();
+    // // Solve the pricing problem for the first vehicle
+    // cout << "Solving to optimality using Pathwyse" << endl;
+    // Route route = solve_pricing_problem(instance, vehicle, dual_solution, true, -1);
+
+    // auto end = chrono::high_resolution_clock::now();
+    // auto duration = chrono::duration_cast<chrono::milliseconds>(end - start).count();
+    // cout << "Time to solve the pricing problem using Pathwyse: " << duration << "ms" << endl;
+
+    // // Print the route
+    // print_route(route, instance);
+
+    cout << "-----------------------------------" << endl;
+
+    auto start_pulse = chrono::high_resolution_clock::now();
     // Solve it using the pulse algorithm
-    cout << "Solving the first pricing problem -- Pulse" << endl;
-    Route route_pulse = solve_pricing_problem_pulse(instance, vehicle, dual_solution);
+    int delta = 10;
+    cout << "Solving to optimality using Pulse with delta = " << delta << endl;
+    Route route_pulse = solve_pricing_problem_pulse(instance, vehicle, dual_solution, delta);
+
+    auto end_pulse = chrono::high_resolution_clock::now();
+    auto duration_pulse = chrono::duration_cast<chrono::milliseconds>(end_pulse - start_pulse).count();
+    cout << "Time to solve the pricing problem using Pulse: " << duration_pulse << "ms" << endl;
 
     // Print the route
     print_route(route_pulse, instance);

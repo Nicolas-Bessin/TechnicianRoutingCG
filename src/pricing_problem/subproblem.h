@@ -64,8 +64,7 @@ Route solve_pricing_problem_pulse(
     const Instance &instance, 
     const Vehicle &vehicle,
     const DualSolution &dual_solution,
-    bool use_cyclic_pricing = false,
-    int n_res_dom = -1,
+    int delta = 50,
     const std::set<std::tuple<int, int, int>> &forbidden_edges = {},
     const std::set<std::tuple<int, int, int>> &required_edges = {}
     );

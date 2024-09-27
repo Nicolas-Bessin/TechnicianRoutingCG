@@ -387,19 +387,17 @@ Route solve_pricing_problem_pulse(
     const Instance &instance, 
     const Vehicle &vehicle,
     const DualSolution &dual_solution,
-    bool use_cyclic_pricing,
-    int n_res_dom,
+    int delta,
     const std::set<std::tuple<int, int, int>> &forbidden_edges,
     const std::set<std::tuple<int, int, int>> &required_edges
     ) {
     // Create the pricing problem
-    unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, vehicle, use_cyclic_pricing, forbidden_edges, required_edges);
+    unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, vehicle, true, forbidden_edges, required_edges);
     // Update the pricing problem with the dual values
     update_pricing_instance(pricing_problem, dual_solution, instance, vehicle);
     // Create the pulse algorithm
     PulseAlgorithm pulse_algorithm = PulseAlgorithm(pricing_problem.get());
     // Get the partial path
-    int delta = 50;
     int error = pulse_algorithm.solve(delta);
 
     if (error != 0) {

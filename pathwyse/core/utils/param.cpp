@@ -215,7 +215,7 @@ void Parameters::setParametersFromMode(int mode){
     if (mode == DEFAULT_ACYCLIC_PARAM_MODE) {
         default_compare_unreachables = false;
     } else if (mode == DEFAULT_CYCLE_PARAM_MODE) {
-        default_timelimit = 5;
+        default_timelimit = 0;
         default_compare_unreachables = true;
     } else {
         std::cout << "Warning: Mode not recognized, using default parameters." << std::endl;
