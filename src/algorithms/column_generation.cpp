@@ -163,11 +163,13 @@ CGResult column_generation(
             best_reduced_costs[i] = 0;
         }
         int delta = 10;
+        int pool_size = 10;
         std::vector<Route> new_routes = solve_pricing_problems_basic_pulse(
             convex_dual_solution,
             instance,
             vehicle_order,
-            delta
+            delta,
+            pool_size
         );
         // We add the new routes to the global routes vector
         for (Route& new_route : new_routes){
@@ -231,7 +233,7 @@ CGResult column_generation(
         cout << "Time limit reached" << endl;
     }
     cout << "End of the column generation after " << iteration << " iterations" << endl;
-    cout << "Relaxed RMP objective value : " << setprecision(3) << solution.objective_value << endl;
+    cout << "Relaxed RMP objective value : " << setprecision(15) << solution.objective_value << endl;
 
     // Convert the value from the minimum formulation to the maximum formulation
     double total_outsource_cost = 0;
@@ -239,7 +241,7 @@ CGResult column_generation(
         total_outsource_cost += instance.nodes[i].duration * instance.M;
     }
     double relaxed_maximum_objective = total_outsource_cost - solution.objective_value;
-    cout << "Relaxed RMP maximum formulation objective value : " << setprecision(3) << relaxed_maximum_objective << endl;
+    cout << "Relaxed RMP maximum formulation objective value : " << setprecision(15) << relaxed_maximum_objective << endl;
 
     // Update the node's upper bound
     node.upper_bound = solution.objective_value;
@@ -258,7 +260,7 @@ CGResult column_generation(
         cout << "Integer RMP objective value : " << integer_solution.objective_value << endl;
         // Compute the maximum formulation objective value
         double integer_maximum_objective = total_outsource_cost - integer_solution.objective_value;
-        cout << "Integer RMP maximum formulation objective value : " << setprecision(3) << integer_maximum_objective << endl;
+        cout << "Integer RMP maximum formulation objective value : " << setprecision(15) << integer_maximum_objective << endl;
         double gap = std::abs(solution.objective_value - integer_solution.objective_value) / integer_solution.objective_value;
         cout << "Gap between the relaxed and integer RMP : " << setprecision(5) << gap << endl;
 

@@ -24,7 +24,7 @@
 #include <chrono>
 #include <format>
 
-#define TIME_LIMIT 1200
+#define TIME_LIMIT 300
 #define THRESHOLD 1e-6
 #define VERBOSE true
 #define GREEDY_INIT false
@@ -124,7 +124,7 @@ int main(int argc, char *argv[]){
     routes = repair_routes(routes, integer_solution, instance);
     integer_solution = AllOnesSolution(routes.size());
     integer_solution.objective_value = compute_integer_objective(integer_solution, routes, instance);
-    cout << "Objective value of the repaired solution : " << integer_solution.objective_value << endl;
+    cout << "Objective value of the repaired solution : " << setprecision(15) << integer_solution.objective_value << endl;
 
     // Print the routes in the integer solution (in detail)
     // full_analysis(integer_solution, routes, instance);

@@ -216,14 +216,15 @@ std::vector<Route> solve_pricing_problems_basic_pulse(
     const DualSolution & solution,
     const Instance & instance,
     const std::vector<int> & vehicle_order,
-    int delta
+    int delta,
+    int pool_size
 ){
     using std::vector;
     using std::packaged_task;
     using std::future;
     
     auto single_pricer = [&](int v){
-            return solve_pricing_problem_pulse(instance, instance.vehicles.at(v), solution, delta);
+            return solve_pricing_problem_pulse(instance, instance.vehicles.at(v), solution, delta, pool_size);
         };
 
     vector<packaged_task<vector<Route>(int)>> tasks;
