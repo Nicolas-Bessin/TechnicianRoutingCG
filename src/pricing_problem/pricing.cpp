@@ -18,10 +18,9 @@
 std::vector<Route> solve_pricing_problems_basic(
     const DualSolution & solution,
     const Instance & instance,
-    bool using_cyclic_pricing,
-    int n_ressources_dominance,
     const std::vector<int> &vehicle_order,
-    double reduced_cost_threshold
+    bool using_cyclic_pricing,
+    int n_ressources_dominance
     ){
     using std::vector;
     using std::packaged_task;
@@ -60,10 +59,9 @@ std::vector<Route> solve_pricing_problems_basic(
 std::vector<Route> solve_pricing_problems_diversification(
     const DualSolution & solution,
     const Instance & instance,
+    const std::vector<int> &vehicle_order,
     bool using_cyclic_pricing,
     int n_ressources_dominance,
-    const std::vector<int> &vehicle_order,
-    double reduced_cost_threshold,
     int seed
 ) {
     using std::vector;
@@ -97,7 +95,7 @@ std::vector<Route> solve_pricing_problems_diversification(
             // Solve the pricing problem for the vehicle
             Route new_route = solve_pricing_problem(instance, vehicle, solution, using_cyclic_pricing, n_ressources_dominance);
             // If the reduced cost is greater than the threshold, we add the route
-            if (new_route.reduced_cost < -reduced_cost_threshold && new_route.id_sequence.size() > 2){
+            if (new_route.id_sequence.size() > 2){
                 private_new_routes.push_back(new_route);
                 // Update the covered interventions (interventions only, not warehouses)
                 for (int i = 1; i < new_route.id_sequence.size() - 1; i++){
@@ -144,10 +142,9 @@ std::vector<Route> solve_pricing_problems_diversification(
 std::vector<Route> solve_pricing_problems_clustering(
     const DualSolution & solution,
     const Instance & instance,
+    const std::vector<int> &vehicle_order,
     bool using_cyclic_pricing,
     int n_ressources_dominance,
-    const std::vector<int> &vehicle_order,
-    double reduced_cost_threshold,
     int seed
     ){
     using std::vector;
@@ -172,7 +169,7 @@ std::vector<Route> solve_pricing_problems_clustering(
     // Use the previous function to solve the pricing problems
     for (auto cluster : clusters){
         vector<int> vehicle_order = cluster;
-        vector<Route> new_routes_cluster = solve_pricing_problems_diversification(solution, instance, using_cyclic_pricing, n_ressources_dominance, vehicle_order, reduced_cost_threshold);
+        vector<Route> new_routes_cluster = solve_pricing_problems_diversification(solution, instance, vehicle_order, using_cyclic_pricing, n_ressources_dominance);
         new_routes.insert(new_routes.end(), new_routes_cluster.begin(), new_routes_cluster.end());
     }
 
@@ -186,7 +183,6 @@ std::vector<Route> solve_pricing_problems_tabu_search(
     bool using_cyclic_pricing,
     int n_ressources_dominance,
     const std::vector<int> &vehicle_order,
-    double reduced_cost_threshold,
     int max_iterations,
     int max_modifications,
     int seed
@@ -210,6 +206,52 @@ std::vector<Route> solve_pricing_problems_tabu_search(
 
         // We add the new routes to the list of new routes
         new_routes.insert(new_routes.end(), tabu_list.begin(), tabu_list.end());
+    }
+
+    return new_routes;
+}
+
+
+std::vector<Route> solve_pricing_problems_basic_pulse(
+    const DualSolution & solution,
+    const Instance & instance,
+    const std::vector<int> & vehicle_order,
+    int delta
+){
+    using std::vector;
+    using std::packaged_task;
+    using std::future;
+    
+    auto single_pricer = [&](int v){
+            return solve_pricing_problem_pulse(instance, instance.vehicles.at(v), solution, delta);
+        };
+
+    vector<packaged_task<vector<Route>(int)>> tasks;
+    for (int v : vehicle_order){
+        tasks.push_back(packaged_task<vector<Route>(int)>(single_pricer));
+    }
+    vector<future<vector<Route>>> futures;
+    for (auto& task : tasks){
+        futures.push_back(task.get_future());
+    }
+    // Multi-threaded execution
+    vector<std::thread> threads(tasks.size());
+
+    // Sequential execution
+    vector<vector<Route>> new_routes_parallel(vehicle_order.size());
+    for (int i = 0; i < tasks.size(); i++){
+        threads[i] = std::thread(std::move(tasks[i]), vehicle_order[i]);
+    }
+
+    for (int i = 0; i < tasks.size(); i++){
+        threads[i].join();
+        new_routes_parallel[i] = futures[i].get();
+    }
+
+    // Regroup all the routes in a single vector
+    vector<Route> new_routes;
+    for (auto routes : new_routes_parallel){
+        new_routes.insert(new_routes.end(), routes.begin(), routes.end());
     }
 
     return new_routes;

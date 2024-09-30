@@ -162,14 +162,12 @@ CGResult column_generation(
         for (int i = 0; i < instance.vehicles.size(); i++){
             best_reduced_costs[i] = 0;
         }
-
-        std::vector<Route> new_routes = solve_pricing_problems_basic(
+        int delta = 10;
+        std::vector<Route> new_routes = solve_pricing_problems_basic_pulse(
             convex_dual_solution,
             instance,
-            using_cyclic_pricing,
-            n_ressources_dominance,
             vehicle_order,
-            reduced_cost_threshold
+            delta
         );
         // We add the new routes to the global routes vector
         for (Route& new_route : new_routes){

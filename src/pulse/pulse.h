@@ -6,7 +6,7 @@
 
 #include <array>
 #include <vector>
-
+#include <map>
 
 struct PartialPath {
     std::vector<int> is_visited;
@@ -21,10 +21,11 @@ PartialPath extend_path(const PartialPath& path, const int vertex);
 class PulseAlgorithm {
 
 public :
-    // Constructor 
-    PulseAlgorithm(Problem* problem);
-    // Destructor
-    ~PulseAlgorithm();
+    // Constructor
+    // @param problem : the underlying problem - will not be deleted
+    // @param delta : the time step for the bounding phase
+    // @param pool_size : the size of the solution pool
+    PulseAlgorithm(Problem* problem, int delta, int pool_size);
 
     // Reset the best path and best objective value (Used during the bounding phase)
     void reset();
@@ -33,7 +34,7 @@ public :
     void pulse(int vertex, int time, std::vector<int> quantities, double cost, const PartialPath& path);
 
     // Bounding phase
-    void bound(int delta);
+    void bound();
 
     // Returns true if the bound is respected, that is, if we might reach a better solution
     bool check_bounds(int vertex, int time, double cost);
@@ -47,30 +48,32 @@ public :
     // Getters
     PartialPath get_best_path() {return best_path;}
     double get_best_objective() {return best_objective;}
+    auto get_solution_pool() {return solutions;}
 
 private :
     // Underlying problem
     Problem* problem;
     // Origin and destination nodes
-    int origin;
-    int destination;
+    const int origin;
+    const int destination;
     // Number of nodes
-    int N;
+    const int N;
     // Number of capacities
-    int K;
-    // // Capacity resources
-    // std::vector<Capacity*> capacities;
-    // // Time resource
-    // CustomTimeWindow *time;
-    // // Objective
-    // DefaultCost* objective;
+    const int K;
 
     // Best path and best objective value
     PartialPath best_path;
     double best_objective;
 
+    // Size of the solution pool
+    const int pool_size = 10;
+    // Value of the worst solution in the pool - we only insert a new solution if it is better than this    
+    double pool_bound = std::numeric_limits<double>::infinity();
+    // Pool of solutions
+    std::multimap<double, PartialPath> solutions;
+
     // Delta definition for the bounding matrix
-    int delta = 5;
+    const int delta = 5;
 
     // Matrix of bounds
     // bounds[i][j] is a lower bound on the best path from v_i to the destination using less than (j-1)*delta units of time

@@ -13,10 +13,9 @@
 std::vector<Route> solve_pricing_problems_basic(
     const DualSolution & solution,
     const Instance & instance,
-    bool using_cyclic_pricing,
-    int n_ressources_dominance,
     const std::vector<int> & vehicle_order,
-    double reduced_cost_threshold = 1e-6
+    bool using_cyclic_pricing,
+    int n_ressources_dominance
 );
 
 
@@ -26,10 +25,9 @@ std::vector<Route> solve_pricing_problems_basic(
 std::vector<Route> solve_pricing_problems_diversification(
     const DualSolution & solution,
     const Instance & instance,
+    const std::vector<int> & vehicle_order,
     bool using_cyclic_pricing,
     int n_ressources_dominance,
-    const std::vector<int> & vehicle_order,
-    double reduced_cost_threshold = 1e-6,
     int seed = RANDOM_SEED
 );
 
@@ -37,10 +35,9 @@ std::vector<Route> solve_pricing_problems_diversification(
 std::vector<Route> solve_pricing_problems_clustering(
     const DualSolution & solution,
     const Instance & instance,
+    const std::vector<int> &vehicle_order,
     bool using_cyclic_pricing,
     int n_ressources_dominance,
-    const std::vector<int> &vehicle_order,
-    double reduced_cost_threshold,
     int seed = RANDOM_SEED
     );
 
@@ -48,11 +45,19 @@ std::vector<Route> solve_pricing_problems_clustering(
 std::vector<Route> solve_pricing_problems_tabu_search(
     const DualSolution & solution,
     const Instance & instance,
+    const std::vector<int> &vehicle_order,
     bool using_cyclic_pricing,
     int n_ressources_dominance,
-    const std::vector<int> &vehicle_order,
-    double reduced_cost_threshold,
     int max_iterations,
     int max_modifications,
     int seed = RANDOM_SEED
+    );
+
+
+std::vector<Route> solve_pricing_problems_basic_pulse(
+    const DualSolution & solution,
+    const Instance & instance,
+    const std::vector<int> & vehicle_order,
+    int delta = 10,
+    int pool_size = 10
     );

@@ -60,11 +60,12 @@ Route solve_pricing_problem(
     );
 
 
-Route solve_pricing_problem_pulse(
+std::vector<Route> solve_pricing_problem_pulse(
     const Instance &instance, 
     const Vehicle &vehicle,
     const DualSolution &dual_solution,
     int delta = 50,
+    int pool_size = 10,
     const std::set<std::tuple<int, int, int>> &forbidden_edges = {},
     const std::set<std::tuple<int, int, int>> &required_edges = {}
     );

@@ -24,7 +24,7 @@
 #define TIME_LIMIT 60
 #define THRESHOLD 1e-6
 #define VERBOSE true
-#define N_INTERVENTIONS 25
+#define N_INTERVENTIONS 75
 #define INSTANCE_FILE "instance_1"
 
 int main(int argc, char *argv[]){
@@ -58,12 +58,12 @@ int main(int argc, char *argv[]){
     Vehicle vehicle = instance.vehicles[0];
 
 
-    // auto start = chrono::high_resolution_clock::now();
+    // auto start = chrono::steady_clock::now();
     // // Solve the pricing problem for the first vehicle
     // cout << "Solving to optimality using Pathwyse" << endl;
     // Route route = solve_pricing_problem(instance, vehicle, dual_solution, true, -1);
 
-    // auto end = chrono::high_resolution_clock::now();
+    // auto end = chrono::steady_clock::now();
     // auto duration = chrono::duration_cast<chrono::milliseconds>(end - start).count();
     // cout << "Time to solve the pricing problem using Pathwyse: " << duration << "ms" << endl;
 
@@ -72,17 +72,21 @@ int main(int argc, char *argv[]){
 
     cout << "-----------------------------------" << endl;
 
-    auto start_pulse = chrono::high_resolution_clock::now();
+    auto start_pulse = chrono::steady_clock::now();
     // Solve it using the pulse algorithm
-    int delta = 12;
+    int delta = 10;
+    int pool_size = 100;
     cout << "Solving to optimality using Pulse with delta = " << delta << endl;
-    Route route_pulse = solve_pricing_problem_pulse(instance, vehicle, dual_solution, delta);
+    vector<Route> routes_pulse = solve_pricing_problem_pulse(instance, vehicle, dual_solution, delta, pool_size);
 
-    auto end_pulse = chrono::high_resolution_clock::now();
+    auto end_pulse = chrono::steady_clock::now();
     auto duration_pulse = chrono::duration_cast<chrono::milliseconds>(end_pulse - start_pulse).count();
     cout << "Time to solve the pricing problem using Pulse: " << duration_pulse << "ms" << endl;
+    cout << "Found " << routes_pulse.size() << " routes" << endl;
 
     // Print the route
-    print_route(route_pulse, instance);
+    for (Route route_pulse : routes_pulse){
+        print_route(route_pulse, instance);
+    }
 
 }

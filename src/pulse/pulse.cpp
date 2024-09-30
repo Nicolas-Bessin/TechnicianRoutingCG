@@ -29,23 +29,32 @@ void print_path_inline(const PartialPath& path) {
 }
 
 // Constructor
-PulseAlgorithm::PulseAlgorithm(Problem* problem) {
-    this->problem = problem;
-    this->origin = problem->getOrigin();
-    this->destination = problem->getDestination();
-    this->N = problem->getNumNodes();
-    this->K = problem->getNumRes() - 1;
+PulseAlgorithm::PulseAlgorithm(Problem* problem, int delta, int pool_size) :
+    problem(problem),
+    origin(problem->getOrigin()),
+    destination(problem->getDestination()),
+    N(problem->getNumNodes()),
+    K(problem->getNumRes() - 1),
+    delta(delta),
+    pool_size(pool_size)
+{
+    best_objective = std::numeric_limits<double>::infinity();
+    pool_bound = std::numeric_limits<double>::infinity();
+    best_path = EmptyPath(N);
+
+    // If the pool if of size 0, we tell the user there is a problem
+    if (pool_size <= 0) {
+        throw std::invalid_argument("Error: pool size must be strictly positive");
+    }
 }
 
-// Destructor
-PulseAlgorithm::~PulseAlgorithm() {
-    // Nothing to do
-    std::cout << "Destructor called" << std::endl;
-}
 
 void PulseAlgorithm::reset() {
     best_objective = std::numeric_limits<double>::infinity();
     best_path = EmptyPath(N);
+    // Reset the pool
+    pool_bound = std::numeric_limits<double>::infinity();
+    solutions.clear();
 }
 
 
@@ -53,14 +62,12 @@ int get_bound_index(int time, int delta) {
     return ceil( (double) (END_DAY - time) / (double) delta) - 1;
 }
 
-void PulseAlgorithm::bound(int delta) {
-    this->delta = delta;
-
+void PulseAlgorithm::bound() {
     // Initialize the bounds matrix
     // We have one bounding level in terms of time for each END_DAY - (j-1) * delta
     // Thus, bound[v][j] is the best objective value that can be achieved starting from vertex v with available time (j+) * delta
     // Or equivalently, the best objective value that can be achieved starting from vertex v at time END_DAY - (j + 1) * delta
-    int num_bounds = get_bound_index(0, delta);
+    int num_bounds = ceil((double) END_DAY / (double) delta);
 
     if (num_bounds <= 0) {
         std::cerr << "Error: delta is too large" << std::endl;
@@ -180,7 +187,18 @@ void PulseAlgorithm::pulse(int vertex, int time, std::vector<int>quantities, dou
             best_objective = cost;
             best_path = p_new;
         }
+        if (cost < pool_bound) {
+            // Insert the new solution in the pool
+            solutions.insert(std::pair<double, PartialPath>(cost, p_new));
+            // If the pool is too large, we remove the worst solution
+            if (solutions.size() > pool_size) {
+                auto it = std::prev(solutions.end());
+                solutions.erase(it);
+            }
+            // Update the pool bound
+            pool_bound = solutions.rbegin()->first;
         return;
+        }
     }
 
     // Pulse from all the forward neighborsj
@@ -198,7 +216,7 @@ int PulseAlgorithm::solve(int delta) {
 
     // Launch the bounding phase
     reset();
-    bound(delta);
+    bound();
 
     // Launch the pulse from the origin
     // std::cout << "-----------------------------------" << std::endl;
