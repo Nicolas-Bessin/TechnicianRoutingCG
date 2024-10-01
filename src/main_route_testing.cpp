@@ -55,6 +55,7 @@ int main(int argc, char *argv[]){
     BPNode node = RootNode(routes);
     MasterSolution master_solution = relaxed_RMP(instance, routes, node);
     DualSolution dual_solution = master_solution.dual_solution;
+    master_solution.dual_solution = dual_solution;
     Vehicle vehicle = instance.vehicles[0];
 
 
@@ -75,7 +76,7 @@ int main(int argc, char *argv[]){
     auto start_pulse = chrono::steady_clock::now();
     // Solve it using the pulse algorithm
     int delta = 10;
-    int pool_size = 100;
+    int pool_size = 10;
     cout << "Solving to optimality using Pulse with delta = " << delta << endl;
     vector<Route> routes_pulse = solve_pricing_problem_pulse(instance, vehicle, dual_solution, delta, pool_size);
 
@@ -83,10 +84,11 @@ int main(int argc, char *argv[]){
     auto duration_pulse = chrono::duration_cast<chrono::milliseconds>(end_pulse - start_pulse).count();
     cout << "Time to solve the pricing problem using Pulse: " << duration_pulse << "ms" << endl;
     cout << "Found " << routes_pulse.size() << " routes" << endl;
+    cout << "Best reduced cost : " << routes_pulse[0].reduced_cost << endl;
+    cout << "-----" << endl;
 
-    // Print the route
-    for (Route route_pulse : routes_pulse){
-        print_route(route_pulse, instance);
-    }
+    Route best_route = routes_pulse[0];
+    // Print the route along with the master solution
+    print_route(best_route, instance, master_solution);
 
 }

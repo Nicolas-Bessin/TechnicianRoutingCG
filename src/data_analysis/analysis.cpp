@@ -378,21 +378,20 @@ vector<double> accumulated_reduced_cost(const Route& route, const MasterSolution
     // Initialize the accumulated cost vector as an empty vector
     vector<double> accumulated_costs = {};
     // Take into account the vehicle's fixed cost and the beta value
-    double current_cost = - vehicle.cost - solution.dual_solution.betas[route.vehicle_id];
+    double current_cost = vehicle.cost + solution.dual_solution.betas[route.vehicle_id];
 
     // Then go through the sequence of nodes and accumulate the reduced cost
     for (int i = 0; i < route.id_sequence.size(); i++) {
         int true_i = route.id_sequence[i];
         if (true_i != vehicle.depot) {
             current_cost -= solution.dual_solution.alphas[true_i];
-            current_cost += instance.nodes[true_i].duration * instance.M;
         }
         // We count the accumulated reduced cost until this node - so we add it after adding the alpha from the current node
         accumulated_costs.push_back(current_cost);
         // If there is a next node, we add the corresponding travel cost
         if (i < route.id_sequence.size() - 1) {
             int true_j = route.id_sequence[i + 1];
-            current_cost -= instance.cost_per_km * instance.distance_matrix[true_i][true_j];
+            current_cost += instance.cost_per_km * instance.distance_matrix[true_i][true_j];
             // If applicable, also add the duals from the cuts of the BP tree
             std::tuple<int, int, int> edge = {true_i, true_j, route.vehicle_id};
             if (solution.dual_solution.lower_bound_duals.contains(edge)) {

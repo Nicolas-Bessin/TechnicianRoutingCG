@@ -2,6 +2,8 @@
 
 #include "instance/constants.h"
 
+#include <chrono>
+
 
 #define FORWARD true
 
@@ -29,14 +31,15 @@ void print_path_inline(const PartialPath& path) {
 }
 
 // Constructor
-PulseAlgorithm::PulseAlgorithm(Problem* problem, int delta, int pool_size) :
+PulseAlgorithm::PulseAlgorithm(Problem* problem, int delta, int pool_size, double fixed_cost) :
     problem(problem),
     origin(problem->getOrigin()),
     destination(problem->getDestination()),
     N(problem->getNumNodes()),
     K(problem->getNumRes() - 1),
     delta(delta),
-    pool_size(pool_size)
+    pool_size(pool_size),
+    fixed_cost(fixed_cost)
 {
     best_objective = std::numeric_limits<double>::infinity();
     pool_bound = std::numeric_limits<double>::infinity();
@@ -213,7 +216,7 @@ void PulseAlgorithm::pulse(int vertex, int time, std::vector<int>quantities, dou
 }
 
 int PulseAlgorithm::solve(int delta) {
-
+    using namespace std::chrono;
     // Launch the bounding phase
     reset();
     bound();
@@ -222,8 +225,8 @@ int PulseAlgorithm::solve(int delta) {
     // std::cout << "-----------------------------------" << std::endl;
     // std::cout << "Solving starting from the origin" << std::endl;
     reset();
-    PartialPath p = EmptyPath(N);
-    pulse(origin, 0, std::vector<int>(K, 0), 0, p);
+    PartialPath path = EmptyPath(N);
+    pulse(origin, 0, std::vector<int>(K, 0), fixed_cost, path);
 
     if(best_path.sequence.size() == 0) {
         return 1;

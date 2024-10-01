@@ -25,7 +25,7 @@ public :
     // @param problem : the underlying problem - will not be deleted
     // @param delta : the time step for the bounding phase
     // @param pool_size : the size of the solution pool
-    PulseAlgorithm(Problem* problem, int delta, int pool_size);
+    PulseAlgorithm(Problem* problem, int delta, int pool_size, double fixed_cost);
 
     // Reset the best path and best objective value (Used during the bounding phase)
     void reset();
@@ -60,6 +60,9 @@ private :
     const int N;
     // Number of capacities
     const int K;
+
+    // Fixed cost of the vehicle
+    const double fixed_cost;
 
     // Best path and best objective value
     PartialPath best_path;

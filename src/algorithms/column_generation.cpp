@@ -162,9 +162,10 @@ CGResult column_generation(
         for (int i = 0; i < instance.vehicles.size(); i++){
             best_reduced_costs[i] = 0;
         }
+        // Use the basic pulse algorithm
         int delta = 10;
         int pool_size = 10;
-        std::vector<Route> new_routes = solve_pricing_problems_basic_pulse(
+        vector<Route> new_routes = solve_pricing_problems_basic_pulse(
             convex_dual_solution,
             instance,
             vehicle_order,
