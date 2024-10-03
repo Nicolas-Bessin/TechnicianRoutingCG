@@ -7,11 +7,11 @@
 
 #include "data_analysis/analysis.h"
 
-inline const std::string INSTANCE_FILE = "instance_1";
-inline const int N_INTERVENTIONS = 25;
+inline constexpr std::string INSTANCE_FILE = "instance_1";
+inline constexpr int N_INTERVENTIONS = 25;
 
-inline const int TIME_LIMIT = 1200;
-inline const bool VERBOSE = true;
+inline constexpr int TIME_LIMIT = 1200;
+inline constexpr bool VERBOSE = true;
 
 
 int main(int argc, char *argv[]){

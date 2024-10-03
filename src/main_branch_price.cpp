@@ -16,23 +16,23 @@
 #include <iomanip>
 #include <chrono>
 
-inline const std::string INSTANCE_FILE = "instance_1";
-inline const int N_INTERVENTIONS = 25;
+inline constexpr std::string INSTANCE_FILE = "instance_1";
+inline constexpr int N_INTERVENTIONS = 25;
 
-inline const int TIME_LIMIT = 1200;
-inline const double THRESHOLD = 1e-6;
-inline const bool VERBOSE = true;
-inline const int MAX_ITER = 10000;
-inline const bool COMPUTE_INTEGER_SOL = true;
+inline constexpr int TIME_LIMIT = 1200;
+inline constexpr double THRESHOLD = 1e-6;
+inline constexpr bool VERBOSE = true;
+inline constexpr int MAX_ITER = 10000;
+inline constexpr bool COMPUTE_INTEGER_SOL = true;
 
-inline const bool SWITCH_CYCLIC_PRICING = true;
+inline constexpr bool SWITCH_CYCLIC_PRICING = true;
 
-inline const int DELTA = 10;
-inline const int SOLUTION_POOL_SIZE = 10;
+inline constexpr int DELTA = 10;
+inline constexpr int SOLUTION_POOL_SIZE = 10;
 
-inline const double ALPHA = 0.5;
+inline constexpr double ALPHA = 0.5;
 
-inline const int MAX_DEPTH = 10;
+inline constexpr int MAX_DEPTH = 10;
 
 
 int main(int argc, char *argv[]){

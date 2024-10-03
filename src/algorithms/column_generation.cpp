@@ -18,7 +18,7 @@
 #include <execution>
 #include <random>
 
-inline const int S_TO_MS = 1000;
+inline constexpr int S_TO_MS = 1000;
 
 
 CGResult column_generation(
