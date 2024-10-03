@@ -87,19 +87,9 @@ CGResult column_generation(
     using std::unique_ptr;
     namespace chrono = std::chrono;
 
-    auto start_sub_building = chrono::steady_clock::now();
-    auto end_sub_building = chrono::steady_clock::now();
-    int building_time = chrono::duration_cast<chrono::milliseconds>(end_sub_building - start_sub_building).count();
-
     int master_time = 0;
     int pricing_time = 0;
-
     int time_limit_ms = time_limit * 1000;
-
-    // If the given max_resources_dominance is -1, we use all the resources
-    if (max_resources_dominance == -1){
-        max_resources_dominance = instance.capacities_labels.size() + 1;
-    }
 
     // Create the underlying RMP model
     vector<GRBVar> route_vars;
@@ -115,21 +105,26 @@ CGResult column_generation(
     bool stop = false;
     int consecutive_non_improvement = 0;
     int max_consecutive_non_improvement = 5;
+    double previous_solution_objective = std::numeric_limits<double>::infinity();
 
+    // Master Solutions
     DualSolution previous_dual_solution = DualSolution{};
     MasterSolution solution;
-    // We stop if we don't improve the objective value
-    double previous_solution_objective = std::numeric_limits<double>::infinity();
-    // Testing out the sequential pricing problem solving
-    int current_vehicle_index = 0;
-    // We begin with the acyclic pricing which is so much faster
-    // We switch to the cyclic pricing when we don't add any routes
-    bool using_cyclic_pricing = false;
-    // We switch to the cyclic pricing when we don't add any routes
-    int n_ressources_dominance = instance.capacities_labels.size() + 1;
 
-    // Keep the last best reduced cost for each vehicle
-    vector<double> best_reduced_costs(instance.vehicles.size(), 0);
+    // Order of exploration of the vehicles for the pricing problem (does not matter, we simply remove the vehicles that can not be used)
+    vector<int> vehicle_order = {};
+    for (int v = 0; v < instance.number_vehicles; v++){
+        if (instance.vehicles[v].interventions.size() > 0){
+            vehicle_order.push_back(v);
+        }
+    }
+
+    // Pathwyse heuristic parameters
+    bool using_cyclic_pricing = false;
+    int n_ressources_dominance = instance.capacities_labels.size() + 1;
+    if (max_resources_dominance == -1){
+        max_resources_dominance = instance.capacities_labels.size() + 1;
+    }
 
     while (!stop && !(consecutive_non_improvement == max_consecutive_non_improvement) && master_time + pricing_time < time_limit_ms){
         // Solve the master problem
@@ -171,15 +166,6 @@ CGResult column_generation(
         //     convex_dual_solution = alpha * dual_solution + (1 - alpha) * previous_dual_solution;
         // }
 
-        // Initialize the vehicle order
-        vector<int> vehicle_order(instance.vehicles.size());
-        std::iota(vehicle_order.begin(), vehicle_order.end(), 0);
-
-        // Reset the best reduced costs
-        double min_reduced_cost = 0;
-        for (int i = 0; i < instance.vehicles.size(); i++){
-            best_reduced_costs[i] = 0;
-        }
         // Use the basic pulse algorithm
         int delta = 10;
         int pool_size = 10;
@@ -190,11 +176,11 @@ CGResult column_generation(
             delta,
             pool_size
         );
+        double min_reduced_cost = std::numeric_limits<double>::infinity();
         // We add the new routes to the global routes vector
         for (Route& new_route : new_routes){
             if (new_route.reduced_cost < -reduced_cost_threshold) {
                 routes.push_back(new_route);
-                best_reduced_costs[new_route.vehicle_id] = std::min(best_reduced_costs[new_route.vehicle_id], new_route.reduced_cost);
                 min_reduced_cost = std::min(min_reduced_cost, new_route.reduced_cost);
                 node.active_routes.insert(routes.size() - 1);
                 n_added_routes++;
@@ -309,8 +295,7 @@ CGResult column_generation(
         iteration,
         master_time,
         pricing_time,
-        integer_time,
-        building_time
+        integer_time
     };
 
     return result;

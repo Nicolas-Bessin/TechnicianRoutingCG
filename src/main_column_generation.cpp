@@ -49,14 +49,7 @@ int main(int argc, char *argv[]){
     cout << "-----------------------------------" << endl;
     string fileprefix = INSTANCE_FILE;
     string filename = "../data/" + fileprefix + ".json";
-    Instance instance = parse_file(filename, fileprefix, true);
-
-    // Only keep the first N_INTERVENTIONS nodes
-    vector<int> kept_nodes = vector<int>(instance.number_interventions);
-    for (int i = 0; i < N_INTERVENTIONS; i++){
-        kept_nodes[i] = 1;
-    }
-    instance = cut_instance(instance, kept_nodes);
+    Instance instance = parse_file(filename, fileprefix, N_INTERVENTIONS, VERBOSE);
 
     preprocess_interventions(instance);
 
@@ -102,7 +95,6 @@ int main(int argc, char *argv[]){
     int master_time = result.master_time;
     int pricing_time = result.pricing_time;
     int integer_time = result.integer_time;
-    int sub_building_time = result.building_time;
 
     MasterSolution master_solution = result.master_solution;
     IntegerSolution integer_solution = result.integer_solution;
@@ -133,7 +125,6 @@ int main(int argc, char *argv[]){
     int elapsed_time = chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - start_parse).count();
     // Print the time it took to solve the master problem
     cout << "-----------------------------------" << endl;
-    cout << "Total time spent building the pricing problems : " << sub_building_time << " ms" << endl;
     cout << "Total time spent solving the master problem : " << master_time << " ms" << endl;
     cout << "Total time spent solving the pricing problems : " << pricing_time << " ms - Average : " << pricing_time / result.number_of_iterations << " ms" << endl;
     cout << "Total time spent solving the integer problem : " << integer_time << " ms" << endl;

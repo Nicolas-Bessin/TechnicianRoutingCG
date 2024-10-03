@@ -103,96 +103,6 @@ void check_triangular_inequality(const Instance& instance) {
     }
 }
 
-Instance cut_instance(const Instance& instance, const std::vector<int>& mask) {
-    // We only keep the interventions that are not masked
-    // We need to remove the vehicles that cannot do any intervention
-    // We need to update the vehicles
-    // And the time and distance matrices
-
-    // First, update the interventions themselves
-    std::vector<Node> new_nodes;
-    std::map<int, int> old_to_new;
-    std::map<int, int> new_to_old;
-
-    for (int i = 0; i < instance.number_interventions; i++){
-        if (mask[i] == 1){
-            new_nodes.push_back(instance.nodes[i]);
-            old_to_new[i] = new_nodes.size() - 1;
-            new_to_old[new_nodes.size() - 1] = i;
-        }
-    }
-    // Add the warehouses
-    for (int i = instance.number_interventions; i < instance.nodes.size(); i++){
-        new_nodes.push_back(instance.nodes[i]);
-        old_to_new[i] = new_nodes.size() - 1;
-        new_to_old[new_nodes.size() - 1] = i;
-    }
-
-    // Update the vehicles' interventions
-    std::vector<Vehicle> new_vehicles;
-    for (const Vehicle& vehicle : instance.vehicles){
-        // Update the interventions & reverse map
-        std::vector<int> new_interventions;
-        std::map<int, int> new_reverse_map;
-        for (int intervention : vehicle.interventions){
-            if (mask[intervention] == 1){
-                new_interventions.push_back(old_to_new[intervention]);
-                new_reverse_map[old_to_new[intervention]] = new_interventions.size() - 1;
-            }
-        }
-        // If the vehicle can do at least one intervention, we keep it
-        Vehicle new_vehicle = Vehicle{
-            vehicle.id, 
-            vehicle.technicians, 
-            vehicle.skills, 
-            new_interventions, 
-            new_reverse_map, 
-            old_to_new[vehicle.depot],
-            vehicle.capacities, 
-            vehicle.cost};
-        if (new_vehicle.interventions.size() > 0){
-            new_vehicle.id = new_vehicles.size();
-            new_vehicles.push_back(new_vehicle);
-        }
-    }
-
-    // Update the time and distance matrices
-    std::vector<std::vector<int>> new_time_matrix(new_nodes.size(), std::vector<int>(new_nodes.size(), 0));
-    std::vector<std::vector<int>> new_distance_matrix(new_nodes.size(), std::vector<int>(new_nodes.size(), 0));
-    for (int i = 0; i < new_nodes.size(); i++){
-        for (int j = 0; j < new_nodes.size(); j++){
-            new_time_matrix[i][j] = instance.time_matrix[new_to_old[i]][new_to_old[j]];
-            new_distance_matrix[i][j] = instance.distance_matrix[new_to_old[i]][new_to_old[j]];
-        }
-    }
-
-    // Re-compute the similarity matrix
-    std::vector<std::vector<int>> new_similarity_matrix = compute_similarity_matrix(new_vehicles);
-
-    auto new_instance = Instance{
-        instance.name,
-        new_nodes.size() - instance.number_warehouses,
-        instance.number_warehouses,
-        new_vehicles.size(),
-        instance.cost_per_km,
-        instance.technician_cost,
-        0,
-        new_nodes,
-        new_vehicles,
-        instance.capacities_labels,
-        new_time_matrix,
-        new_distance_matrix,
-        new_similarity_matrix
-    };
-
-        // Re-compute the big M
-    double M = compute_M_perV(new_instance);
-    new_instance.M = M;
-    std::cout << "New M : " << M << std::endl;
-
-    return new_instance;
-}
-
 
 double compute_M_naive(const Instance& instance) {
     using std::__gcd;
@@ -272,7 +182,7 @@ double compute_M_perV(const Instance& instance) {
         }
     }
     // Min cost per vehicle
-    double min_vehicle_fixed_cost = 0;
+    double min_vehicle_fixed_cost = std::numeric_limits<double>::infinity();
     for (const Vehicle& vehicle : instance.vehicles){
         min_vehicle_fixed_cost = std::min(min_vehicle_fixed_cost, vehicle.cost);
     }
@@ -283,7 +193,7 @@ double compute_M_perV(const Instance& instance) {
     max_fixed_expect_one -= min_vehicle_fixed_cost;
 
     // We finally compute the big M
-    double M = ( (20 * (END_DAY - min_duration) * max_speed * instance.cost_per_km)
+    double M = ( (instance.number_vehicles * (END_DAY - min_duration) * max_speed * instance.cost_per_km)
         + max_fixed_expect_one ) / gcd_durations;
 
     return M;

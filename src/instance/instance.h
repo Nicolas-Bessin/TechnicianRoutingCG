@@ -209,13 +209,9 @@ bool can_do_intervention(const Node& intervention, const Vehicle& vehicle);
 // We check this by looking at the time window of the interventions
 bool is_edge_feasible(int i, int j, const Instance& instance);
 
+
+// Check the triangular inequality for the distance and time matrices
 void check_triangular_inequality(const Instance& instance);
-
-
-// Generate a new instance from an existing one
-// @param mask : vector of size instance.number_interventions
-// mask[i] = 0 if the intervention i is removed from the new instance
-Instance cut_instance(const Instance& instance, const std::vector<int>& mask);
 
 
 // Compute the naive oursourcing cost M for a given instance

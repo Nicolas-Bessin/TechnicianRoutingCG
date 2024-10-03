@@ -18,7 +18,6 @@ struct CGResult {
     int master_time;
     int pricing_time;
     int integer_time;
-    int building_time;
     // Empty constructor
     CGResult() {};
     // Constructor
@@ -29,16 +28,14 @@ struct CGResult {
         int number_of_iterations,
         int master_time,
         int pricing_time,
-        int integer_time,
-        int building_time
+        int integer_time
     ) : 
         master_solution(master_solution),
         integer_solution(integer_solution),
         number_of_iterations(number_of_iterations),
         master_time(master_time),
         pricing_time(pricing_time),
-        integer_time(integer_time),
-        building_time(building_time)
+        integer_time(integer_time)
     {}
 };
 

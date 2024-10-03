@@ -85,7 +85,7 @@ Technician parse_technician(json data){
 
 
 // Parse a JSON file to return a Instance object
-Instance parse_file(string filename, string instance_name, bool verbose){
+Instance parse_file(string filename, string instance_name, int nb_interventions, bool verbose){
     if (verbose){
         cout << "Parsing file " << filename << endl;
     }
@@ -132,16 +132,17 @@ Instance parse_file(string filename, string instance_name, bool verbose){
     vector<Node> nodes = vector<Node>();
     map<string, int> node_id_to_index = map<string, int>();
 
-    // Get the interventions
+    // Get the n_interventions interventions
     vector<json> interventions_data = data.at("step_manager").at("interventions");
-    for (int i = 0; i < interventions_data.size(); i++){
+    if (nb_interventions == -1){
+        nb_interventions = interventions_data.size();
+    }
+    for (int i = 0; i < nb_interventions; i++){
         Node intervention = parse_intervention(interventions_data[i]);
         nodes.push_back(intervention);
         node_id_to_index[intervention.id] = i;
     }
 
-    // Print the number of interventions
-    int nb_interventions = nodes.size();
     if (verbose){
         cout << "Number of interventions: " << nb_interventions << endl;
     }
