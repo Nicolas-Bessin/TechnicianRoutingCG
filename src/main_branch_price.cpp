@@ -9,21 +9,30 @@
 #include "data_analysis/analysis.h"
 
 #include "algorithms/heuristics.h"
+#include "algorithms/parameters.h"
 
 #include <memory>   
 #include <iostream>
 #include <iomanip>
 #include <chrono>
 
-#define TIME_LIMIT 60
-#define SOLVER_MODE IMPOSE_ROUTING
-#define THRESHOLD 1e-6
-#define VERBOSE true
-#define GREEDY_INIT false
-#define CYCLIC_PRICING true
-#define MAX_ITER 10000
-#define MAX_DEPTH 10
-#define COMPUTE_INTEGER_SOL true
+inline const std::string INSTANCE_FILE = "instance_1";
+inline const int N_INTERVENTIONS = 25;
+
+inline const int TIME_LIMIT = 1200;
+inline const double THRESHOLD = 1e-6;
+inline const bool VERBOSE = true;
+inline const int MAX_ITER = 10000;
+inline const bool COMPUTE_INTEGER_SOL = true;
+
+inline const bool SWITCH_CYCLIC_PRICING = true;
+
+inline const int DELTA = 10;
+inline const int SOLUTION_POOL_SIZE = 10;
+
+inline const double ALPHA = 0.5;
+
+inline const int MAX_DEPTH = 10;
 
 
 int main(int argc, char *argv[]){
@@ -38,15 +47,10 @@ int main(int argc, char *argv[]){
     auto start_parse = chrono::steady_clock::now();
     cout << "Technician Routing Problem using Column Generation" << endl;
     cout << "-----------------------------------" << endl;
-    string default_filename = "../data/instance_1.json";
-    Instance instance = parse_file(default_filename, true);
-
-    // Only keep the first 20 nodes
-    vector<int> kept_nodes = vector<int>(instance.number_interventions);
-    for (int i = 0; i < 25; i++){
-        kept_nodes[i] = 1;
-    }
-    instance = cut_instance(instance, kept_nodes);
+    string fileprefix = INSTANCE_FILE;
+    string filename = "../data/" + fileprefix + ".json";
+    Instance instance = parse_file(filename, fileprefix, N_INTERVENTIONS, VERBOSE);
+    instance.M = compute_M_naive(instance);
 
     preprocess_interventions(instance);
 
@@ -57,30 +61,34 @@ int main(int argc, char *argv[]){
 
     cout << "-----------------------------------" << endl;
     vector<Route> routes;
-    if (GREEDY_INIT) {
-        cout << "Initializing the routes with a greedy heuristic" << endl;
-        routes = greedy_heuristic(instance);
-        IntegerSolution greedy_solution = IntegerSolution(vector<int>(routes.size(), 1), 0);
-        greedy_solution.objective_value = compute_integer_objective(greedy_solution, routes, instance);
-        cout << "Objective value of the greedy heuristic : " << greedy_solution.objective_value << endl;
-    } else {
-        cout << "Initializing the routes with an empty route" << endl;
-        routes = vector<Route>();
-        routes.push_back(EmptyRoute(instance.nodes.size()));
-    }
+    cout << "Initializing the routes with an empty route" << endl;
+    routes = vector<Route>();
+    routes.push_back(EmptyRoute(instance.nodes.size()));
+    
 
     cout << "-----------------------------------" << endl;
 
     int MAX_RES_DOMINANCE = instance.capacities_labels.size() + 1;
 
+    BranchAndPriceParameters parameters = BranchAndPriceParameters({
+        {"time_limit", TIME_LIMIT},
+        {"reduced_cost_threshold", THRESHOLD},
+        {"verbose", VERBOSE},
+        {"max_iterations", MAX_ITER},
+        {"compute_integer_solution", COMPUTE_INTEGER_SOL},
+        {"max_resources_dominance", MAX_RES_DOMINANCE},
+        {"switch_to_cyclic_pricing", SWITCH_CYCLIC_PRICING},
+        {"delta", DELTA},
+        {"solution_pool_size", SOLUTION_POOL_SIZE},
+        {"alpha", ALPHA},
+        {"max_depth", MAX_DEPTH}
+    }
+    );
+
     branch_and_price(
         instance,
         routes,
-        MAX_RES_DOMINANCE,
-        CYCLIC_PRICING,
-        TIME_LIMIT,
-        MAX_DEPTH,
-        VERBOSE
+        parameters
         );
 
     return 0;

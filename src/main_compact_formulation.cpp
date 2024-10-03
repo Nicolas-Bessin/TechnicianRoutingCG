@@ -15,9 +15,12 @@
 #include <iomanip>
 #include <memory>
 
-#define TIME_LIMIT 600
-#define HEURISTIC_INIT false
-#define N_INTERVENTIONS 75
+inline const std::string INSTANCE_FILE = "instance_1";
+inline const int N_INTERVENTIONS = 25;
+
+inline const int TIME_LIMIT = 1200;
+inline const bool VERBOSE = true;
+
 
 int main(int argc, char** argv) {
     using std::cout, std::endl;
@@ -28,34 +31,25 @@ int main(int argc, char** argv) {
 
     // Parse the instance from a JSON file
     auto start_parse = chrono::steady_clock::now();
-    cout << "Technician Routing Problem using the compact formulation" << endl;
-    string default_filename = "../data/instance_1.json";
-    Instance instance = parse_file(default_filename, false);
-
-    // ONly keep the first N_INTERVENTIONS nodes
-    vector<int> kept_nodes = vector<int>(instance.number_interventions);
-    for (int i = 0; i < N_INTERVENTIONS; i++){
-        kept_nodes[i] = 1;
-    }
-    instance = cut_instance(instance, kept_nodes);
+    cout << "Technician Routing Problem using Column Generation" << endl;
+    cout << "-----------------------------------" << endl;
+    string fileprefix = INSTANCE_FILE;
+    string filename = "../data/" + fileprefix + ".json";
+    Instance instance = parse_file(filename, fileprefix, N_INTERVENTIONS, VERBOSE);
+    instance.M = compute_M_naive(instance);
 
     preprocess_interventions(instance);
+
     auto end_parse = chrono::steady_clock::now();
     int diff_parse = chrono::duration_cast<chrono::milliseconds>(end_parse - start_parse).count();
+
+    cout << "Total time spent parsing the instance : " << diff_parse << " ms" << endl;
 
     cout << "-----------------------------------" << endl;
     // Define a vector of routes to help the solver
     vector<Route> initial_routes;
-    if (HEURISTIC_INIT){
-        cout << "Initializing the routes with a greedy heuristic" << endl;
-        initial_routes = greedy_heuristic(instance);
-        // Print the objective value of the greedy solution
-        IntegerSolution greedy_solution = IntegerSolution(vector<int>(initial_routes.size(), 1), 0);
-        double greedy_objective = compute_integer_objective(greedy_solution, initial_routes, instance);
-        cout << "Objective value of the greedy solution : " << setprecision(2) << fixed << greedy_objective << endl;
-    } else {
-        cout << "No heuristic initialization" << endl;
-    }
+    cout << "No heuristic initialization" << endl;
+    
     cout << "-----------------------------------" << endl;
 
 

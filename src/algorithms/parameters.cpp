@@ -43,6 +43,14 @@ ColumnGenerationParameters::ColumnGenerationParameters(std::map<std::string, std
     if (args.contains("alpha")) {
         alpha = std::any_cast<double>(args["alpha"]);
     }
+    if (args.contains("use_stabilisation")) {
+        use_stabilisation = std::any_cast<bool>(args["use_stabilisation"]);
+    }
+
+    // Pricing function
+    if (args.contains("pricing_function")) {
+        pricing_function = std::any_cast<std::string>(args["pricing_function"]);
+    }
 }
 
 

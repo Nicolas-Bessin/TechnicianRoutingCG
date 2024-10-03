@@ -21,11 +21,12 @@
 #include <chrono>
 #include <random>
 
-#define TIME_LIMIT 60
-#define THRESHOLD 1e-6
-#define VERBOSE true
-#define N_INTERVENTIONS 75
-#define INSTANCE_FILE "instance_1"
+
+inline const std::string INSTANCE_FILE = "instance_1";
+inline const int N_INTERVENTIONS = 25;
+
+inline const int TIME_LIMIT = 1200;
+inline const bool VERBOSE = true;
 
 int main(int argc, char *argv[]){
 
@@ -35,18 +36,12 @@ int main(int argc, char *argv[]){
     namespace chrono = std::chrono;
 
     // Parse the instance from a JSON file
-    cout << "Technician Routing Problem using Column Generation" << endl;
+    cout << "Technician Routing Problem - Testing" << endl;
     cout << "-----------------------------------" << endl;
     string fileprefix = INSTANCE_FILE;
     string filename = "../data/" + fileprefix + ".json";
-    Instance instance = parse_file(filename, fileprefix, true);
-
-    // Only keep the first N_INTERVENTIONS nodes
-    vector<int> kept_nodes = vector<int>(instance.number_interventions);
-    for (int i = 0; i < N_INTERVENTIONS; i++){
-        kept_nodes[i] = 1;
-    }
-    instance = cut_instance(instance, kept_nodes);
+    Instance instance = parse_file(filename, fileprefix, N_INTERVENTIONS, VERBOSE);
+    instance.M = compute_M_naive(instance);
 
     preprocess_interventions(instance);
 

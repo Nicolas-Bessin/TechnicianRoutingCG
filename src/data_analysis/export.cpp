@@ -27,7 +27,51 @@ nlohmann::json export_route(const Route& route, const Instance& instance) {
     return j;
 }
 
-void export_solution(const std::string& filename, const Instance& instance, const IntegerSolution& solution, const std::vector<Route>& routes, int elapsed_time){
+nlohmann::json export_parameters(const ColumnGenerationParameters& parameters) {
+    using std::string;
+    nlohmann::json j;
+
+    // General parameters
+    j["general"] = {
+        {"time_limit", parameters.time_limit},
+        {"reduced_cost_threshold", parameters.reduced_cost_threshold},
+        {"verbose", parameters.verbose},
+        {"max_iterations", parameters.max_iterations},
+        {"max_consecutive_non_improvement", parameters.max_consecutive_non_improvement},
+        {"compute_integer_solution", parameters.compute_integer_solution}
+    };
+
+    // Pathwyse related parameters
+    j["pathwyse"] = {
+        {"max_resources_dominance", parameters.max_resources_dominance},
+        {"switch_to_cyclic_pricing", parameters.switch_to_cyclic_pricing}
+    };
+
+    // Pulse related parameters
+    j["pulse"] = {
+        {"delta", parameters.delta},
+        {"solution_pool_size", parameters.solution_pool_size}
+    };
+
+    // Stabilisation parameters
+    j["stabilisation"] = {
+        {"alpha", parameters.alpha},
+        {"use_stabilisation", parameters.use_stabilisation}
+    };
+
+    // Pricing function
+    j["pricing_function"] = parameters.pricing_function;
+    return j;
+}
+
+void export_solution(
+    const std::string& filename, 
+    const Instance& instance, 
+    const IntegerSolution& solution, 
+    const std::vector<Route>& routes, 
+    int elapsed_time,
+    const ColumnGenerationParameters& parameters
+    ){
 
     using namespace nlohmann;
 
@@ -61,6 +105,9 @@ void export_solution(const std::string& filename, const Instance& instance, cons
             j["routes"].push_back(export_route(routes[i], instance));
         }
     }
+
+    // Add the parameters
+    j["parameters"] = export_parameters(parameters);
 
     // Write the json to a file
     std::string output = j.dump(4);

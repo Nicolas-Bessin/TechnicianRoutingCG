@@ -5,9 +5,6 @@
 #include <chrono>
 
 
-#define FORWARD true
-
-
 PartialPath EmptyPath(const int N) {
     PartialPath p;
     p.is_visited = std::vector<int>(N, 0);

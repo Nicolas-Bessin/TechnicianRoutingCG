@@ -7,9 +7,9 @@
 
 #include <vector>
 
-#define NO_ROUTING 0
-#define WARM_START 1
-#define IMPOSE_ROUTING 2
+inline extern const int NO_ROUTING = 0;
+inline extern const int WARM_START = 1;
+inline extern const int IMPOSE_ROUTING = 2;
 
 
 /*

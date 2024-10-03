@@ -7,7 +7,11 @@
 
 #include "data_analysis/analysis.h"
 
-#define TIME_LIMIT 60
+inline const std::string INSTANCE_FILE = "instance_1";
+inline const int N_INTERVENTIONS = 25;
+
+inline const int TIME_LIMIT = 1200;
+inline const bool VERBOSE = true;
 
 
 int main(int argc, char *argv[]){
@@ -20,20 +24,19 @@ int main(int argc, char *argv[]){
 
     // Parse the instance from a JSON file
     auto start_parse = chrono::steady_clock::now();
-    cout << "Technician Routing Problem using Column Generation" << endl;
+    cout << "Technician Routing Problem using GA" << endl;
     cout << "-----------------------------------" << endl;
-    string default_filename = "../data/instance_1.json";
-    Instance instance = parse_file(default_filename, false);
-
-    // Only keep the first 20 nodes
-    vector<int> kept_nodes = vector<int>(instance.number_interventions);
-    for (int i = 0; i < 25; i++){
-        kept_nodes[i] = 1;
-    }
-    instance = cut_instance(instance, kept_nodes);
+    string fileprefix = INSTANCE_FILE;
+    string filename = "../data/" + fileprefix + ".json";
+    Instance instance = parse_file(filename, fileprefix, N_INTERVENTIONS, VERBOSE);
+    instance.M = compute_M_naive(instance);
 
     preprocess_interventions(instance);
 
+    auto end_parse = chrono::steady_clock::now();
+    int diff_parse = chrono::duration_cast<chrono::milliseconds>(end_parse - start_parse).count();
+
+    cout << "Total time spent parsing the instance : " << diff_parse << " ms" << endl;
 
     genetic_algorithm(instance);
 

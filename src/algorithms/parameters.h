@@ -4,7 +4,9 @@
 #include <any>
 #include <string>
 
-#define ALL_RESOURCES_DOMINANCE -1
+#include "pricing_problem/pricing.h"
+
+inline extern const int ALL_RESOURCES_DOMINANCE = -1;
 
 
 struct ColumnGenerationParameters {
@@ -17,7 +19,7 @@ struct ColumnGenerationParameters {
     bool compute_integer_solution = false;
     // Pathwyse related parameters
     int max_resources_dominance = ALL_RESOURCES_DOMINANCE;
-    bool switch_to_cyclic_pricing = false;
+    bool switch_to_cyclic_pricing = true;
 
     // Pulse related parameters
     int delta = 10;
@@ -25,6 +27,10 @@ struct ColumnGenerationParameters {
 
     // Stabilisation parameters
     double alpha = 0.5;
+    bool use_stabilisation = false;
+
+    // Pricing function
+    std::string pricing_function = PRICING_PATHWYSE_BASIC;
 
     // ALl default values
     ColumnGenerationParameters() {};

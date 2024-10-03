@@ -7,8 +7,8 @@
 
 #include "instance/constants.h"
 
-#define KEEP_NON_COVERED 0
-#define KEEP_COVERED 1
+inline extern const int KEEP_NON_COVERED = 0;
+inline extern const int KEEP_COVERED = 1;
 
 /*
     @struct Node

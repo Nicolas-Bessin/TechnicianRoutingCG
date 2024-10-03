@@ -9,7 +9,7 @@
 #include <chrono>
 #include <iostream>
 
-#define GLOBAL_TIME_LIMIT = 3600
+inline const int GLOBAL_TIME_LIMIT = 3600;
 
 double compute_x(int i, int j, int v,const MasterSolution& master_solution, const std::vector<Route>& routes, const Instance& instance){    
     double x_ijv = 0;

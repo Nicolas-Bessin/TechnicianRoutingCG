@@ -18,56 +18,7 @@
 #include <execution>
 #include <random>
 
-// Removes all but the N last used routes from the routes and last_used vectors
-// Returns a map from old index to new index, the new routes, and the new last_used vector
-std::tuple<
-    std::map<int, int>, 
-    std::vector<Route>, 
-    std::vector<int>> keep_last_used_routes(int N, std::vector<Route>& routes, std::vector<int>& last_used){
-
-    std::vector<int> indices(routes.size());
-    std::iota(indices.begin(), indices.end(), 0);
-    std::sort(indices.begin(), indices.end(), [&last_used](int i, int j){
-        return last_used[i] > last_used[j];
-    });
-    N = std::min(N, (int)routes.size());
-    std::vector<Route> new_routes(N);
-    std::vector<int> new_last_used(N);
-    std::map<int, int> old_to_new;
-    for (int i = 0; i < N; i++){
-        new_routes[i] = routes[indices[i]];
-        new_last_used[i] = last_used[indices[i]];
-        old_to_new[indices[i]] = i;
-    }
-    return std::make_tuple(old_to_new, new_routes, new_last_used);
-}
-
-// Returns list of the vehicles to expore given the previous best reduced costs
-// We base our list on a probability distrbution of the form:
-// p(v) = floor + (best_v - best) / (worst - best) * (1 - floor)
-// We can further adapt the floor to be higher when reduced costs are bad (with a floor of 1, we explore all vehicles)
-std::vector<int> get_vehicles_to_explore(const std::vector<double> previous_best_reduced_costs) {
-    using std::vector;
-    // Floor is defined such that if the best reduced cost is > -100, we explore all vehicles
-    // And if the best reduced cost is < -20000, we get a floor of 0.5
-    double best = *std::min_element(previous_best_reduced_costs.begin(), previous_best_reduced_costs.end());
-    double worst = *std::max_element(previous_best_reduced_costs.begin(), previous_best_reduced_costs.end());
-    double floor = std::max(1 - 0.5 * (best + 100) / 19900, 0.5);
-
-
-    vector<int> explore_list;
-    for (int v = 0; v < previous_best_reduced_costs.size(); v++){
-        double reduced_cost = previous_best_reduced_costs[v];
-        double proba = floor + (reduced_cost - best) / (worst - best) * (1 - floor);
-        double random = (double)rand() / RAND_MAX;
-        if (random < proba){
-            explore_list.push_back(v);
-        }
-    }
-
-    return explore_list;
-}
-
+inline const int S_TO_MS = 1000;
 
 
 CGResult column_generation(
@@ -84,7 +35,6 @@ CGResult column_generation(
 
     int master_time = 0;
     int pricing_time = 0;
-    int time_limit_ms = parameters.time_limit * 1000;
 
     // Create the underlying RMP model
     vector<GRBVar> route_vars;
@@ -99,7 +49,6 @@ CGResult column_generation(
     // Stopping conditions
     bool stop = false;
     int consecutive_non_improvement = 0;
-    int max_consecutive_non_improvement = parameters.max_consecutive_non_improvement;
     double previous_solution_objective = std::numeric_limits<double>::infinity();
 
     // Master Solutions
@@ -122,7 +71,10 @@ CGResult column_generation(
         max_resources_dominance = instance.capacities_labels.size() + 1;
     }
 
-    while (!stop && !(consecutive_non_improvement == max_consecutive_non_improvement) && master_time + pricing_time < time_limit_ms){
+    while (
+        !stop && 
+        !(consecutive_non_improvement == parameters.max_consecutive_non_improvement) && 
+        master_time + pricing_time < S_TO_MS * parameters.time_limit){
         // Solve the master problem
         auto start = chrono::steady_clock::now();
         int status = solve_model(model);
@@ -157,22 +109,50 @@ CGResult column_generation(
 
         // Compute with a convex combination of the previous dual solution and the current one
         DualSolution convex_dual_solution = dual_solution;
-        // if (iteration > 0){
-        //     convex_dual_solution = parameters.alpha * dual_solution + (1 - parameters.alpha) * previous_dual_solution;
-        // }
+        if (parameters.use_stabilisation && iteration > 0){
+            convex_dual_solution = parameters.alpha * dual_solution + (1 - parameters.alpha) * previous_dual_solution;
+        }
 
-        // Use the basic pulse algorithm
-        int delta = 10;
-        int pool_size = 10;
-        vector<Route> new_routes = solve_pricing_problems_basic_pulse(
+        // Use the pricing algorithm defined in the parameters
+        vector<Route> new_routes;
+        if (parameters.pricing_function == PRICING_PATHWYSE_BASIC){
+            new_routes = solve_pricing_problems_basic(
+                convex_dual_solution,
+                instance,
+                vehicle_order,
+                using_cyclic_pricing,
+                n_ressources_dominance
+            );
+        } else if (parameters.pricing_function == PRICING_DIVERSIFICATION){
+            new_routes = solve_pricing_problems_diversification(
+                convex_dual_solution,
+                instance,
+                vehicle_order,
+                using_cyclic_pricing,
+                n_ressources_dominance,
+                iteration
+            );
+        } else if (parameters.pricing_function == PRICING_CLUSTERING){
+            new_routes = solve_pricing_problems_clustering(
+                convex_dual_solution,
+                instance,
+                vehicle_order,
+                using_cyclic_pricing,
+                n_ressources_dominance,
+                iteration
+            );
+        } else if (parameters.pricing_function == PRICING_PULSE_BASIC){
+        new_routes = solve_pricing_problems_basic_pulse(
             convex_dual_solution,
             instance,
             vehicle_order,
-            delta,
-            pool_size
+            parameters.delta,
+            parameters.solution_pool_size
         );
-        double min_reduced_cost = std::numeric_limits<double>::infinity();
+        }
+
         // We add the new routes to the global routes vector
+        double min_reduced_cost = std::numeric_limits<double>::infinity();
         for (Route& new_route : new_routes){
             if (new_route.reduced_cost < - parameters.reduced_cost_threshold) {
                 routes.push_back(new_route);
@@ -184,10 +164,10 @@ CGResult column_generation(
                 add_route(model, new_route, instance, route_vars, intervention_ctrs, vehicle_ctrs);
             }
         }        
-
         auto end_pricing = chrono::steady_clock::now();
         int diff_pricing = chrono::duration_cast<chrono::milliseconds>(end_pricing - start_pricing).count();
         pricing_time += diff_pricing;
+        
         if (parameters.verbose) {
             cout << "Pricing sub problems solved in " << diff_pricing << " ms - Added " << n_added_routes << " routes";
             cout << " - Min reduced cost : " << setprecision(15) << min_reduced_cost << "\n";
@@ -238,10 +218,10 @@ CGResult column_generation(
     if (stop) {
         cout << "Found no new route to add" << endl;
     }
-    if (consecutive_non_improvement == max_consecutive_non_improvement){
-        cout << "Stopped after " << max_consecutive_non_improvement << " iterations without improvement" << endl;
+    if (consecutive_non_improvement == parameters.max_consecutive_non_improvement){
+        cout << "Stopped after " << parameters.max_consecutive_non_improvement << " iterations without improvement" << endl;
     }
-    if (master_time + pricing_time >= time_limit_ms){
+    if (master_time + pricing_time >= S_TO_MS * parameters.time_limit){
         cout << "Time limit reached" << endl;
     }
     cout << "End of the column generation after " << iteration << " iterations" << endl;

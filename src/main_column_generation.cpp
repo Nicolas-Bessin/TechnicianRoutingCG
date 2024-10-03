@@ -16,28 +16,27 @@
 #include "data_analysis/analysis.h"
 #include "data_analysis/export.h"
 
-#include "algorithms/heuristics.h"
-
 #include <memory>   
 #include <iostream>
 #include <iomanip>
 #include <chrono>
 #include <format>
 
-#define INSTANCE_FILE "instance_1"
-#define N_INTERVENTIONS 25
-#define TIME_LIMIT 1200
-#define THRESHOLD 1e-6
-#define VERBOSE true
-#define MAX_ITER 10000
-#define COMPUTE_INTEGER_SOL true
+inline const std::string INSTANCE_FILE = "instance_1";
+inline const int N_INTERVENTIONS = 25;
 
-#define SWITCH_CYCLIC_PRICING true
+inline const int TIME_LIMIT = 1200;
+inline const double THRESHOLD = 1e-6;
+inline const bool VERBOSE = true;
+inline const int MAX_ITER = 10000;
+inline const bool COMPUTE_INTEGER_SOL = true;
 
-#define DELTA 10
-#define SOLUTION_POOL_SIZE 10
+inline const bool SWITCH_CYCLIC_PRICING = true;
 
-#define ALPHA 0.5
+inline const int DELTA = 10;
+inline const int SOLUTION_POOL_SIZE = 10;
+
+inline const double ALPHA = 0.5;
 
 int main(int argc, char *argv[]){
 
@@ -55,6 +54,7 @@ int main(int argc, char *argv[]){
     string fileprefix = INSTANCE_FILE;
     string filename = "../data/" + fileprefix + ".json";
     Instance instance = parse_file(filename, fileprefix, N_INTERVENTIONS, VERBOSE);
+    instance.M = compute_M_naive(instance);
 
     preprocess_interventions(instance);
 
@@ -86,7 +86,9 @@ int main(int argc, char *argv[]){
         {"switch_to_cyclic_price", SWITCH_CYCLIC_PRICING},
         {"delta ", DELTA},
         {"solution_pool_size", SOLUTION_POOL_SIZE},
-        {"alpha", ALPHA}
+        {"alpha", ALPHA},
+        {"use_stabilisation", false},
+        {"pricing_function", PRICING_PULSE_BASIC}
     });
     // Create a root node for the algorithm
     BPNode root = RootNode(routes);
@@ -149,7 +151,7 @@ int main(int argc, char *argv[]){
     string date = std::format("{:%Y-%m-%d-%H-%M-%OS}", now);
     string output_filename = "../results/" + fileprefix + "_" + date + ".json";
     double seconds = elapsed_time / 1000.0;
-    export_solution(output_filename, instance, integer_solution, routes, seconds);
+    export_solution(output_filename, instance, integer_solution, routes, seconds, parameters);
     
 
     return 0;
