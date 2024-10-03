@@ -43,7 +43,7 @@ public :
     bool rollback(int vertex, const PartialPath & path);
 
     // Full solving procedure, returns an error code (0 if everything went well)
-    int solve(int delta);
+    int solve();
 
     // Getters
     PartialPath get_best_path() {return best_path;}

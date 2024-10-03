@@ -212,7 +212,7 @@ void PulseAlgorithm::pulse(int vertex, int time, std::vector<int>quantities, dou
     return;
 }
 
-int PulseAlgorithm::solve(int delta) {
+int PulseAlgorithm::solve() {
     using namespace std::chrono;
     // Launch the bounding phase
     reset();

@@ -400,7 +400,7 @@ std::vector<Route> solve_pricing_problem_pulse(
     // Create the pulse algorithm
     PulseAlgorithm pulse_algorithm = PulseAlgorithm(pricing_problem.get(), delta, pool_size, vehicle.cost);
     // Get the partial path
-    int error = pulse_algorithm.solve(delta);
+    int error = pulse_algorithm.solve();
 
     if (error != 0) {
         cout << "Error in solving the pulse algorithm" << endl;

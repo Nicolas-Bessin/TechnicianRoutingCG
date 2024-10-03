@@ -23,20 +23,20 @@
 #include <format>
 
 inline constexpr std::string INSTANCE_FILE = "instance_1";
-inline constexpr int N_INTERVENTIONS = 25;
+inline constexpr int N_INTERVENTIONS = 75;
 
-inline constexpr int TIME_LIMIT = 1200;
-inline constexpr double THRESHOLD = 1e-6;
+// inline constexpr int TIME_LIMIT = 300;
+// inline constexpr double THRESHOLD = 1e-6;
 inline constexpr bool VERBOSE = true;
-inline constexpr int MAX_ITER = 10000;
-inline constexpr bool COMPUTE_INTEGER_SOL = true;
+// inline constexpr int MAX_ITER = 10000;
+// inline constexpr bool COMPUTE_INTEGER_SOL = true;
 
-inline constexpr bool SWITCH_CYCLIC_PRICING = true;
+// inline constexpr bool SWITCH_CYCLIC_PRICING = true;
 
-inline constexpr int DELTA = 10;
-inline constexpr int SOLUTION_POOL_SIZE = 10;
+// inline constexpr int DELTA = 10;
+// inline constexpr int SOLUTION_POOL_SIZE = 10;
 
-inline constexpr double ALPHA = 0.5;
+// inline constexpr double ALPHA = 0.5;
 
 int main(int argc, char *argv[]){
 
@@ -76,17 +76,17 @@ int main(int argc, char *argv[]){
     int MAX_RESOURCES_DOMINANCE = instance.capacities_labels.size() + 1;
     // Create the parameters for the column generation algorithm
     ColumnGenerationParameters parameters = ColumnGenerationParameters({
-        {"time_limit", TIME_LIMIT},
-        {"reduced_cost_threshold", THRESHOLD},
+        {"time_limit", 300},
+        {"reduced_cost_threshold", 1e-6},
         {"verbose", VERBOSE},
-        {"max_iterations", MAX_ITER},
+        {"max_iterations", 1000},
         {"max_consecutive_non_improvement", 5},
-        {"compute_integer_solution", COMPUTE_INTEGER_SOL},
+        {"compute_integer_solution", true},
         {"max_resources_dominance", MAX_RESOURCES_DOMINANCE},
-        {"switch_to_cyclic_price", SWITCH_CYCLIC_PRICING},
-        {"delta ", DELTA},
-        {"solution_pool_size", SOLUTION_POOL_SIZE},
-        {"alpha", ALPHA},
+        {"switch_to_cyclic_price", true},
+        {"delta ", 50},
+        {"solution_pool_size", 10},
+        {"alpha", 0.5},
         {"use_stabilisation", false},
         {"pricing_function", PRICING_PULSE_BASIC}
     });
