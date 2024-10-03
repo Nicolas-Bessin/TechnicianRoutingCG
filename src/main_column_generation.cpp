@@ -25,18 +25,9 @@
 inline constexpr std::string INSTANCE_FILE = "instance_1";
 inline constexpr int N_INTERVENTIONS = 75;
 
-// inline constexpr int TIME_LIMIT = 300;
-// inline constexpr double THRESHOLD = 1e-6;
+inline constexpr int TIME_LIMIT = 300;
 inline constexpr bool VERBOSE = true;
-// inline constexpr int MAX_ITER = 10000;
-// inline constexpr bool COMPUTE_INTEGER_SOL = true;
 
-// inline constexpr bool SWITCH_CYCLIC_PRICING = true;
-
-// inline constexpr int DELTA = 10;
-// inline constexpr int SOLUTION_POOL_SIZE = 10;
-
-// inline constexpr double ALPHA = 0.5;
 
 int main(int argc, char *argv[]){
 
@@ -76,7 +67,7 @@ int main(int argc, char *argv[]){
     int MAX_RESOURCES_DOMINANCE = instance.capacities_labels.size() + 1;
     // Create the parameters for the column generation algorithm
     ColumnGenerationParameters parameters = ColumnGenerationParameters({
-        {"time_limit", 300},
+        {"time_limit", TIME_LIMIT},
         {"reduced_cost_threshold", 1e-6},
         {"verbose", VERBOSE},
         {"max_iterations", 1000},

@@ -174,30 +174,32 @@ CGResult column_generation(
         }
         // ----------------- Stop conditions -----------------
         // If we added no routes but are not using the cyclic pricing yet, we switch to it
-        if (n_added_routes == 0 && parameters.switch_to_cyclic_pricing && !using_cyclic_pricing){
-            using_cyclic_pricing = true;
-            // Reset the number of resources used for the dominance test
-            n_ressources_dominance = 0;
-            if (parameters.verbose){
-                cout << "-----------------------------------" << endl;
-                cout << "Switching to cyclic pricing" << endl;
-                cout << "Current time : " << master_time + pricing_time << " ms" << endl;
+        if (parameters.pricing_function != PRICING_PULSE_BASIC) {
+            if (n_added_routes == 0 && parameters.switch_to_cyclic_pricing && !using_cyclic_pricing){
+                using_cyclic_pricing = true;
+                // Reset the number of resources used for the dominance test
+                n_ressources_dominance = 0;
+                if (parameters.verbose){
+                    cout << "-----------------------------------" << endl;
+                    cout << "Switching to cyclic pricing" << endl;
+                    cout << "Current time : " << master_time + pricing_time << " ms" << endl;
+                }
+                // Go to the next iteration (skip the stop condition checks)
+                continue;
             }
-            // Go to the next iteration (skip the stop condition checks)
-            continue;
-        }
-        // If we reached the end, and we were not using all the resources for the dominance test
-        // We increase the number of resources used
-        if (n_added_routes == 0 && using_cyclic_pricing && n_ressources_dominance < max_resources_dominance){
-            n_ressources_dominance++;
-            if (parameters.verbose){
-                cout << "-----------------------------------" << endl;
-                cout << "Increasing the number of resources used for the dominance test";
-                cout << " - Now using " << n_ressources_dominance << " resources" << endl;
-                cout << "Current time : " << master_time + pricing_time << " ms" << endl;
+            // If we reached the end, and we were not using all the resources for the dominance test
+            // We increase the number of resources used
+            if (n_added_routes == 0 && using_cyclic_pricing && n_ressources_dominance < max_resources_dominance){
+                n_ressources_dominance++;
+                if (parameters.verbose){
+                    cout << "-----------------------------------" << endl;
+                    cout << "Increasing the number of resources used for the dominance test";
+                    cout << " - Now using " << n_ressources_dominance << " resources" << endl;
+                    cout << "Current time : " << master_time + pricing_time << " ms" << endl;
+                }
+                // Go to the next iteration (skip the stop condition checks)
+                continue;
             }
-            // Go to the next iteration (skip the stop condition checks)
-            continue;
         }
         // If no route was added, we stop the algorithm
         if (n_added_routes == 0){

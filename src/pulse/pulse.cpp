@@ -28,15 +28,14 @@ void print_path_inline(const PartialPath& path) {
 }
 
 // Constructor
-PulseAlgorithm::PulseAlgorithm(Problem* problem, int delta, int pool_size, double fixed_cost) :
+PulseAlgorithm::PulseAlgorithm(Problem* problem, int delta, int pool_size) :
     problem(problem),
     origin(problem->getOrigin()),
     destination(problem->getDestination()),
     N(problem->getNumNodes()),
     K(problem->getNumRes() - 1),
     delta(delta),
-    pool_size(pool_size),
-    fixed_cost(fixed_cost)
+    pool_size(pool_size)
 {
     best_objective = std::numeric_limits<double>::infinity();
     pool_bound = std::numeric_limits<double>::infinity();
@@ -223,7 +222,8 @@ int PulseAlgorithm::solve() {
     // std::cout << "Solving starting from the origin" << std::endl;
     reset();
     PartialPath path = EmptyPath(N);
-    pulse(origin, 0, std::vector<int>(K, 0), fixed_cost, path);
+    double initial_cost = problem->getObj()->getNodeCost(origin);
+    pulse(origin, 0, std::vector<int>(K, 0), initial_cost, path);
 
     if(best_path.sequence.size() == 0) {
         return 1;

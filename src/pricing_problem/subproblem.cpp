@@ -398,7 +398,7 @@ std::vector<Route> solve_pricing_problem_pulse(
     // Update the pricing problem with the dual values
     update_pricing_instance(pricing_problem, dual_solution, instance, vehicle);
     // Create the pulse algorithm
-    PulseAlgorithm pulse_algorithm = PulseAlgorithm(pricing_problem.get(), delta, pool_size, vehicle.cost);
+    PulseAlgorithm pulse_algorithm = PulseAlgorithm(pricing_problem.get(), delta, pool_size);
     // Get the partial path
     int error = pulse_algorithm.solve();
 
