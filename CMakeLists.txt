@@ -89,6 +89,8 @@ set(
     src/algorithms/genetic_solver.cpp
     src/algorithms/heuristics.h
     src/algorithms/heuristics.cpp
+    src/algorithms/parameters.h
+    src/algorithms/parameters.cpp
 
     src/data_analysis/analysis.h 
     src/data_analysis/analysis.cpp

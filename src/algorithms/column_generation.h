@@ -7,9 +7,9 @@
 
 #include "routes/route.h"
 
-#include <vector>
+#include "algorithms/parameters.h"
 
-#define ALL_RES_DOMINANCE -1
+#include <vector>
 
 struct CGResult {
     MasterSolution master_solution;
@@ -68,10 +68,5 @@ CGResult column_generation(
     const Instance & instance,
     BPNode & node,
     std::vector<Route> & routes,
-    int max_resources_dominance = ALL_RES_DOMINANCE,
-    bool switch_to_cyclic_pricing = false,
-    bool compute_integer_solution = true,
-    int time_limit = 60, // (in seconds)
-    double reduced_cost_threshold = 1e-6,
-    bool verbose = false
+    const ColumnGenerationParameters & parameters
     );

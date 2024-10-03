@@ -42,11 +42,7 @@ std::tuple<int, int, int> find_first_valid_cut(const MasterSolution& master_solu
 void branch_and_price(
     const Instance& instance, 
     std::vector<Route>& routes,
-    int max_resources_dominance,
-    bool cyclic_pricing,
-    int time_limit_per_node,
-    int max_depth,
-    bool verbose
+    const BranchAndPriceParameters& parameters
     ){
         using std::queue, std::vector;
         using std::cout, std::endl;
@@ -67,7 +63,7 @@ void branch_and_price(
         int nodes_explored = 0;
 
         // Main loop
-        while(!node_queue.empty() && depth <= max_depth) {
+        while(!node_queue.empty() && depth <= parameters.max_depth) {
             // Get the top node in the queue and remove it 
             BPNode current_node = node_queue.front();
             node_queue.pop();
@@ -89,7 +85,7 @@ void branch_and_price(
             if (current_node.depth == 0) {
                 time_limit = 600;
             } else {
-                time_limit = time_limit_per_node;
+                time_limit = parameters.time_limit_per_node;
             }
 
             // Solve this node
@@ -97,10 +93,7 @@ void branch_and_price(
                 instance,
                 current_node,
                 routes,
-                max_resources_dominance,
-                cyclic_pricing,
-                true,
-                time_limit
+                parameters
             );
 
             // If the returned relaxed solution is tagged as non feasible, it means the cuts introduced to this node are non feasible

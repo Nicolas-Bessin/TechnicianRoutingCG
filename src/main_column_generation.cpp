@@ -24,15 +24,20 @@
 #include <chrono>
 #include <format>
 
-#define TIME_LIMIT 300
+#define INSTANCE_FILE "instance_1"
+#define N_INTERVENTIONS 25
+#define TIME_LIMIT 1200
 #define THRESHOLD 1e-6
 #define VERBOSE true
-#define GREEDY_INIT false
-#define CYCLIC_PRICING true
 #define MAX_ITER 10000
 #define COMPUTE_INTEGER_SOL true
-#define N_INTERVENTIONS 25
-#define INSTANCE_FILE "instance_1"
+
+#define SWITCH_CYCLIC_PRICING true
+
+#define DELTA 10
+#define SOLUTION_POOL_SIZE 10
+
+#define ALPHA 0.5
 
 int main(int argc, char *argv[]){
 
@@ -60,35 +65,36 @@ int main(int argc, char *argv[]){
 
     cout << "-----------------------------------" << endl;
     vector<Route> routes;
-    if (GREEDY_INIT) {
-        cout << "Initializing the routes with a greedy heuristic" << endl;
-        routes = greedy_heuristic(instance);
-        IntegerSolution greedy_solution = IntegerSolution(vector<int>(routes.size(), 1), 0);
-        greedy_solution.objective_value = compute_integer_objective(greedy_solution, routes, instance);
-        cout << "Objective value of the greedy heuristic : " << greedy_solution.objective_value << endl;
-    } else {
-        cout << "Initializing the routes with an empty route" << endl;
-        routes = vector<Route>();
-        routes.push_back(EmptyRoute(instance.nodes.size()));
-    }
-
+    cout << "Initializing the routes with an empty route" << endl;
+    routes = vector<Route>();
+    routes.push_back(EmptyRoute(instance.nodes.size()));
+    
     cout << "-----------------------------------" << endl;
     cout << "Starting the column generation algorithm" << endl;
     
 
     int MAX_RESOURCES_DOMINANCE = instance.capacities_labels.size() + 1;
+    // Create the parameters for the column generation algorithm
+    ColumnGenerationParameters parameters = ColumnGenerationParameters({
+        {"time_limit", TIME_LIMIT},
+        {"reduced_cost_threshold", THRESHOLD},
+        {"verbose", VERBOSE},
+        {"max_iterations", MAX_ITER},
+        {"max_consecutive_non_improvement", 5},
+        {"compute_integer_solution", COMPUTE_INTEGER_SOL},
+        {"max_resources_dominance", MAX_RESOURCES_DOMINANCE},
+        {"switch_to_cyclic_price", SWITCH_CYCLIC_PRICING},
+        {"delta ", DELTA},
+        {"solution_pool_size", SOLUTION_POOL_SIZE},
+        {"alpha", ALPHA}
+    });
     // Create a root node for the algorithm
     BPNode root = RootNode(routes);
     CGResult result = column_generation(
         instance,
         root, 
         routes, 
-        MAX_RESOURCES_DOMINANCE,
-        CYCLIC_PRICING,
-        COMPUTE_INTEGER_SOL,
-        TIME_LIMIT,
-        THRESHOLD,
-        VERBOSE
+        parameters
         );
 
     // Extract the results from the column generation algorithm

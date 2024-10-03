@@ -74,12 +74,7 @@ CGResult column_generation(
     const Instance & instance,
     BPNode & node,
     std::vector<Route> & routes,
-    int max_resources_dominance,
-    bool switch_to_cyclic_pricing,
-    bool compute_integer_solution,
-    int time_limit, // (in seconds)
-    double reduced_cost_threshold,
-    bool verbose
+    const ColumnGenerationParameters& parameters
     ){
     using std::cout, std::endl;
     using std::setprecision, std::fixed;
@@ -89,7 +84,7 @@ CGResult column_generation(
 
     int master_time = 0;
     int pricing_time = 0;
-    int time_limit_ms = time_limit * 1000;
+    int time_limit_ms = parameters.time_limit * 1000;
 
     // Create the underlying RMP model
     vector<GRBVar> route_vars;
@@ -104,7 +99,7 @@ CGResult column_generation(
     // Stopping conditions
     bool stop = false;
     int consecutive_non_improvement = 0;
-    int max_consecutive_non_improvement = 5;
+    int max_consecutive_non_improvement = parameters.max_consecutive_non_improvement;
     double previous_solution_objective = std::numeric_limits<double>::infinity();
 
     // Master Solutions
@@ -122,7 +117,8 @@ CGResult column_generation(
     // Pathwyse heuristic parameters
     bool using_cyclic_pricing = false;
     int n_ressources_dominance = instance.capacities_labels.size() + 1;
-    if (max_resources_dominance == -1){
+    int max_resources_dominance = parameters.max_resources_dominance;
+    if (max_resources_dominance == ALL_RESOURCES_DOMINANCE){
         max_resources_dominance = instance.capacities_labels.size() + 1;
     }
 
@@ -145,7 +141,7 @@ CGResult column_generation(
         // Extract the dual solution from the master solution
         DualSolution& dual_solution = solution.dual_solution;
 
-        if (verbose) {
+        if (parameters.verbose) {
             cout << "Iteration " << iteration << " - Objective value : " << solution.objective_value;
             cout << " - Master problem solved in " << diff << " ms \n";
             cout << "Number of interventions covered : " << setprecision(2) << count_covered_interventions(solution, routes, instance);
@@ -160,10 +156,9 @@ CGResult column_generation(
         int n_routes_changed = 0;
 
         // Compute with a convex combination of the previous dual solution and the current one
-        double alpha = 0.5;
         DualSolution convex_dual_solution = dual_solution;
         // if (iteration > 0){
-        //     convex_dual_solution = alpha * dual_solution + (1 - alpha) * previous_dual_solution;
+        //     convex_dual_solution = parameters.alpha * dual_solution + (1 - parameters.alpha) * previous_dual_solution;
         // }
 
         // Use the basic pulse algorithm
@@ -179,7 +174,7 @@ CGResult column_generation(
         double min_reduced_cost = std::numeric_limits<double>::infinity();
         // We add the new routes to the global routes vector
         for (Route& new_route : new_routes){
-            if (new_route.reduced_cost < -reduced_cost_threshold) {
+            if (new_route.reduced_cost < - parameters.reduced_cost_threshold) {
                 routes.push_back(new_route);
                 min_reduced_cost = std::min(min_reduced_cost, new_route.reduced_cost);
                 node.active_routes.insert(routes.size() - 1);
@@ -193,17 +188,17 @@ CGResult column_generation(
         auto end_pricing = chrono::steady_clock::now();
         int diff_pricing = chrono::duration_cast<chrono::milliseconds>(end_pricing - start_pricing).count();
         pricing_time += diff_pricing;
-        if (verbose) {
+        if (parameters.verbose) {
             cout << "Pricing sub problems solved in " << diff_pricing << " ms - Added " << n_added_routes << " routes";
             cout << " - Min reduced cost : " << setprecision(15) << min_reduced_cost << "\n";
         }
         // ----------------- Stop conditions -----------------
         // If we added no routes but are not using the cyclic pricing yet, we switch to it
-        if (n_added_routes == 0 && switch_to_cyclic_pricing && !using_cyclic_pricing){
+        if (n_added_routes == 0 && parameters.switch_to_cyclic_pricing && !using_cyclic_pricing){
             using_cyclic_pricing = true;
             // Reset the number of resources used for the dominance test
             n_ressources_dominance = 0;
-            if (verbose){
+            if (parameters.verbose){
                 cout << "-----------------------------------" << endl;
                 cout << "Switching to cyclic pricing" << endl;
                 cout << "Current time : " << master_time + pricing_time << " ms" << endl;
@@ -215,7 +210,7 @@ CGResult column_generation(
         // We increase the number of resources used
         if (n_added_routes == 0 && using_cyclic_pricing && n_ressources_dominance < max_resources_dominance){
             n_ressources_dominance++;
-            if (verbose){
+            if (parameters.verbose){
                 cout << "-----------------------------------" << endl;
                 cout << "Increasing the number of resources used for the dominance test";
                 cout << " - Now using " << n_ressources_dominance << " resources" << endl;
@@ -263,6 +258,7 @@ CGResult column_generation(
     // Update the node's upper bound
     node.upper_bound = solution.objective_value;
     // If the upper bound is lower than the lower bound, it isn't worth computing the integer solution
+    bool compute_integer_solution = parameters.compute_integer_solution;
     if (node.upper_bound < node.lower_bound){
         compute_integer_solution = false;
     }
@@ -271,7 +267,7 @@ CGResult column_generation(
     int integer_time = 0;
     if (compute_integer_solution) {
         auto start_integer = chrono::steady_clock::now();
-        integer_solution = integer_RMP(instance, routes, node, time_limit, false);
+        integer_solution = integer_RMP(instance, routes, node, parameters.time_limit, false);
         auto end_integer = chrono::steady_clock::now();
         integer_time = chrono::duration_cast<chrono::milliseconds>(end_integer - start_integer).count();
         cout << "Integer RMP objective value : " << integer_solution.objective_value << endl;

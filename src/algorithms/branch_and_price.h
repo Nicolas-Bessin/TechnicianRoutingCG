@@ -2,6 +2,7 @@
 
 #include "instance/instance.h"
 #include "routes/route.h"
+#include "algorithms/parameters.h"
 
 #include <tuple>
 #include <set>
@@ -10,11 +11,7 @@
 void branch_and_price(
     const Instance& instance, 
     std::vector<Route>& routes,
-    int max_resources_dominance = -1,
-    bool cyclic_pricing = true,
-    int time_limit_per_node = 60,
-    int max_depth = 10,
-    bool verbose = true
+    const BranchAndPriceParameters& parameters
     );
 
 
