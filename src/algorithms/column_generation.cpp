@@ -1,5 +1,6 @@
 #include "column_generation.h"
 
+#include "master_problem/solver2.h"
 #include "master_problem/rmp_solver.h"
 #include "master_problem/integer_solution.h"
 #include "master_problem/node.h"
@@ -100,13 +101,25 @@ CGResult column_generation(
         max_resources_dominance = instance.capacities_labels.size() + 1;
     }
 
+    // Create the underlying RMP model
+    vector<GRBVar> route_vars;
+    vector<GRBVar> postpone_vars;
+    vector<GRBConstr> intervention_ctrs;
+    vector<GRBConstr> vehicle_ctrs;
+
+    GRBModel model = create_model(instance, routes, route_vars, postpone_vars, intervention_ctrs, vehicle_ctrs);
+
     // Main loop of the column generation algorithm
     int iteration = 0;
+    // Stopping conditions
     bool stop = false;
+    int consecutive_non_improvement = 0;
+    int max_consecutive_non_improvement = 5;
+
     DualSolution previous_dual_solution = DualSolution{};
     MasterSolution solution;
     // We stop if we don't improve the objective value
-    double previous_solution_objective = -1000; 
+    double previous_solution_objective = std::numeric_limits<double>::infinity();
     // Testing out the sequential pricing problem solving
     int current_vehicle_index = 0;
     // We begin with the acyclic pricing which is so much faster
@@ -118,10 +131,15 @@ CGResult column_generation(
     // Keep the last best reduced cost for each vehicle
     vector<double> best_reduced_costs(instance.vehicles.size(), 0);
 
-    while (!stop && master_time + pricing_time < time_limit_ms){
+    while (!stop && !(consecutive_non_improvement == max_consecutive_non_improvement) && master_time + pricing_time < time_limit_ms){
         // Solve the master problem
         auto start = chrono::steady_clock::now();
-        solution = relaxed_RMP(instance, routes, node);
+        int status = solve_model(model);
+        if (status != GRB_OPTIMAL){
+            cout << "The master problem is not optimal" << endl;
+            break;
+        }
+        solution = extract_solution(model, route_vars, intervention_ctrs, vehicle_ctrs);
         auto end = chrono::steady_clock::now();
         int diff = chrono::duration_cast<chrono::milliseconds>(end - start).count();
         // At this point, if the solution is not feasible, it it because the cuts give a non feasible problem
@@ -180,6 +198,9 @@ CGResult column_generation(
                 min_reduced_cost = std::min(min_reduced_cost, new_route.reduced_cost);
                 node.active_routes.insert(routes.size() - 1);
                 n_added_routes++;
+
+                // Add the route to the model
+                add_route(model, new_route, instance, route_vars, intervention_ctrs, vehicle_ctrs);
             }
         }        
 
@@ -221,6 +242,12 @@ CGResult column_generation(
         if (n_added_routes == 0){
             stop = true;
         }
+        // Count the number of consecutive non improvement
+        if (solution.objective_value >= previous_solution_objective){
+            consecutive_non_improvement++;
+        } else {
+            consecutive_non_improvement = 0;
+        }
         previous_solution_objective = solution.objective_value;
         previous_dual_solution = dual_solution;
         iteration++;
@@ -229,6 +256,9 @@ CGResult column_generation(
     cout << "-----------------------------------" << endl;
     if (stop) {
         cout << "Found no new route to add" << endl;
+    }
+    if (consecutive_non_improvement == max_consecutive_non_improvement){
+        cout << "Stopped after " << max_consecutive_non_improvement << " iterations without improvement" << endl;
     }
     if (master_time + pricing_time >= time_limit_ms){
         cout << "Time limit reached" << endl;

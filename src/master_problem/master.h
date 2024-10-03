@@ -43,6 +43,19 @@ struct MasterSolution {
         objective_value(objective_value),
         is_feasible(true)
     {}
+
+    // Constructor withouth upper and lower bound duals
+    MasterSolution(
+        std::vector<double> coefficients,
+        std::vector<double> alphas,
+        std::vector<double> betas,
+        double objective_value
+    ) : 
+        coefficients(coefficients),
+        dual_solution({alphas, betas, {}, {}}),
+        objective_value(objective_value),
+        is_feasible(true)
+    {}
 };
 
 // Solution to the integer version of the problem

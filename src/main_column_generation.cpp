@@ -24,14 +24,14 @@
 #include <chrono>
 #include <format>
 
-#define TIME_LIMIT 3600
+#define TIME_LIMIT 300
 #define THRESHOLD 1e-6
 #define VERBOSE true
 #define GREEDY_INIT false
 #define CYCLIC_PRICING true
 #define MAX_ITER 10000
 #define COMPUTE_INTEGER_SOL true
-#define N_INTERVENTIONS 75
+#define N_INTERVENTIONS 25
 #define INSTANCE_FILE "instance_1"
 
 int main(int argc, char *argv[]){
@@ -117,6 +117,7 @@ int main(int argc, char *argv[]){
 
     int n_routes_generated = routes.size();
     cout << "Number of routes generated : " << n_routes_generated;
+    cout << " - Number of duplicate routes : " << count_routes_with_duplicates(routes);
     cout << " - Average time to generate a route : " << pricing_time / n_routes_generated << " ms" << endl;
     // Repair the integer solution
     cout << "-----------------------------------" << endl;
@@ -156,84 +157,3 @@ int main(int argc, char *argv[]){
 
     return 0;
 }
-
-    // vector<Route> best_routes = parse_routes_from_file("../routes/best_small.json", instance);
-    // // Compute the reduced cost of the best routes with respect to the master solution
-    // for (const Route &route : best_routes){
-    //     double reduced_cost = compute_reduced_cost(route, master_solution.alphas, master_solution.betas[route.vehicle_id], instance);
-    //     cout << "Reduced cost of the best route " << route.vehicle_id << " : " << reduced_cost << endl;
-    // }
-    // cout << "-----------------------------------" << endl;
-    // // Convert those routes to a set a required edges
-    // set<tuple<int, int, int>> required_edges = routes_to_required_edges(best_routes);
-    // set<tuple<int, int, int>> forbidden_edges = set<tuple<int, int, int>>();
-    // vector<int> order = {14, 3, 8, 7, 19, 6, 10, 0, 1, 2};
-
-    // vector<Route> regenerated_routes = greedy_heuristic_duals(instance, master_solution, CYCLIC_PRICING, order, forbidden_edges, required_edges);
-    // BPNode regenerated_root = RootNode(regenerated_routes);
-    // IntegerSolution regenerated_solution = integer_RMP(instance, regenerated_routes, regenerated_root);
-
-    // // Print the reduced costs of the regenerated routes
-    // for (const Route &route : regenerated_routes){
-    //     double reduced_cost = compute_reduced_cost(route, master_solution.alphas, master_solution.betas[route.vehicle_id], instance);
-    //     cout << "Route v" << route.vehicle_id << " - computed RC : " << reduced_cost;
-    //     cout << " - returned RC : " << route.reduced_cost << endl;
-    // }
-
-    // cout << "-----------------------------------" << endl;
-    // cout << "Generating a new route for vehicle 14 given the final dual - without using the known best routes" << endl;
-    // // Generate a route for vehicle 14
-    // unique_ptr<Problem> pricing_problem_normal = create_pricing_instance(instance, instance.vehicles[14], CYCLIC_PRICING);
-    // update_pricing_instance(pricing_problem_normal, master_solution, instance, instance.vehicles[14]);
-    // Route new_route_14_normal = solve_pricing_problem(pricing_problem_normal, instance, instance.vehicles[14]);
-    // // Print its reduced cost
-    // double reduced_cost = compute_reduced_cost(new_route_14_normal, master_solution.alphas, master_solution.betas[14], instance);
-    // cout << "Reduced cost for vehicle 14: " << new_route_14_normal.reduced_cost << endl;
-    // cout << "Reduced cost for vehicle 14 (computed): " << reduced_cost << endl;
-
-    // // Print the route itself
-    // print_route(new_route_14_normal, instance, master_solution);
-
-    // cout << "-----------------------------------" << endl;
-    // int N_EDGES = 1;
-    // cout << "Generating a new route for vehicle 14 given the final dual - imposing the first " << N_EDGES << " edges of best route for v14" <<  endl;
-    // // Create a set of edges containing the first N_EDGES of the best route for vehicle 14
-    // set<tuple<int, int, int>> edges_14;
-    // for (int i = 0; i < N_EDGES; i++){
-    //     int edge_i = regenerated_routes[0].id_sequence.at(i);
-    //     int edge_j = regenerated_routes[0].id_sequence.at(i + 1);
-    //     edges_14.insert(std::make_tuple(edge_i, edge_j, 14));
-    // }
-    // set<tuple<int, int, int>> empty_edges = set<tuple<int, int, int>>();
-    // // Generate a route for vehicle 14
-    // unique_ptr<Problem> pricing_problem_impose = create_pricing_instance(instance, instance.vehicles[14], CYCLIC_PRICING, empty_edges, edges_14);
-    // update_pricing_instance(pricing_problem_impose, master_solution, instance, instance.vehicles[14]);
-    // Route new_route_14_impose = solve_pricing_problem(pricing_problem_impose, instance, instance.vehicles[14]);
-    // // Print its reduced cost
-    // double reduced_cost_impose = compute_reduced_cost(new_route_14_impose, master_solution.alphas, master_solution.betas[14], instance);
-    // cout << "Reduced cost for vehicle 14: " << new_route_14_impose.reduced_cost << endl;
-    // cout << "Reduced cost for vehicle 14 (computed): " << reduced_cost_impose << endl;
-
-    // // Print the route itself
-    // print_route(new_route_14_impose, instance, master_solution);
-
-    // cout << "-----------------------------------" << endl;
-    // cout << "Generating a new route for vehicle 14 given the final dual - forbidding the first " << N_EDGES << " edges of bad route for v14" <<  endl;
-    // // Create a set of edges containing the first N_EDGES of the bad route for vehicle 14
-    // set<tuple<int, int, int>> edges_14_forbid;
-    // for (int i = 0; i < N_EDGES; i++){
-    //     int edge_i = new_route_14_normal.id_sequence.at(i);
-    //     int edge_j = new_route_14_normal.id_sequence.at(i + 1);
-    //     edges_14_forbid.insert(std::make_tuple(edge_i, edge_j, 14));
-    // }
-    // // Generate a route for vehicle 14
-    // unique_ptr<Problem> pricing_problem_forbid = create_pricing_instance(instance, instance.vehicles[14], CYCLIC_PRICING, edges_14_forbid, empty_edges);
-    // update_pricing_instance(pricing_problem_forbid, master_solution, instance, instance.vehicles[14]);
-    // Route new_route_14_forbid = solve_pricing_problem(pricing_problem_forbid, instance, instance.vehicles[14]);
-    // // Print its reduced cost
-    // double reduced_cost_forbid= compute_reduced_cost(new_route_14_forbid, master_solution.alphas, master_solution.betas[14], instance);
-    // cout << "Reduced cost for vehicle 14: " << new_route_14_forbid.reduced_cost << endl;
-    // cout << "Reduced cost for vehicle 14 (computed): " << reduced_cost_forbid<< endl;
-
-    // // Print the route itself
-    // print_route(new_route_14_forbid, instance, master_solution);

@@ -169,14 +169,14 @@ Instance cut_instance(const Instance& instance, const std::vector<int>& mask) {
     // Re-compute the similarity matrix
     std::vector<std::vector<int>> new_similarity_matrix = compute_similarity_matrix(new_vehicles);
 
-    return Instance{
+    auto new_instance = Instance{
         instance.name,
         new_nodes.size() - instance.number_warehouses,
         instance.number_warehouses,
         new_vehicles.size(),
         instance.cost_per_km,
         instance.technician_cost,
-        instance.M,
+        0,
         new_nodes,
         new_vehicles,
         instance.capacities_labels,
@@ -184,6 +184,13 @@ Instance cut_instance(const Instance& instance, const std::vector<int>& mask) {
         new_distance_matrix,
         new_similarity_matrix
     };
+
+        // Re-compute the big M
+    double M = compute_M_perV(new_instance);
+    new_instance.M = M;
+    std::cout << "New M : " << M << std::endl;
+
+    return new_instance;
 }
 
 
@@ -276,7 +283,7 @@ double compute_M_perV(const Instance& instance) {
     max_fixed_expect_one -= min_vehicle_fixed_cost;
 
     // We finally compute the big M
-    double M = ( instance.number_vehicles * (END_DAY - min_duration) * max_speed * instance.cost_per_km
+    double M = ( (20 * (END_DAY - min_duration) * max_speed * instance.cost_per_km)
         + max_fixed_expect_one ) / gcd_durations;
 
     return M;

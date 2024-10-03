@@ -300,7 +300,11 @@ Instance parse_file(string filename, string instance_name, bool verbose){
         similarity_matrix
     );
 
-    instance.M = compute_M_naive(instance);
+    instance.M = compute_M_perV(instance);
+
+    if (verbose){
+        cout << "Big M value: " << instance.M << endl;
+    }
 
     return instance;
 }

@@ -57,6 +57,8 @@ set(
     src/master_problem/node.cpp
     src/master_problem/integer_solution.h
     src/master_problem/integer_solution.cpp
+    src/master_problem/solver2.h 
+    src/master_problem/solver2.cpp
 
     src/pulse/pulse.h
     src/pulse/pulse.cpp
