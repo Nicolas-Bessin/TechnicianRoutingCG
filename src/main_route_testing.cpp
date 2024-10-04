@@ -55,40 +55,35 @@ int main(int argc, char *argv[]){
     cout << "-----------------------------------" << endl;
 
     auto vehicle_groups = regroup_vehicles_by_depot(instance.vehicles);
-    // Print the first vehicle group
-    cout << "First vehicle group - depot " << vehicle_groups.begin()->first << " : ";
-    for (int v : vehicle_groups.begin()->second) {
-        cout << "v" << v << " ";
-    }
-    cout << endl;
 
     cout << "-----------------------------------" << endl;
-    cout << "Solving the pricing problem for the first group" << endl;
+    cout << "Solving the pricing problems group by group" << endl;
 
     auto begin = chrono::steady_clock::now();
-
-    auto group = vehicle_groups.begin()->second;
-    vector<Route> new_routes = solve_pricing_problem_pulse_grouped(instance, group, dual_solution, 10, 1);
-
+    vector<Route> new_routes_grouped;
+    for (auto [depot, group] : vehicle_groups) {
+        auto group_routes = solve_pricing_problem_pulse_grouped(instance, group, dual_solution, 10, 1);
+        new_routes_grouped.insert(new_routes_grouped.end(), group_routes.begin(), group_routes.end());
+    }
 
     // Print the routes
     cout << "Routes generated : " << endl;
-    for (Route route : new_routes) {
-        print_route(route, instance, master_solution);
+    for (Route route : new_routes_grouped) {
+        print_route_reduced(route, instance);
         cout << "------------" << endl;
     }
 
     auto end = chrono::steady_clock::now();
     int diff = chrono::duration_cast<chrono::milliseconds>(end - begin).count();
-    cout << "Time spent solving the pricing problem for the first group : " << diff << " ms" << endl;
+    cout << "Time spent solving the pricing problem group by group : " << diff << " ms" << endl;
 
     cout << "-----------------------------------" << endl;
-    cout << "Solving each pricing problem in the first group individually" << endl;
+    cout << "Solving each pricing problem sequentially" << endl;
      
     begin = chrono::steady_clock::now();
 
     vector<Route> new_routes_individually;
-    for (int v : group) {
+    for (int v = 0; v < instance.vehicles.size(); v++) {
         const Vehicle& vehicle = instance.vehicles[v];
         auto new_routes_v = solve_pricing_problem_pulse(instance, vehicle, dual_solution, 10, 1);
         new_routes_individually.insert(new_routes_individually.end(), new_routes_v.begin(), new_routes_v.end());
@@ -97,12 +92,12 @@ int main(int argc, char *argv[]){
     // Print the routes
     cout << "Routes generated : " << endl;
     for (Route route : new_routes_individually) {
-        print_route(route, instance, master_solution);
+        print_route_reduced(route, instance);
         cout << "------------" << endl;
     }
 
     end = chrono::steady_clock::now();
     diff = chrono::duration_cast<chrono::milliseconds>(end - begin).count();
-    cout << "Time spent solving the pricing problem for the first group individually : " << diff << " ms" << endl;
+    cout << "Time spent solving the pricing problems individually : " << diff << " ms" << endl;
 
 }

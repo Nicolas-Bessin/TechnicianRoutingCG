@@ -365,3 +365,16 @@ std::vector<Route> parse_routes_from_file(const std::string& filename, const Ins
     return routes;
 }
 
+
+void print_route_reduced(const Route& route, const Instance& instance) {
+    using std::cout, std::endl;
+    cout << "Vehicle " << route.vehicle_id;
+    cout << " - Total cost : " << route.total_cost << " - Reduced cost : " << route.reduced_cost;
+    cout << " - Total duration : " << route.total_duration << " - Total distance : " << count_route_kilometres(route, instance) << endl;
+    cout << "Sequence : ";
+    for (int i = 0; i < route.id_sequence.size(); i++) {
+        cout << route.id_sequence[i] << " ";
+    }
+    cout << endl;
+}
+

@@ -77,4 +77,7 @@ std::vector<Route> keep_used_routes(const std::vector<Route>& routes, const Inte
 // Parse a vector of routes from a file
 std::vector<Route> parse_routes_from_file(const std::string& filename, const Instance& instance);
 
+// Print reduced information about a route (vehicle id, total cost, reduced cost, total duration and sequence)
+void print_route_reduced(const Route& route, const Instance& instance);
+
 
