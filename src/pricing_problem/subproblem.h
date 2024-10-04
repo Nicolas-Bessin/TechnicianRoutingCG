@@ -71,3 +71,16 @@ std::vector<Route> solve_pricing_problem_pulse(
     );
 
 
+// Solves the pricing problem for a group of vehicles
+//   @param instance: the instance of the problem
+//   @param vehicle_indexes: the indexes of the vehicles to solve the pricing problem for - all need to have the same depot
+//   @param dual_solution: the dual solution of the master problem
+//   @param delta: the time step for the bounding phase
+//   @param pool_size: the size of the solution pool
+std::vector<Route> solve_pricing_problem_pulse_grouped(
+    const Instance &instance, 
+    std::vector<int> & vehicle_indexes,
+    const DualSolution &dual_solution,
+    int delta,
+    int pool_size
+);

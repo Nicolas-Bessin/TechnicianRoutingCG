@@ -400,7 +400,7 @@ std::vector<Route> solve_pricing_problem_pulse(
     // Create the pulse algorithm
     PulseAlgorithm pulse_algorithm = PulseAlgorithm(pricing_problem.get(), delta, pool_size);
     // Get the partial path
-    int error = pulse_algorithm.solve();
+    int error = pulse_algorithm.bound_and_solve();
 
     if (error != 0) {
         cout << "Error in solving the pulse algorithm" << endl;
@@ -411,50 +411,98 @@ std::vector<Route> solve_pricing_problem_pulse(
     std::vector<Route> new_routes;
         
     for (const auto& [rc, path] : pulse_algorithm.get_solution_pool()) {
-
-        // Get all the info we need to build a Route object
-        double total_cost = vehicle.cost;
-        int total_duration = 0;
-        vector<int> id_sequence;
-        vector<int> is_in_route(instance.nodes.size(), 0);
-        vector<vector<int>> route_edges(instance.nodes.size(), vector<int>(instance.nodes.size(), 0));
-
-        // Sequence in terms of the vehicle's interventions (not the true node ids)
-        auto tour = path.sequence;    
-
-        for (int i = 0; i < tour.size() - 1; i++) {
-            int true_i = i == 0 ? vehicle.depot : vehicle.interventions[tour[i]];
-            int true_j = i+1 == tour.size()-1 ? vehicle.depot : vehicle.interventions[tour[i + 1]];
-            // Update the sequence of interventions
-            id_sequence.push_back(true_i);
-            // Update the edge matrix
-            route_edges[true_i][true_j] = 1;
-            // Update the is_in_route
-            is_in_route[true_i] = 1;
-            // Get the duration, and distance between the two interventions
-            int duration = instance.nodes[true_i].duration;
-            int distance = instance.distance_matrix[true_i][true_j];
-            // Update the running total cost & duration
-            total_cost += instance.cost_per_km * distance;
-            total_duration += duration;        
-        }
-        // Add the checks related to the last intervention
-        int true_last = vehicle.depot;
-        id_sequence.push_back(true_last);
-        is_in_route[true_last] = 1;
-
-        // Create the Route object
-        new_routes.push_back(Route{
-            vehicle.id,
-            total_cost,
-            rc,
-            total_duration,
-            id_sequence,
-            is_in_route,
-            route_edges
-        });
+        new_routes.push_back(convert_path_to_route(rc, path, instance, vehicle));
     }
 
+
+    return new_routes;
+}
+
+
+std::vector<Route> solve_pricing_problem_pulse_grouped(
+    const Instance &instance, 
+    std::vector<int> & vehicle_indexes,
+    const DualSolution &dual_solution,
+    int delta,
+    int pool_size
+) {
+    using std::vector, std::set, std::map;
+
+    // At firts, we create a virtual vehicle that contains all the interventions
+    if (vehicle_indexes.size() == 0) {
+        std::cerr << "No vehicle indexes provided" << endl;
+        return {};
+    }
+    set<int> all_interventions;
+    set<int> depots;
+    map<std::string, int> all_capacities = instance.vehicles[vehicle_indexes[0]].capacities;
+    for (int v : vehicle_indexes) {
+        depots.insert(instance.vehicles[v].depot);
+        all_interventions.insert(instance.vehicles[v].interventions.begin(), instance.vehicles[v].interventions.end());
+        for (const auto& [label, capacity] : instance.vehicles[v].capacities) {
+            all_capacities[label] = std::max(all_capacities[label], capacity);
+        }
+    }
+    if (depots.size() != 1) {
+        std::cerr << "All vehicles need to have the same depot" << endl;
+        return {};
+    }
+    vector<int> all_interventions_v;
+    map<int, int> reverse_interventions;
+    for (int i : all_interventions) {
+        all_interventions_v.push_back(i);
+        reverse_interventions[i] = all_interventions_v.size() - 1;
+    }
+    Vehicle virtual_vehicle = Vehicle{
+        -1, // Fake id
+        {}, // Technicians are not needed
+        {}, // Skills are not needed
+        all_interventions_v,
+        reverse_interventions,
+        *depots.begin(),
+        all_capacities,
+        0 // Fake cost
+    };
+    int n_interventions_v = all_interventions_v.size();
+
+    // Next step : create the pricing problem
+    unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, virtual_vehicle);
+    // Update the pricing problem with the dual values
+    update_pricing_instance(pricing_problem, dual_solution, instance, virtual_vehicle);
+
+    // Create the pulse algorithm
+    PulseAlgorithmWithSubsets pulse_algorithm = PulseAlgorithmWithSubsets(pricing_problem.get(), delta, pool_size);
+    // Set all the interventions as available
+    pulse_algorithm.reset();
+    // Proceed with the bounding phase
+    pulse_algorithm.bound();
+
+
+    // For every vehicle, define the available interventions and solve the pricing problem
+    vector<Route> new_routes;
+    for (int v : vehicle_indexes) {
+        // Get the vehicle
+        const Vehicle& vehicle = instance.vehicles[v];
+        // Get the available interventions
+        vector<int> available_interventions(n_interventions_v, 0);
+        for (int i : vehicle.interventions) {
+            available_interventions[virtual_vehicle.reverse_interventions[i]] = 1;
+        }
+        // Solve the pricing problem
+        int error = pulse_algorithm.solve(vehicle.cost, dual_solution.betas[v], available_interventions);
+        if (error != 0) {
+            cout << "Error in solving the pulse algorithm for vehicle " << v << endl;
+            continue;
+        }
+        // Transform the partial pathes from the solution pool into Route objects
+        for (const auto& [rc, path] : pulse_algorithm.get_solution_pool()) {
+            Route route = convert_path_to_route(rc, path, instance, virtual_vehicle);
+            // Update the route with the real vehicle id & add the cost of the vehicle
+            route.vehicle_id = v;
+            route.total_cost += vehicle.cost;
+            new_routes.push_back(route);
+        }
+    }
 
     return new_routes;
 }

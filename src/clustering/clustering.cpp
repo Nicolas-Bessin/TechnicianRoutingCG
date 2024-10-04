@@ -238,3 +238,13 @@ int compute_clustering_cost(
     }
     return cost;
 }
+
+
+std::map<int, std::vector<int>> regroup_vehicles_by_depot(const std::vector<Vehicle>& vehicles) {
+    using std::map;
+    map<int, std::vector<int>> depot_to_vehicles;
+    for (const Vehicle& vehicle : vehicles){
+        depot_to_vehicles[vehicle.depot].push_back(vehicle.id);
+    }
+    return depot_to_vehicles;
+}

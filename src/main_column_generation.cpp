@@ -25,7 +25,7 @@
 inline constexpr std::string INSTANCE_FILE = "instance_1";
 inline constexpr int N_INTERVENTIONS = 75;
 
-inline constexpr int TIME_LIMIT = 300;
+inline constexpr int TIME_LIMIT = 60;
 inline constexpr bool VERBOSE = true;
 
 

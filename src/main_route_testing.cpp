@@ -3,7 +3,6 @@
 
 #include "clustering/clustering.h"
 
-
 #include "master_problem/master.h"
 #include "master_problem/rmp_solver.h"
 
@@ -23,7 +22,7 @@
 
 
 inline constexpr std::string INSTANCE_FILE = "instance_1";
-inline constexpr int N_INTERVENTIONS = 25;
+inline constexpr int N_INTERVENTIONS = 75;
 
 inline constexpr int TIME_LIMIT = 1200;
 inline constexpr bool VERBOSE = true;
@@ -53,37 +52,57 @@ int main(int argc, char *argv[]){
     master_solution.dual_solution = dual_solution;
     Vehicle vehicle = instance.vehicles[0];
 
-
-    // auto start = chrono::steady_clock::now();
-    // // Solve the pricing problem for the first vehicle
-    // cout << "Solving to optimality using Pathwyse" << endl;
-    // Route route = solve_pricing_problem(instance, vehicle, dual_solution, true, -1);
-
-    // auto end = chrono::steady_clock::now();
-    // auto duration = chrono::duration_cast<chrono::milliseconds>(end - start).count();
-    // cout << "Time to solve the pricing problem using Pathwyse: " << duration << "ms" << endl;
-
-    // // Print the route
-    // print_route(route, instance);
-
     cout << "-----------------------------------" << endl;
 
-    auto start_pulse = chrono::steady_clock::now();
-    // Solve it using the pulse algorithm
-    int delta = 10;
-    int pool_size = 10;
-    cout << "Solving to optimality using Pulse with delta = " << delta << endl;
-    vector<Route> routes_pulse = solve_pricing_problem_pulse(instance, vehicle, dual_solution, delta, pool_size);
+    auto vehicle_groups = regroup_vehicles_by_depot(instance.vehicles);
+    // Print the first vehicle group
+    cout << "First vehicle group - depot " << vehicle_groups.begin()->first << " : ";
+    for (int v : vehicle_groups.begin()->second) {
+        cout << "v" << v << " ";
+    }
+    cout << endl;
 
-    auto end_pulse = chrono::steady_clock::now();
-    auto duration_pulse = chrono::duration_cast<chrono::milliseconds>(end_pulse - start_pulse).count();
-    cout << "Time to solve the pricing problem using Pulse: " << duration_pulse << "ms" << endl;
-    cout << "Found " << routes_pulse.size() << " routes" << endl;
-    cout << "Best reduced cost : " << routes_pulse[0].reduced_cost << endl;
-    cout << "-----" << endl;
+    cout << "-----------------------------------" << endl;
+    cout << "Solving the pricing problem for the first group" << endl;
 
-    Route best_route = routes_pulse[0];
-    // Print the route along with the master solution
-    print_route(best_route, instance, master_solution);
+    auto begin = chrono::steady_clock::now();
+
+    auto group = vehicle_groups.begin()->second;
+    vector<Route> new_routes = solve_pricing_problem_pulse_grouped(instance, group, dual_solution, 10, 1);
+
+
+    // Print the routes
+    cout << "Routes generated : " << endl;
+    for (Route route : new_routes) {
+        print_route(route, instance, master_solution);
+        cout << "------------" << endl;
+    }
+
+    auto end = chrono::steady_clock::now();
+    int diff = chrono::duration_cast<chrono::milliseconds>(end - begin).count();
+    cout << "Time spent solving the pricing problem for the first group : " << diff << " ms" << endl;
+
+    cout << "-----------------------------------" << endl;
+    cout << "Solving each pricing problem in the first group individually" << endl;
+     
+    begin = chrono::steady_clock::now();
+
+    vector<Route> new_routes_individually;
+    for (int v : group) {
+        const Vehicle& vehicle = instance.vehicles[v];
+        auto new_routes_v = solve_pricing_problem_pulse(instance, vehicle, dual_solution, 10, 1);
+        new_routes_individually.insert(new_routes_individually.end(), new_routes_v.begin(), new_routes_v.end());
+    }
+
+    // Print the routes
+    cout << "Routes generated : " << endl;
+    for (Route route : new_routes_individually) {
+        print_route(route, instance, master_solution);
+        cout << "------------" << endl;
+    }
+
+    end = chrono::steady_clock::now();
+    diff = chrono::duration_cast<chrono::milliseconds>(end - begin).count();
+    cout << "Time spent solving the pricing problem for the first group individually : " << diff << " ms" << endl;
 
 }

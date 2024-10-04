@@ -6,7 +6,7 @@
 
 #include "pricing_problem/pricing.h"
 
-inline extern const int ALL_RESOURCES_DOMINANCE = -1;
+inline constexpr int ALL_RESOURCES_DOMINANCE = -1;
 
 
 struct ColumnGenerationParameters {

@@ -36,3 +36,8 @@ int compute_clustering_cost(
     const std::vector<std::vector<int>>& clusters,
     const std::vector<std::vector<int>>& similarity_matrix
 );
+
+
+
+// Basic regrouping of vehicles into groups that have the same depot
+std::map<int, std::vector<int>> regroup_vehicles_by_depot(const std::vector<Vehicle>& vehicles);

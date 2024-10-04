@@ -7,9 +7,9 @@
 
 #include <vector>
 
-inline extern const int NO_ROUTING = 0;
-inline extern const int WARM_START = 1;
-inline extern const int IMPOSE_ROUTING = 2;
+inline constexpr int NO_ROUTING = 0;
+inline constexpr int WARM_START = 1;
+inline constexpr int IMPOSE_ROUTING = 2;
 
 
 /*
