@@ -41,7 +41,7 @@ void update_pricing_instance(
     @param instance: the instance of the problem
     @param vehicle: the vehicle that will perform the routes
 */
-Route solve_pricing_problem(
+Route solve_problem(
     std::unique_ptr<Problem> & pricing_problem,
     const Instance &instance, 
     const Vehicle &vehicle,
@@ -79,7 +79,7 @@ std::vector<Route> solve_pricing_problem_pulse(
 //   @param pool_size: the size of the solution pool
 std::vector<Route> solve_pricing_problem_pulse_grouped(
     const Instance &instance, 
-    std::vector<int> & vehicle_indexes,
+    const std::vector<int> & vehicle_indexes,
     const DualSolution &dual_solution,
     int delta,
     int pool_size

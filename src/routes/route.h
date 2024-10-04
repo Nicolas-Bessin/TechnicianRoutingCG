@@ -9,16 +9,7 @@
 #include <set>
 
 
-/*
-    Class Route : represents a sequence of nodes, starting at the warehouse, going through interventions and ending at the warehouse
-    @param vehicle_id int
-    @param total_cost double
-    @param reduced_cost double
-    @param total_duration int
-    @param id_sequence vector<int>
-    @param is_in_route vector<int>
-    @param route_edges vector<vector<int>>
-*/
+// Holds all the useful information about a route
 struct Route {
     // Index of the vehicle that will perform the route
     int vehicle_id;
@@ -28,16 +19,24 @@ struct Route {
     double reduced_cost;
     // Total duration of the interventions along the route 
     int total_duration;
-    // Sequence of nodes in the route (not strictly necessary for the problem but useful for analysis)
+    // Sequence of the interventions along the route
     std::vector<int> id_sequence;
-    // List of nodes in the route (1 if the node is in the route, 0 otherwise)
+    // Vector of booleans indicating if an intervention is in the route
     std::vector<int> is_in_route;
     // Matrix of the travel path
     std::vector<std::vector<int>> route_edges;
 };
 
+// Creates an empty route in a graph with N vertices
+Route EmptyRoute(const int N);
 
-Route EmptyRoute(int n_nodes);
+
+// Convert a partial path and its associated reduced cost to a Route object
+// @param rc: the reduced cost of the path
+// @param sequence: the sequence of the path in terms of in-vehicle indices
+// @param instance: the instance of the problem
+// @param vehicle: the vehicle that will perform the route
+Route convert_sequence_to_route(double rc, const std::vector<int> & sequence, const Instance& instance, const Vehicle& vehicle);
 
 
 // Checks if two routes are equal

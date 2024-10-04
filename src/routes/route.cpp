@@ -20,6 +20,50 @@ Route EmptyRoute(int n_nodes) {
     return route;
 }
 
+
+Route convert_sequence_to_route(double rc, const std::vector<int> & sequence, const Instance& instance, const Vehicle& vehicle) {
+    using std::vector;
+    // Get all the info we need to build a Route object
+    double total_cost = vehicle.cost;
+    int total_duration = 0;
+    vector<int> id_sequence;
+    vector<int> is_in_route(instance.nodes.size(), 0);
+    vector<vector<int>> route_edges(instance.nodes.size(), vector<int>(instance.nodes.size(), 0));
+
+
+    for (int i = 0; i < sequence.size() - 1; i++) {
+        int true_i = i == 0 ? vehicle.depot : vehicle.interventions[sequence[i]];
+        int true_j = i+1 == sequence.size()-1 ? vehicle.depot : vehicle.interventions[sequence[i + 1]];
+        // Update the sequence of interventions
+        id_sequence.push_back(true_i);
+        // Update the edge matrix
+        route_edges[true_i][true_j] = 1;
+        // Update the is_in_route
+        is_in_route[true_i] = 1;
+        // Get the duration, and distance between the two interventions
+        int duration = instance.nodes[true_i].duration;
+        int distance = instance.distance_matrix[true_i][true_j];
+        // Update the running total cost & duration
+        total_cost += instance.cost_per_km * distance;
+        total_duration += duration;        
+    }
+    // Add the checks related to the last intervention
+    int true_last = vehicle.depot;
+    id_sequence.push_back(true_last);
+    is_in_route[true_last] = 1;
+
+    // Create the Route object
+    return Route{
+        vehicle.id,
+        total_cost,
+        rc,
+        total_duration,
+        id_sequence,
+        is_in_route,
+        route_edges
+    };
+}
+
 // Checks if two routes are equal
 // That is, if they have :
 // - the same vehicle_id

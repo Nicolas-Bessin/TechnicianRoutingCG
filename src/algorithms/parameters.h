@@ -4,7 +4,7 @@
 #include <any>
 #include <string>
 
-#include "pricing_problem/pricing.h"
+#include "pricing_problem/full_pricing.h"
 
 inline constexpr int ALL_RESOURCES_DOMINANCE = -1;
 

@@ -275,7 +275,7 @@ void update_pricing_instance(
 }
 
 
-Route solve_pricing_problem(
+Route solve_problem(
     unique_ptr<Problem> & problem,
     const Instance& instance, 
     const Vehicle& vehicle,
@@ -323,47 +323,9 @@ Route solve_pricing_problem(
     if (!path.isElementary()) {
          cout << "Vehicle " << vehicle.id << " : Path is not elementary" << endl;
     }
-    // Get all the info we need to build a Route object
-    double total_cost = vehicle.cost;
-    int total_duration = 0;
-    vector<int> id_sequence;
-    vector<int> is_in_route(instance.nodes.size(), 0);
-    vector<vector<int>> route_edges(instance.nodes.size(), vector<int>(instance.nodes.size(), 0));
     
-
-    for (int i = 0; i < tour.size() - 1; i++) {
-        int true_i = i == 0 ? vehicle.depot : vehicle.interventions[tour[i]];
-        int true_j = i+1 == tour.size()-1 ? vehicle.depot : vehicle.interventions[tour[i + 1]];
-        // Update the sequence of interventions
-        id_sequence.push_back(true_i);
-        // Update the edge matrix
-        route_edges[true_i][true_j] = 1;
-        // Update the is_in_route
-        is_in_route[true_i] = 1;
-        // Get the duration, and distance between the two interventions
-        int duration = instance.nodes[true_i].duration;
-        int distance = instance.distance_matrix[true_i][true_j];
-        // Update the running total cost & duration
-        total_cost += instance.cost_per_km * distance;
-        total_duration += duration;        
-    }
-    // Add the checks related to the last intervention
-    int true_last = vehicle.depot;
-    id_sequence.push_back(true_last);
-    is_in_route[true_last] = 1;
-
-    // Create the Route object
-    Route new_route = Route{
-        vehicle.id,
-        total_cost,
-        reduced_cost,
-        total_duration,
-        id_sequence,
-        is_in_route,
-        route_edges
-    };
+    return convert_sequence_to_route(reduced_cost, tour, instance, vehicle);
     
-    return new_route;
 }
 
 Route solve_pricing_problem(
@@ -380,7 +342,7 @@ Route solve_pricing_problem(
     // Update the pricing problem with the dual values
     update_pricing_instance(pricing_problem, dual_solution, instance, vehicle);
     // Solve the pricing problem
-    return solve_pricing_problem(pricing_problem, instance, vehicle, n_res_dom);
+    return solve_problem(pricing_problem, instance, vehicle, n_res_dom);
 }
 
 
@@ -411,9 +373,8 @@ std::vector<Route> solve_pricing_problem_pulse(
     std::vector<Route> new_routes;
         
     for (const auto& [rc, path] : pulse_algorithm.get_solution_pool()) {
-        new_routes.push_back(convert_path_to_route(rc, path, instance, vehicle));
+        new_routes.push_back(convert_sequence_to_route(rc, path.sequence, instance, vehicle));
     }
-
 
     return new_routes;
 }
@@ -421,7 +382,7 @@ std::vector<Route> solve_pricing_problem_pulse(
 
 std::vector<Route> solve_pricing_problem_pulse_grouped(
     const Instance &instance, 
-    std::vector<int> & vehicle_indexes,
+    const std::vector<int> & vehicle_indexes,
     const DualSolution &dual_solution,
     int delta,
     int pool_size
@@ -496,7 +457,7 @@ std::vector<Route> solve_pricing_problem_pulse_grouped(
         }
         // Transform the partial pathes from the solution pool into Route objects
         for (const auto& [rc, path] : pulse_algorithm.get_solution_pool()) {
-            Route route = convert_path_to_route(rc, path, instance, virtual_vehicle);
+            Route route = convert_sequence_to_route(rc, path.sequence, instance, virtual_vehicle);
             // Update the route with the real vehicle id & add the cost of the vehicle
             route.vehicle_id = v;
             route.total_cost += vehicle.cost;

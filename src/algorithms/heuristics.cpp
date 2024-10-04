@@ -41,7 +41,7 @@ std::vector<Route> greedy_heuristic(
         // Create a pricing problem for the vehicle
         unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, v, true, forbidden_edges, required_edges);
         // Solve the pricing problem
-        Route new_route = solve_pricing_problem(pricing_problem, instance, v);
+        Route new_route = solve_problem(pricing_problem, instance, v);
         // If no route was found, continue to the next vehicle
         if (new_route.id_sequence.size() == 0) {
             continue;
@@ -103,7 +103,7 @@ std::vector<Route> greedy_heuristic_duals(
         unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, v, use_cyclic_pricing, forbidden_edges, required_edges);
         update_pricing_instance(pricing_problem, solution, instance, v);
         // Solve the pricing problem
-        Route new_route = solve_pricing_problem(pricing_problem, instance, v);
+        Route new_route = solve_problem(pricing_problem, instance, v);
         // If no route was found, continue to the next vehicle
         if (new_route.id_sequence.size() == 0) {
             continue;

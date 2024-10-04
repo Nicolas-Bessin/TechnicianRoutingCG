@@ -7,7 +7,7 @@
 
 #include "routes/route_optimizer.h"
 
-#include "pricing_problem/pricing.h"
+#include "pricing_problem/full_pricing.h"
 
 #include "data_analysis/analysis.h"
 
@@ -116,7 +116,7 @@ CGResult column_generation(
         // Use the pricing algorithm defined in the parameters
         vector<Route> new_routes;
         if (parameters.pricing_function == PRICING_PATHWYSE_BASIC){
-            new_routes = solve_pricing_problems_basic(
+            new_routes = full_pricing_problems_basic(
                 convex_dual_solution,
                 instance,
                 vehicle_order,
@@ -124,7 +124,7 @@ CGResult column_generation(
                 n_ressources_dominance
             );
         } else if (parameters.pricing_function == PRICING_DIVERSIFICATION){
-            new_routes = solve_pricing_problems_diversification(
+            new_routes = full_pricing_problems_diversification(
                 convex_dual_solution,
                 instance,
                 vehicle_order,
@@ -133,7 +133,7 @@ CGResult column_generation(
                 iteration
             );
         } else if (parameters.pricing_function == PRICING_CLUSTERING){
-            new_routes = solve_pricing_problems_clustering(
+            new_routes = full_pricing_problems_clustering(
                 convex_dual_solution,
                 instance,
                 vehicle_order,
@@ -142,7 +142,7 @@ CGResult column_generation(
                 iteration
             );
         } else if (parameters.pricing_function == PRICING_PULSE_BASIC){
-        new_routes = solve_pricing_problems_basic_pulse(
+        new_routes = full_pricing_problems_basic_pulse(
             convex_dual_solution,
             instance,
             vehicle_order,

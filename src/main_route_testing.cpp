@@ -6,7 +6,7 @@
 #include "master_problem/master.h"
 #include "master_problem/rmp_solver.h"
 
-#include "pricing_problem/pricing.h"
+#include "pricing_problem/full_pricing.h"
 #include "pricing_problem/subproblem.h"
 
 #include "data_analysis/analysis.h"
@@ -60,11 +60,7 @@ int main(int argc, char *argv[]){
     cout << "Solving the pricing problems group by group" << endl;
 
     auto begin = chrono::steady_clock::now();
-    vector<Route> new_routes_grouped;
-    for (auto [depot, group] : vehicle_groups) {
-        auto group_routes = solve_pricing_problem_pulse_grouped(instance, group, dual_solution, 10, 1);
-        new_routes_grouped.insert(new_routes_grouped.end(), group_routes.begin(), group_routes.end());
-    }
+    vector<Route> new_routes_grouped = full_pricing_problems_grouped_pulse(dual_solution, instance, vehicle_groups, 10, 1);
 
     // Print the routes
     cout << "Routes generated : " << endl;
@@ -82,12 +78,13 @@ int main(int argc, char *argv[]){
      
     begin = chrono::steady_clock::now();
 
-    vector<Route> new_routes_individually;
-    for (int v = 0; v < instance.vehicles.size(); v++) {
-        const Vehicle& vehicle = instance.vehicles[v];
-        auto new_routes_v = solve_pricing_problem_pulse(instance, vehicle, dual_solution, 10, 1);
-        new_routes_individually.insert(new_routes_individually.end(), new_routes_v.begin(), new_routes_v.end());
+    vector<int> vehicle_order = {};
+    for (int v = 0; v < instance.number_vehicles; v++){
+        if (instance.vehicles[v].interventions.size() > 0){
+            vehicle_order.push_back(v);
+        }
     }
+    vector<Route> new_routes_individually = full_pricing_problems_basic_pulse(dual_solution, instance, vehicle_order, 10, 1);
 
     // Print the routes
     cout << "Routes generated : " << endl;

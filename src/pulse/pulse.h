@@ -16,6 +16,7 @@ struct PartialPath {
 // Return an empty path corresponding to a graph with N vertices
 PartialPath EmptyPath(const int N);
 
+// Extend a path by adding a vertex to it
 PartialPath extend_path(const PartialPath& path, const int vertex);
 
 class PulseAlgorithm {
@@ -104,11 +105,3 @@ protected:
     // Available interventions
     std::vector<int> available_interventions;
 };
-
-
-// Convert a partial path and its associated reduced cost to a Route object
-// @param rc: the reduced cost of the path
-// @param path: the partial path to convert
-// @param instance: the instance of the problem
-// @param vehicle: the vehicle that will perform the route
-Route convert_path_to_route(double rc, const PartialPath& path, const Instance& instance, const Vehicle& vehicle);

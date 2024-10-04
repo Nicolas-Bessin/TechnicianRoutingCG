@@ -63,8 +63,8 @@ set(
     src/pulse/pulse.h
     src/pulse/pulse.cpp
 
-    src/pricing_problem/pricing.h
-    src/pricing_problem/pricing.cpp 
+    src/pricing_problem/full_pricing.h
+    src/pricing_problem/full_pricing.cpp 
     src/pricing_problem/subproblem.h
     src/pricing_problem/subproblem.cpp
     src/pricing_problem/time_window_lunch.h

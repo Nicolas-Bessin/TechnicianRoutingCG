@@ -244,7 +244,9 @@ std::map<int, std::vector<int>> regroup_vehicles_by_depot(const std::vector<Vehi
     using std::map;
     map<int, std::vector<int>> depot_to_vehicles;
     for (const Vehicle& vehicle : vehicles){
-        depot_to_vehicles[vehicle.depot].push_back(vehicle.id);
+        if (vehicle.interventions.size() > 0){
+            depot_to_vehicles[vehicle.depot].push_back(vehicle.id);
+        }
     }
     return depot_to_vehicles;
 }
