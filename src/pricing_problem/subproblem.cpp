@@ -9,6 +9,7 @@
 #include <map>
 #include <iostream>
 #include <memory>
+#include <chrono>
 
 
 using std::cout, std::endl;
@@ -269,6 +270,9 @@ void update_pricing_instance(
     }
     
     // Put in the fixed costs of the vehicle
+    if (vehicle.id == -1) {
+        return;
+    }
     double fixed_cost = - dual_solution.betas[vehicle.id] + vehicle.cost;
     objective->setNodeCost(origin, fixed_cost);
     return;
@@ -355,14 +359,22 @@ std::vector<Route> solve_pricing_problem_pulse(
     const std::set<std::tuple<int, int, int>> &forbidden_edges,
     const std::set<std::tuple<int, int, int>> &required_edges
     ) {
+    using namespace std::chrono;
     // Create the pricing problem
     unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, vehicle, true, forbidden_edges, required_edges);
     // Update the pricing problem with the dual values
     update_pricing_instance(pricing_problem, dual_solution, instance, vehicle);
     // Create the pulse algorithm
     PulseAlgorithm pulse_algorithm = PulseAlgorithm(pricing_problem.get(), delta, pool_size);
-    // Get the partial path
-    int error = pulse_algorithm.bound_and_solve();
+    // Bounding phase
+    auto start = steady_clock::now();
+    pulse_algorithm.bound();
+    auto end = steady_clock::now();
+    int duration_bound = duration_cast<milliseconds>(end - start).count();
+
+    // Solve the pricing problem
+    auto start_pricing = steady_clock::now();
+    int error = pulse_algorithm.solve(vehicle.cost, dual_solution.betas[vehicle.id]);
 
     if (error != 0) {
         cout << "Error in solving the pulse algorithm" << endl;
@@ -375,6 +387,10 @@ std::vector<Route> solve_pricing_problem_pulse(
     for (const auto& [rc, path] : pulse_algorithm.get_solution_pool()) {
         new_routes.push_back(convert_sequence_to_route(rc, path.sequence, instance, vehicle));
     }
+    auto end_pricing = steady_clock::now();
+    int duration_pricing = duration_cast<milliseconds>(end_pricing - start_pricing).count();
+
+    cout << "V" << vehicle.id << " : Bound in " << duration_bound << " ms, pricing in " << duration_pricing << " ms" << endl;
 
     return new_routes;
 }
@@ -388,6 +404,7 @@ std::vector<Route> solve_pricing_problem_pulse_grouped(
     int pool_size
 ) {
     using std::vector, std::set, std::map;
+    using namespace std::chrono;
 
     // At firts, we create a virtual vehicle that contains all the interventions
     if (vehicle_indexes.size() == 0) {
@@ -436,10 +453,14 @@ std::vector<Route> solve_pricing_problem_pulse_grouped(
     // Set all the interventions as available
     pulse_algorithm.reset();
     // Proceed with the bounding phase
+    auto start = steady_clock::now();
     pulse_algorithm.bound();
+    auto end = steady_clock::now();
+    int duration_bound = duration_cast<milliseconds>(end - start).count();
 
 
     // For every vehicle, define the available interventions and solve the pricing problem
+    auto start_pricing = steady_clock::now();
     vector<Route> new_routes;
     for (int v : vehicle_indexes) {
         // Get the vehicle
@@ -464,6 +485,14 @@ std::vector<Route> solve_pricing_problem_pulse_grouped(
             new_routes.push_back(route);
         }
     }
+    auto end_pricing = steady_clock::now();
+    int duration_pricing = duration_cast<milliseconds>(end_pricing - start_pricing).count();
+
+    cout << "Group [";
+    for (int v : vehicle_indexes) {
+        cout << "v" << v << ", ";
+    }
+    cout << "] : Bound in " << duration_bound << " ms, pricing in " << duration_pricing << " ms" << endl;
 
     return new_routes;
 }

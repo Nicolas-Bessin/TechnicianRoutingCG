@@ -25,7 +25,7 @@
 inline constexpr std::string INSTANCE_FILE = "instance_1";
 inline constexpr int N_INTERVENTIONS = 75;
 
-inline constexpr int TIME_LIMIT = 60;
+inline constexpr int TIME_LIMIT = 1200;
 inline constexpr bool VERBOSE = true;
 
 
@@ -79,7 +79,7 @@ int main(int argc, char *argv[]){
         {"solution_pool_size", 10},
         {"alpha", 0.5},
         {"use_stabilisation", false},
-        {"pricing_function", PRICING_PULSE_BASIC}
+        {"pricing_function", PRICING_PULSE_GROUPED}
     });
     // Create a root node for the algorithm
     BPNode root = RootNode(routes);

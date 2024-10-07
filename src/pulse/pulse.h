@@ -43,8 +43,11 @@ public :
     // If going through the last vertex in p was a mistake, we rollback the choice
     bool rollback(int vertex, const PartialPath & path);
 
+    // Only the solving part of the pulse algorithm
+    int solve(double fixed_cost, double dual_value);
+    
     // Full solving procedure, returns an error code (0 if everything went well)
-    int bound_and_solve();
+    int bound_and_solve(double fixed_cost, double dual_value);
 
     // Getters
     PartialPath get_best_path() {return best_path;}

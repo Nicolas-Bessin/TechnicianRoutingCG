@@ -240,10 +240,11 @@ std::vector<Route> full_pricing_problems_basic_pulse(
     vector<vector<Route>> new_routes_parallel(vehicle_order.size());
     for (int i = 0; i < tasks.size(); i++){
         threads[i] = std::thread(std::move(tasks[i]), vehicle_order[i]);
+        threads[i].join(); // Non-parallel execution
     }
 
     for (int i = 0; i < tasks.size(); i++){
-        threads[i].join();
+        //threads[i].join();
         new_routes_parallel[i] = futures[i].get();
     }
 
@@ -286,11 +287,12 @@ std::vector<Route> full_pricing_problems_grouped_pulse(
     vector<std::thread> threads(tasks.size());
     for (int i = 0; i < tasks.size(); i++){
         threads[i] = std::thread(std::move(tasks[i]), task_id_to_depot[i]);
+        threads[i].join(); // Non-parallel execution
     }
 
     vector<vector<Route>> new_routes_parallel(vehicle_groups.size());
     for (int i = 0; i < tasks.size(); i++){
-        threads[i].join();
+        //threads[i].join();
         new_routes_parallel[i] = futures[i].get();
     }
 

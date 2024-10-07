@@ -211,14 +211,11 @@ void PulseAlgorithm::pulse(int vertex, int time, std::vector<int>quantities, dou
     return;
 }
 
-int PulseAlgorithm::bound_and_solve() {
-    // Launch the bounding phase
-    reset();
-    bound();
-    // Launch the pulse from the origin
+int PulseAlgorithm::solve(double fixed_cost, double dual_value) {
+    // Launch the pulse algorithm
     reset();
     PartialPath path = EmptyPath(N);
-    double initial_cost = problem->getObj()->getNodeCost(origin);
+    double initial_cost = fixed_cost - dual_value;
     pulse(origin, 0, std::vector<int>(K, 0), initial_cost, path);
 
     if(best_path.sequence.size() == 0) {
@@ -226,6 +223,14 @@ int PulseAlgorithm::bound_and_solve() {
     }
 
     return 0;
+}
+
+
+int PulseAlgorithm::bound_and_solve(double fixed_cost, double dual_value) {
+    // Launch the bounding phase
+    reset();
+    bound();
+    return solve(fixed_cost, dual_value);
 }
 
 
@@ -320,7 +325,7 @@ int PulseAlgorithmWithSubsets::solve(double fixed_cost, double dual_value, std::
     set_available_interventions(available);
     // Launch the pulse algorithm
     PartialPath path = EmptyPath(N);
-    double initial_cost = fixed_cost + dual_value;
+    double initial_cost = fixed_cost - dual_value;
     pulse(origin, 0, std::vector<int>(K, 0), initial_cost, path);
 
     if(best_path.sequence.size() == 0) {

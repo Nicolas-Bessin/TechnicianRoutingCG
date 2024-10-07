@@ -27,6 +27,8 @@ inline constexpr int N_INTERVENTIONS = 75;
 inline constexpr int TIME_LIMIT = 1200;
 inline constexpr bool VERBOSE = true;
 
+inline constexpr int DELTA = 7;
+
 int main(int argc, char *argv[]){
 
     using std::cout, std::endl;
@@ -55,19 +57,20 @@ int main(int argc, char *argv[]){
     cout << "-----------------------------------" << endl;
 
     auto vehicle_groups = regroup_vehicles_by_depot(instance.vehicles);
+    cout << "Delta = " << DELTA << endl;
 
     cout << "-----------------------------------" << endl;
     cout << "Solving the pricing problems group by group" << endl;
 
     auto begin = chrono::steady_clock::now();
-    vector<Route> new_routes_grouped = full_pricing_problems_grouped_pulse(dual_solution, instance, vehicle_groups, 10, 1);
+    vector<Route> new_routes_grouped = full_pricing_problems_grouped_pulse(dual_solution, instance, vehicle_groups, DELTA, 1);
 
     // Print the routes
-    cout << "Routes generated : " << endl;
-    for (Route route : new_routes_grouped) {
-        print_route_reduced(route, instance);
-        cout << "------------" << endl;
-    }
+    // cout << "Routes generated : " << endl;
+    // for (Route route : new_routes_grouped) {
+    //     print_route_reduced(route, instance);
+    //     cout << "------------" << endl;
+    // }
 
     auto end = chrono::steady_clock::now();
     int diff = chrono::duration_cast<chrono::milliseconds>(end - begin).count();
@@ -84,14 +87,14 @@ int main(int argc, char *argv[]){
             vehicle_order.push_back(v);
         }
     }
-    vector<Route> new_routes_individually = full_pricing_problems_basic_pulse(dual_solution, instance, vehicle_order, 10, 1);
+    vector<Route> new_routes_individually = full_pricing_problems_basic_pulse(dual_solution, instance, vehicle_order, DELTA, 1);
 
     // Print the routes
-    cout << "Routes generated : " << endl;
-    for (Route route : new_routes_individually) {
-        print_route_reduced(route, instance);
-        cout << "------------" << endl;
-    }
+    // cout << "Routes generated : " << endl;
+    // for (Route route : new_routes_individually) {
+    //     print_route_reduced(route, instance);
+    //     cout << "------------" << endl;
+    // }
 
     end = chrono::steady_clock::now();
     diff = chrono::duration_cast<chrono::milliseconds>(end - begin).count();

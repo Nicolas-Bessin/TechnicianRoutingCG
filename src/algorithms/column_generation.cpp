@@ -9,6 +9,8 @@
 
 #include "pricing_problem/full_pricing.h"
 
+#include "clustering/clustering.h"
+
 #include "data_analysis/analysis.h"
 
 #include <iostream>
@@ -142,21 +144,30 @@ CGResult column_generation(
                 iteration
             );
         } else if (parameters.pricing_function == PRICING_PULSE_BASIC){
-        new_routes = full_pricing_problems_basic_pulse(
-            convex_dual_solution,
-            instance,
-            vehicle_order,
-            parameters.delta,
-            parameters.solution_pool_size
-        );
+            new_routes = full_pricing_problems_basic_pulse(
+                convex_dual_solution,
+                instance,
+                vehicle_order,
+                parameters.delta,
+                parameters.solution_pool_size
+            );
+        } else if (parameters.pricing_function == PRICING_PULSE_GROUPED){
+            auto vehicle_groups = regroup_vehicles_by_depot(instance.vehicles);
+            new_routes = full_pricing_problems_grouped_pulse(
+                convex_dual_solution,
+                instance,
+                vehicle_groups,
+                parameters.delta,
+                parameters.solution_pool_size
+            );
         }
 
         // We add the new routes to the global routes vector
         double min_reduced_cost = std::numeric_limits<double>::infinity();
         for (Route& new_route : new_routes){
+            min_reduced_cost = std::min(min_reduced_cost, new_route.reduced_cost);
             if (new_route.reduced_cost < - parameters.reduced_cost_threshold) {
                 routes.push_back(new_route);
-                min_reduced_cost = std::min(min_reduced_cost, new_route.reduced_cost);
                 node.active_routes.insert(routes.size() - 1);
                 n_added_routes++;
 
@@ -174,7 +185,7 @@ CGResult column_generation(
         }
         // ----------------- Stop conditions -----------------
         // If we added no routes but are not using the cyclic pricing yet, we switch to it
-        if (parameters.pricing_function != PRICING_PULSE_BASIC) {
+        if (parameters.pricing_function != PRICING_PULSE_BASIC && parameters.pricing_function != PRICING_PULSE_GROUPED){
             if (n_added_routes == 0 && parameters.switch_to_cyclic_pricing && !using_cyclic_pricing){
                 using_cyclic_pricing = true;
                 // Reset the number of resources used for the dominance test
