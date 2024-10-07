@@ -34,8 +34,14 @@ public :
     // Main pulse algorithm
     void pulse(int vertex, int time, std::vector<int> quantities, double cost, const PartialPath& path);
 
+    // Parallelized version of the pulse algorithm - calling the pulse on each forward neighbor of the vertex in parallel
+    void pulse_parallel(int vertex, int time, std::vector<int> quantities, double cost, const PartialPath& path);
+
     // Bounding phase
     void bound();
+
+    // Parallelized version of the bounding phase - call the pulse_parallel on each vertex.
+    void bound_parallel();
 
     // Returns true if the bound is respected, that is, if we might reach a better solution
     bool check_bounds(int vertex, int time, double cost);
@@ -45,6 +51,9 @@ public :
 
     // Only the solving part of the pulse algorithm
     int solve(double fixed_cost, double dual_value);
+
+    // Parallelized version of the solving part
+    int solve_parallel(double fixed_cost, double dual_value);
     
     // Full solving procedure, returns an error code (0 if everything went well)
     int bound_and_solve(double fixed_cost, double dual_value);

@@ -411,6 +411,9 @@ std::vector<Route> parse_routes_from_file(const std::string& filename, const Ins
 
 
 void print_route_reduced(const Route& route, const Instance& instance) {
+    if (route.id_sequence.size() <= 2) {
+        return;
+    }
     using std::cout, std::endl;
     cout << "Vehicle " << route.vehicle_id;
     cout << " - Total cost : " << route.total_cost << " - Reduced cost : " << route.reduced_cost;

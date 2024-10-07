@@ -35,7 +35,6 @@ nlohmann::json export_parameters(const ColumnGenerationParameters& parameters) {
     j["general"] = {
         {"time_limit", parameters.time_limit},
         {"reduced_cost_threshold", parameters.reduced_cost_threshold},
-        {"verbose", parameters.verbose},
         {"max_iterations", parameters.max_iterations},
         {"max_consecutive_non_improvement", parameters.max_consecutive_non_improvement},
         {"compute_integer_solution", parameters.compute_integer_solution}
