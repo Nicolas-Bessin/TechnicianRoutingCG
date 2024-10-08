@@ -62,6 +62,10 @@ set(
 
     src/pulse/pulse.h
     src/pulse/pulse.cpp
+    src/pulse/pulse_grouped.h
+    src/pulse/pulse_grouped.cpp
+    src/pulse/pulse_multithreaded.h
+    src/pulse/pulse_multithreaded.cpp
 
     src/pricing_problem/full_pricing.h
     src/pricing_problem/full_pricing.cpp 

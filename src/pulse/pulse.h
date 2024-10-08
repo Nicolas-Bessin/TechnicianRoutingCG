@@ -4,13 +4,20 @@
 #include "pricing_problem/time_window_lunch.h"
 #include "routes/route.h"
 
-#include <array>
 #include <vector>
 #include <map>
 
+
+
 struct PartialPath {
-    std::vector<int> is_visited;
+    std::vector<bool> is_visited;
     std::vector<int> sequence;
+
+    // Extension of the path by adding a vertex
+    void extend(int vertex) {
+        sequence.push_back(vertex);
+        is_visited[vertex] = true;
+    }
 };
 
 // Return an empty path corresponding to a graph with N vertices
@@ -32,16 +39,10 @@ public :
     void reset();
 
     // Main pulse algorithm
-    void pulse(int vertex, int time, std::vector<int> quantities, double cost, const PartialPath& path);
-
-    // Parallelized version of the pulse algorithm - calling the pulse on each forward neighbor of the vertex in parallel
-    void pulse_parallel(int vertex, int time, std::vector<int> quantities, double cost, const PartialPath& path);
+    void pulse(int vertex, int time, std::vector<int> quantities, double cost, const PartialPath & path);
 
     // Bounding phase
     void bound();
-
-    // Parallelized version of the bounding phase - call the pulse_parallel on each vertex.
-    void bound_parallel();
 
     // Returns true if the bound is respected, that is, if we might reach a better solution
     bool check_bounds(int vertex, int time, double cost);
@@ -51,9 +52,6 @@ public :
 
     // Only the solving part of the pulse algorithm
     int solve(double fixed_cost, double dual_value);
-
-    // Parallelized version of the solving part
-    int solve_parallel(double fixed_cost, double dual_value);
     
     // Full solving procedure, returns an error code (0 if everything went well)
     int bound_and_solve(double fixed_cost, double dual_value);
@@ -93,27 +91,6 @@ protected :
     std::vector<std::vector<double>> bounds;
 };
 
-// Extension of the PulseAlgorithm class to handle multiple vehicles with different subsets of feasible interventions on the same graph
-class PulseAlgorithmWithSubsets : public PulseAlgorithm {
-public:
-    // Same methods as the PulseAlgorithm class
 
-    // Constructor
-    PulseAlgorithmWithSubsets(Problem* problem, int delta, int pool_size) : PulseAlgorithm(problem, delta, pool_size) {}
 
-    // Sets the available interventions for the pulse feasibility check
-    void set_available_interventions(std::vector<int> available_interventions);
 
-    // Pulse methods is overloaded to handle the available interventions
-    void pulse(int vertex, int time, std::vector<int> quantities, double cost, const PartialPath& path);
-
-    // Reset is also overloaded to reset the available interventions
-    void reset();
-
-    // Only after the bounding, solve the problem for a vehicle with a given fixed cost, dual value, and available interventions
-    int solve(double fixed_cost, double dual_value, std::vector<int> available_interventions);
-
-protected:
-    // Available interventions
-    std::vector<int> available_interventions;
-};

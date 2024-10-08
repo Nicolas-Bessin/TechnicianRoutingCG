@@ -2,8 +2,13 @@
 
 #include "instance/constants.h"
 #include "pricing_problem/time_window_lunch.h"
+
 #include "../../pathwyse/core/solver.h"
+
 #include "pulse/pulse.h"
+#include "pulse/pulse_grouped.h"
+#include "pulse/pulse_multithreaded.h"
+
 #include "data_analysis/analysis.h"
 
 #include <map>
@@ -513,7 +518,7 @@ std::vector<Route> solve_pricing_problem_pulse_parallel(
     // Update the pricing problem with the dual values
     update_pricing_instance(pricing_problem, dual_solution, instance, vehicle);
     // Create the pulse algorithm
-    PulseAlgorithm pulse_algorithm = PulseAlgorithm(pricing_problem.get(), delta, pool_size);
+    PulseAlgorithmMultithreaded pulse_algorithm = PulseAlgorithmMultithreaded(pricing_problem.get(), delta, pool_size);
     // Bounding phase
     auto start = steady_clock::now();
     pulse_algorithm.bound_parallel();

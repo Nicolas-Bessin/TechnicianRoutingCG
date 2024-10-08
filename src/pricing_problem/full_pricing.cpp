@@ -240,11 +240,11 @@ std::vector<Route> full_pricing_problems_basic_pulse(
     vector<vector<Route>> new_routes_parallel(vehicle_order.size());
     for (int i = 0; i < tasks.size(); i++){
         threads[i] = std::thread(std::move(tasks[i]), vehicle_order[i]);
-        threads[i].join(); // Non-parallel execution
+        //threads[i].join(); // Non-parallel execution
     }
 
     for (int i = 0; i < tasks.size(); i++){
-        //threads[i].join();
+        threads[i].join();
         new_routes_parallel[i] = futures[i].get();
     }
 
@@ -300,6 +300,24 @@ std::vector<Route> full_pricing_problems_grouped_pulse(
     vector<Route> new_routes;
     for (auto routes : new_routes_parallel){
         new_routes.insert(new_routes.end(), routes.begin(), routes.end());
+    }
+
+    return new_routes;
+}
+
+std::vector<Route> full_pricing_problems_multithreaded_pulse(
+    const DualSolution & solution,
+    const Instance & instance,
+    const std::vector<int> & vehicle_order,
+    int delta,
+    int pool_size
+) {
+    // Solve each problem sequentially using the multi-threaded pulse algorithm
+    using std::vector;
+    vector<Route> new_routes;
+    for (int v : vehicle_order){
+        vector<Route> new_routes_v = solve_pricing_problem_pulse_parallel(instance, instance.vehicles.at(v), solution, delta, pool_size);
+        new_routes.insert(new_routes.end(), new_routes_v.begin(), new_routes_v.end());
     }
 
     return new_routes;

@@ -77,3 +77,13 @@ std::vector<Route> full_pricing_problems_grouped_pulse(
     int delta = 10,
     int pool_size = 10
     );
+
+// Solve the pricing problems using the multithreaded PA, sequentially
+inline constexpr std::string PRICING_PULSE_MULTITHREADED = "multi_pulse";
+std::vector<Route> full_pricing_problems_multithreaded_pulse(
+    const DualSolution & solution,
+    const Instance & instance,
+    const std::vector<int> & vehicle_order,
+    int delta = 10,
+    int pool_size = 10
+    );
