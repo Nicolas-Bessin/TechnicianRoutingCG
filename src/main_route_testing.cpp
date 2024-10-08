@@ -22,7 +22,7 @@
 
 
 inline constexpr std::string INSTANCE_FILE = "instance_1";
-inline constexpr int N_INTERVENTIONS = 50;
+inline constexpr int N_INTERVENTIONS = 75;
 
 inline constexpr int TIME_LIMIT = 1200;
 inline constexpr bool VERBOSE = true;
@@ -65,29 +65,26 @@ int main(int argc, char *argv[]){
         }
     }
 
+    auto group = vehicle_groups.begin()->second;
+
     cout << "-----------------------------------" << endl;
-    cout << "Solving the pricing problems sequentially" << endl;
+    cout << "Solving each group with one thread, sequentially" << endl;
 
     auto begin = chrono::steady_clock::now();
-    vector<Route> new_routes_naive;
-    for (auto vehicle : instance.vehicles) {
-        if (vehicle.interventions.size() == 0) continue;
-        auto new_routes_v = solve_pricing_problem_pulse(instance, vehicle, dual_solution, DELTA, 10);
-        new_routes_naive.insert(new_routes_naive.end(), new_routes_v.begin(), new_routes_v.end());
-    }
+    vector<Route> new_routes_naive = full_pricing_problems_grouped_pulse(dual_solution, instance, vehicle_groups, DELTA, 1);
 
     auto end = chrono::steady_clock::now();
     int diff = chrono::duration_cast<chrono::milliseconds>(end - begin).count();
-    cout << "Time spent solving the pricing problems in parallel : " << diff << " ms" << endl;
+    cout << "Time spent : " << diff << " ms" << endl;
 
     cout << "-----------------------------------" << endl;
-    cout << "Solving each pricing problem sequentially with the parallel PA" << endl;
+    cout << "Solving each group with the parallel PA, sequentially" << endl;
     
     begin = chrono::steady_clock::now();
 
-    vector<Route> new_routes_individually = full_pricing_problems_multithreaded_pulse(dual_solution, instance, vehicle_order, DELTA, 1);
+    vector<Route> new_routes_individually = full_pricing_problems_grouped_pulse_multithreaded(dual_solution, instance, vehicle_groups, DELTA, 1);
     end = chrono::steady_clock::now();
     diff = chrono::duration_cast<chrono::milliseconds>(end - begin).count();
-    cout << "Time spent solving the pricing problems sequentially with the parallel PA : " << diff << " ms" << endl;
+    cout << "Time spent : " << diff << " ms" << endl;
 
 }

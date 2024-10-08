@@ -322,3 +322,51 @@ std::vector<Route> full_pricing_problems_multithreaded_pulse(
 
     return new_routes;
 }
+
+
+std::vector<Route> full_pricing_problems_grouped_pulse_multithreaded(
+    const DualSolution & solution,
+    const Instance & instance,
+    const std::map<int, std::vector<int>> & vehicle_groups,
+    int delta,
+    int pool_size
+) {
+    using std::vector;
+    using std::packaged_task;
+    using std::future;
+
+    auto single_pricer = [&](int id){
+            return solve_pricing_problem_pulse_grouped_par(instance, vehicle_groups.at(id), solution, delta, pool_size);
+        };
+
+    vector<packaged_task<vector<Route>(int)>> tasks;
+    vector<int> task_id_to_depot = {};
+    for (const auto& [id, vehicles] : vehicle_groups){
+        tasks.push_back(packaged_task<vector<Route>(int)>(single_pricer));
+        task_id_to_depot.push_back(id);
+    }
+    vector<future<vector<Route>>> futures;
+    for (auto& task : tasks){
+        futures.push_back(task.get_future());
+    }
+    // Multi-threaded execution
+    vector<std::thread> threads(tasks.size());
+    for (int i = 0; i < tasks.size(); i++){
+        threads[i] = std::thread(std::move(tasks[i]), task_id_to_depot[i]);
+        threads[i].join(); // Non-parallel execution
+    }
+
+    vector<vector<Route>> new_routes_parallel(vehicle_groups.size());
+    for (int i = 0; i < tasks.size(); i++){
+        //threads[i].join();
+        new_routes_parallel[i] = futures[i].get();
+    }
+
+    // Regroup all the routes in a single vector
+    vector<Route> new_routes;
+    for (auto routes : new_routes_parallel){
+        new_routes.insert(new_routes.end(), routes.begin(), routes.end());
+    }
+
+    return new_routes;
+}

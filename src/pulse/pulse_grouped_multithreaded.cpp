@@ -1,10 +1,19 @@
+#include "pulse_grouped_multithreaded.h"
+
+
 #include "pulse_multithreaded.h"
 
 
 #include <thread>
 
 
-void PulseAlgorithmMultithreaded::bound_parallel() {
+PulseAlgorithmMultithreadedGrouped::PulseAlgorithmMultithreadedGrouped(Problem* problem, int delta, int pool_size) : PulseAlgorithmMultithreaded(problem, delta, pool_size) {
+    available_interventions = std::vector<int>(N, true);
+}
+
+
+
+void PulseAlgorithmMultithreadedGrouped::bound() {
     // Initialize the bounds matrix
     // We have one bounding level in terms of time for each END_DAY - (j-1) * delta
     // Thus, bound[v][j] is the best objective value that can be achieved starting from vertex v with available time (j+) * delta
@@ -48,11 +57,13 @@ void PulseAlgorithmMultithreaded::bound_parallel() {
 }
 
 
-void PulseAlgorithmMultithreaded::pulse(int vertex, int time, std::vector<int>quantities, double cost, const PartialPath& path) {
+void PulseAlgorithmMultithreadedGrouped::pulse(int vertex, int time, std::vector<int>quantities, double cost, const PartialPath& path) {
     using std::vector;
     using std::cout, std::endl;
     // Check the feasibility of the partial path
     bool feasible = true;
+    // Is the intevention available ?
+    feasible = feasible && available_interventions[vertex];
     // Is the path elementary ?
     feasible = feasible && !path.is_visited[vertex];
     for (int c = 0; c < K; c++) {
@@ -114,11 +125,13 @@ void PulseAlgorithmMultithreaded::pulse(int vertex, int time, std::vector<int>qu
 }
 
 
-void PulseAlgorithmMultithreaded::pulse_parallel(int vertex, int time, std::vector<int> quantities, double cost, const PartialPath& path) {
+void PulseAlgorithmMultithreadedGrouped::pulse_parallel(int vertex, int time, std::vector<int> quantities, double cost, const PartialPath& path) {
     using std::vector;
     using std::cout, std::endl;
     // Check the feasibility of the partial path
     bool feasible = true;
+    // Is the intevention available ?
+    feasible = feasible && available_interventions[vertex];
     // Is the path elementary ?
     feasible = feasible && !path.is_visited[vertex];
     for (int c = 0; c < K; c++) {
@@ -148,26 +161,7 @@ void PulseAlgorithmMultithreaded::pulse_parallel(int vertex, int time, std::vect
 
     // Check if we are at the destination
     if (vertex == destination) {
-        // Acquire the lock
-        pool_mutex.lock();
-        if (cost < best_objective) {
-            best_objective = cost;
-            best_path = p_new;
-        }
-        if (cost < pool_bound) {
-            // Insert the new solution in the pool
-            solutions.insert(std::pair<double, PartialPath>(cost, p_new));
-            // If the pool is too large, we remove the worst solution
-            if (solutions.size() > pool_size) {
-                auto it = std::prev(solutions.end());
-                solutions.erase(it);
-            }
-            // Update the pool bound
-            pool_bound = solutions.rbegin()->first;;
-        }
-
-        // Release the lock
-        pool_mutex.unlock();
+        std::cerr << "Error: destination reached in pulse_parallel" << std::endl;
         return;
     }
 
@@ -189,16 +183,31 @@ void PulseAlgorithmMultithreaded::pulse_parallel(int vertex, int time, std::vect
 }
 
 
-int PulseAlgorithmMultithreaded::solve_parallel(double fixed_cost, double dual_value) {
+int PulseAlgorithmMultithreadedGrouped::solve(double fixed_cost, double dual_value, std::vector<int> available_interventions) {
     // Launch the pulse algorithm
     reset();
+    set_available_interventions(available_interventions);
     PartialPath path = EmptyPath(N);
     double initial_cost = fixed_cost - dual_value;
-    PulseAlgorithmMultithreaded::pulse_parallel(origin, 0, std::vector<int>(K, 0), initial_cost, path);
+    PulseAlgorithmMultithreadedGrouped::pulse_parallel(origin, 0, std::vector<int>(K, 0), initial_cost, path);
 
     if(best_path.sequence.size() == 0) {
         return 1;
     }
 
     return 0;
+}
+
+
+void PulseAlgorithmMultithreadedGrouped::set_available_interventions(std::vector<int> available_interventions) {
+    this->available_interventions = available_interventions;
+}
+
+
+void PulseAlgorithmMultithreadedGrouped::reset() {
+    best_objective = std::numeric_limits<double>::infinity();
+    best_path = EmptyPath(N);
+    // Reset the pool
+    pool_bound = std::numeric_limits<double>::infinity();
+    solutions.clear();
 }

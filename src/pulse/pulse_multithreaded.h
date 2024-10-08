@@ -25,7 +25,4 @@ protected:
     // Solution pool mutex
     std::mutex pool_mutex;
 
-    // Best solution mutex
-    std::mutex best_mutex;
-
 };

@@ -8,6 +8,7 @@
 #include "pulse/pulse.h"
 #include "pulse/pulse_grouped.h"
 #include "pulse/pulse_multithreaded.h"
+#include "pulse/pulse_grouped_multithreaded.h"
 
 #include "data_analysis/analysis.h"
 
@@ -548,3 +549,104 @@ std::vector<Route> solve_pricing_problem_pulse_parallel(
     return new_routes;
 }
 
+
+std::vector<Route> solve_pricing_problem_pulse_grouped_par(
+    const Instance &instance, 
+    const std::vector<int> & vehicle_indexes,
+    const DualSolution &dual_solution,
+    int delta,
+    int pool_size
+) {
+    using std::vector, std::set, std::map;
+    using namespace std::chrono;
+
+    // At firts, we create a virtual vehicle that contains all the interventions
+    if (vehicle_indexes.size() == 0) {
+        std::cerr << "No vehicle indexes provided" << endl;
+        return {};
+    }
+    set<int> all_interventions;
+    set<int> depots;
+    map<std::string, int> all_capacities = instance.vehicles[vehicle_indexes[0]].capacities;
+    for (int v : vehicle_indexes) {
+        depots.insert(instance.vehicles[v].depot);
+        all_interventions.insert(instance.vehicles[v].interventions.begin(), instance.vehicles[v].interventions.end());
+        for (const auto& [label, capacity] : instance.vehicles[v].capacities) {
+            all_capacities[label] = std::max(all_capacities[label], capacity);
+        }
+    }
+    if (depots.size() != 1) {
+        std::cerr << "All vehicles need to have the same depot" << endl;
+        return {};
+    }
+    vector<int> all_interventions_v;
+    map<int, int> reverse_interventions;
+    for (int i : all_interventions) {
+        all_interventions_v.push_back(i);
+        reverse_interventions[i] = all_interventions_v.size() - 1;
+    }
+    Vehicle virtual_vehicle = Vehicle{
+        -1, // Fake id
+        {}, // Technicians are not needed
+        {}, // Skills are not needed
+        all_interventions_v,
+        reverse_interventions,
+        *depots.begin(),
+        all_capacities,
+        0 // Fake cost
+    };
+    int n_interventions_v = all_interventions_v.size();
+
+    // Next step : create the pricing problem
+    unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, virtual_vehicle);
+    // Update the pricing problem with the dual values
+    update_pricing_instance(pricing_problem, dual_solution, instance, virtual_vehicle);
+
+    // Create the pulse algorithm
+    PulseAlgorithmMultithreadedGrouped pulse_algorithm = PulseAlgorithmMultithreadedGrouped(pricing_problem.get(), delta, pool_size);
+    // Set all the interventions as available
+    pulse_algorithm.reset();
+    // Proceed with the bounding phase
+    auto start = steady_clock::now();
+    pulse_algorithm.bound();
+    auto end = steady_clock::now();
+    int duration_bound = duration_cast<milliseconds>(end - start).count();
+
+
+    // For every vehicle, define the available interventions and solve the pricing problem
+    auto start_pricing = steady_clock::now();
+    vector<Route> new_routes;
+    for (int v : vehicle_indexes) {
+        // Get the vehicle
+        const Vehicle& vehicle = instance.vehicles[v];
+        // Get the available interventions
+        vector<int> available_interventions(n_interventions_v, 0);
+        for (int i : vehicle.interventions) {
+            available_interventions[virtual_vehicle.reverse_interventions[i]] = 1;
+        }
+        // Solve the pricing problem
+        int error = pulse_algorithm.solve(vehicle.cost, dual_solution.betas[v], available_interventions);
+        if (error != 0) {
+            cout << "Error in solving the pulse algorithm for vehicle " << v << endl;
+            continue;
+        }
+        // Transform the partial pathes from the solution pool into Route objects
+        for (const auto& [rc, path] : pulse_algorithm.get_solution_pool()) {
+            Route route = convert_sequence_to_route(rc, path.sequence, instance, virtual_vehicle);
+            // Update the route with the real vehicle id & add the cost of the vehicle
+            route.vehicle_id = v;
+            route.total_cost += vehicle.cost;
+            new_routes.push_back(route);
+        }
+    }
+    auto end_pricing = steady_clock::now();
+    int duration_pricing = duration_cast<milliseconds>(end_pricing - start_pricing).count();
+
+    cout << "Group [";
+    for (int v : vehicle_indexes) {
+        cout << "v" << v << ", ";
+    }
+    cout << "] : Bound in " << duration_bound << " ms, pricing in " << duration_pricing << " ms" << endl;
+
+    return new_routes;
+}

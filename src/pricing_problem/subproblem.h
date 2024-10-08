@@ -94,3 +94,12 @@ std::vector<Route> solve_pricing_problem_pulse_parallel(
     const std::set<std::tuple<int, int, int>> &forbidden_edges = {},
     const std::set<std::tuple<int, int, int>> &required_edges = {}
     );
+
+
+std::vector<Route> solve_pricing_problem_pulse_grouped_par(
+    const Instance &instance, 
+    const std::vector<int> & vehicle_indexes,
+    const DualSolution &dual_solution,
+    int delta,
+    int pool_size
+);
