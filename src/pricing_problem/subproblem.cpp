@@ -402,17 +402,8 @@ std::vector<Route> solve_pricing_problem_pulse(
 }
 
 
-std::vector<Route> solve_pricing_problem_pulse_grouped(
-    const Instance &instance, 
-    const std::vector<int> & vehicle_indexes,
-    const DualSolution &dual_solution,
-    int delta,
-    int pool_size,
-    bool verbose
-) {
-    using std::vector, std::set, std::map;
-    using namespace std::chrono;
-
+Vehicle create_virtual_vehicle(const Instance & instance, const std::vector<int> & vehicle_indexes) {
+    using std::set, std::map, std::vector;
     // At firts, we create a virtual vehicle that contains all the interventions
     if (vehicle_indexes.size() == 0) {
         std::cerr << "No vehicle indexes provided" << endl;
@@ -448,7 +439,24 @@ std::vector<Route> solve_pricing_problem_pulse_grouped(
         all_capacities,
         0 // Fake cost
     };
-    int n_interventions_v = all_interventions_v.size();
+    return virtual_vehicle;
+}
+
+
+std::vector<Route> solve_pricing_problem_pulse_grouped(
+    const Instance &instance, 
+    const std::vector<int> & vehicle_indexes,
+    const DualSolution &dual_solution,
+    int delta,
+    int pool_size,
+    bool verbose
+) {
+    using std::vector;
+    using namespace std::chrono;
+
+    auto virtual_vehicle = create_virtual_vehicle(instance, vehicle_indexes);
+    
+    int n_interventions_v = virtual_vehicle.interventions.size();
 
     // Next step : create the pricing problem
     unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, virtual_vehicle);
@@ -561,46 +569,12 @@ std::vector<Route> solve_pricing_problem_pulse_grouped_par(
     int pool_size,
     bool verbose
 ) {
-    using std::vector, std::set, std::map;
+    using std::vector;
     using namespace std::chrono;
 
     // At firts, we create a virtual vehicle that contains all the interventions
-    if (vehicle_indexes.size() == 0) {
-        std::cerr << "No vehicle indexes provided" << endl;
-        return {};
-    }
-    set<int> all_interventions;
-    set<int> depots;
-    map<std::string, int> all_capacities = instance.vehicles[vehicle_indexes[0]].capacities;
-    for (int v : vehicle_indexes) {
-        depots.insert(instance.vehicles[v].depot);
-        all_interventions.insert(instance.vehicles[v].interventions.begin(), instance.vehicles[v].interventions.end());
-        for (const auto& [label, capacity] : instance.vehicles[v].capacities) {
-            all_capacities[label] = std::max(all_capacities[label], capacity);
-        }
-    }
-    if (depots.size() != 1) {
-        std::cerr << "All vehicles need to have the same depot" << endl;
-        return {};
-    }
-    vector<int> all_interventions_v;
-    map<int, int> reverse_interventions;
-    for (int i : all_interventions) {
-        all_interventions_v.push_back(i);
-        reverse_interventions[i] = all_interventions_v.size() - 1;
-    }
-    Vehicle virtual_vehicle = Vehicle{
-        -1, // Fake id
-        {}, // Technicians are not needed
-        {}, // Skills are not needed
-        all_interventions_v,
-        reverse_interventions,
-        *depots.begin(),
-        all_capacities,
-        0 // Fake cost
-    };
-    int n_interventions_v = all_interventions_v.size();
-
+    auto virtual_vehicle = create_virtual_vehicle(instance, vehicle_indexes);
+    int n_interventions_v = virtual_vehicle.interventions.size();
     // Next step : create the pricing problem
     unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, virtual_vehicle);
     // Update the pricing problem with the dual values

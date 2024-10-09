@@ -79,7 +79,7 @@ int main(int argc, char *argv[]){
         {"solution_pool_size", 10},
         {"alpha", 0.5},
         {"use_stabilisation", false},
-        {"pricing_function", PRICING_PULSE_GROUPED_MULTITHREADED},
+        {"pricing_function", PRICING_PULSE_GROUPED_PAR_PAR},
         {"pricing_verbose", false}
     });
     // Create a root node for the algorithm

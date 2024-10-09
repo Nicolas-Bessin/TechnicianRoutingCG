@@ -45,7 +45,7 @@ void PulseAlgorithmMultithreadedGrouped::bound() {
             pulse_parallel(v, tau, std::vector<int>(K, 0), 0, p);
             // If no path was found, the objective will have value +inf and thus bound is +infinity
             bounds[v][bound_level] = best_objective;
-            reset();
+            PulseAlgorithmWithSubsets::reset();
         }
         bound_level++;
     }
