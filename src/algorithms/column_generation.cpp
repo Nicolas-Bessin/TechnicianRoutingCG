@@ -149,7 +149,8 @@ CGResult column_generation(
                 instance,
                 vehicle_order,
                 parameters.delta,
-                parameters.solution_pool_size
+                parameters.solution_pool_size,
+                parameters.pricing_verbose
             );
         } else if (parameters.pricing_function == PRICING_PULSE_GROUPED){
             auto vehicle_groups = regroup_vehicles_by_depot(instance.vehicles);
@@ -158,9 +159,39 @@ CGResult column_generation(
                 instance,
                 vehicle_groups,
                 parameters.delta,
-                parameters.solution_pool_size
+                parameters.solution_pool_size,
+                parameters.pricing_verbose
             );
-        }
+        } else if (parameters.pricing_function == PRICING_PULSE_GROUPED_PAR_PAR) {
+            auto vehicle_groups = regroup_vehicles_by_depot(instance.vehicles);
+            new_routes = full_pricing_problems_grouped_pulse_par_par(
+                convex_dual_solution,
+                instance,
+                vehicle_groups,
+                parameters.delta,
+                parameters.solution_pool_size,
+                parameters.pricing_verbose
+            );
+        } else if (parameters.pricing_function == PRICING_PULSE_MULTITHREADED){
+            new_routes = full_pricing_problems_multithreaded_pulse(
+                convex_dual_solution,
+                instance,
+                vehicle_order,
+                parameters.delta,
+                parameters.solution_pool_size,
+                parameters.pricing_verbose
+            );
+        } else if (parameters.pricing_function == PRICING_PULSE_GROUPED_MULTITHREADED){
+            auto vehicle_groups = regroup_vehicles_by_depot(instance.vehicles);
+            new_routes = full_pricing_problems_grouped_pulse_multithreaded(
+                convex_dual_solution,
+                instance,
+                vehicle_groups,
+                parameters.delta,
+                parameters.solution_pool_size,
+                parameters.pricing_verbose
+            );
+        } 
 
         // We add the new routes to the global routes vector
         double min_reduced_cost = std::numeric_limits<double>::infinity();
@@ -185,7 +216,8 @@ CGResult column_generation(
         }
         // ----------------- Stop conditions -----------------
         // If we added no routes but are not using the cyclic pricing yet, we switch to it
-        if (parameters.pricing_function != PRICING_PULSE_BASIC && parameters.pricing_function != PRICING_PULSE_GROUPED){
+        // Only for non PA algorithms
+        if (std::find(PA_ALGORITHMS.begin(), PA_ALGORITHMS.end(), parameters.pricing_function) == PA_ALGORITHMS.end()){
             if (n_added_routes == 0 && parameters.switch_to_cyclic_pricing && !using_cyclic_pricing){
                 using_cyclic_pricing = true;
                 // Reset the number of resources used for the dominance test

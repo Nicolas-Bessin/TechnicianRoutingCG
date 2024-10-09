@@ -362,12 +362,11 @@ std::vector<Route> solve_pricing_problem_pulse(
     const DualSolution &dual_solution,
     int delta,
     int pool_size,
-    const std::set<std::tuple<int, int, int>> &forbidden_edges,
-    const std::set<std::tuple<int, int, int>> &required_edges
+    bool verbose
     ) {
     using namespace std::chrono;
     // Create the pricing problem
-    unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, vehicle, true, forbidden_edges, required_edges);
+    unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, vehicle, true);
     // Update the pricing problem with the dual values
     update_pricing_instance(pricing_problem, dual_solution, instance, vehicle);
     // Create the pulse algorithm
@@ -395,8 +394,9 @@ std::vector<Route> solve_pricing_problem_pulse(
     }
     auto end_pricing = steady_clock::now();
     int duration_pricing = duration_cast<milliseconds>(end_pricing - start_pricing).count();
-
-    cout << "V" << vehicle.id << " : Bound in " << duration_bound << " ms, pricing in " << duration_pricing << " ms" << endl;
+    if (verbose) {
+        cout << "V" << vehicle.id << " : Bound in " << duration_bound << " ms, pricing in " << duration_pricing << " ms" << endl;
+    }
 
     return new_routes;
 }
@@ -407,7 +407,8 @@ std::vector<Route> solve_pricing_problem_pulse_grouped(
     const std::vector<int> & vehicle_indexes,
     const DualSolution &dual_solution,
     int delta,
-    int pool_size
+    int pool_size,
+    bool verbose
 ) {
     using std::vector, std::set, std::map;
     using namespace std::chrono;
@@ -494,11 +495,13 @@ std::vector<Route> solve_pricing_problem_pulse_grouped(
     auto end_pricing = steady_clock::now();
     int duration_pricing = duration_cast<milliseconds>(end_pricing - start_pricing).count();
 
-    cout << "Group [";
-    for (int v : vehicle_indexes) {
-        cout << "v" << v << ", ";
+    if (verbose) {
+        cout << "Group [";
+        for (int v : vehicle_indexes) {
+            cout << "v" << v << ", ";
+        }
+        cout << "] : Bound in " << duration_bound << " ms, pricing in " << duration_pricing << " ms" << endl;
     }
-    cout << "] : Bound in " << duration_bound << " ms, pricing in " << duration_pricing << " ms" << endl;
 
     return new_routes;
 }
@@ -510,12 +513,11 @@ std::vector<Route> solve_pricing_problem_pulse_parallel(
     const DualSolution &dual_solution,
     int delta,
     int pool_size,
-    const std::set<std::tuple<int, int, int>> &forbidden_edges,
-    const std::set<std::tuple<int, int, int>> &required_edges
+    bool verbose
     ) {
     using namespace std::chrono;
     // Create the pricing problem
-    unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, vehicle, true, forbidden_edges, required_edges);
+    unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, vehicle, true);
     // Update the pricing problem with the dual values
     update_pricing_instance(pricing_problem, dual_solution, instance, vehicle);
     // Create the pulse algorithm
@@ -543,8 +545,9 @@ std::vector<Route> solve_pricing_problem_pulse_parallel(
     }
     auto end_pricing = steady_clock::now();
     int duration_pricing = duration_cast<milliseconds>(end_pricing - start_pricing).count();
-
-    cout << "V" << vehicle.id << " : Bound in " << duration_bound << " ms, pricing in " << duration_pricing << " ms" << endl;
+    if (verbose) {
+        cout << "V" << vehicle.id << " : Bound in " << duration_bound << " ms, pricing in " << duration_pricing << " ms" << endl;
+    }
 
     return new_routes;
 }
@@ -555,7 +558,8 @@ std::vector<Route> solve_pricing_problem_pulse_grouped_par(
     const std::vector<int> & vehicle_indexes,
     const DualSolution &dual_solution,
     int delta,
-    int pool_size
+    int pool_size,
+    bool verbose
 ) {
     using std::vector, std::set, std::map;
     using namespace std::chrono;
@@ -642,11 +646,13 @@ std::vector<Route> solve_pricing_problem_pulse_grouped_par(
     auto end_pricing = steady_clock::now();
     int duration_pricing = duration_cast<milliseconds>(end_pricing - start_pricing).count();
 
-    cout << "Group [";
-    for (int v : vehicle_indexes) {
-        cout << "v" << v << ", ";
+    if (verbose) {
+        cout << "Group [";
+        for (int v : vehicle_indexes) {
+            cout << "v" << v << ", ";
+        }
+        cout << "] : Bound in " << duration_bound << " ms, pricing in " << duration_pricing << " ms" << endl;
     }
-    cout << "] : Bound in " << duration_bound << " ms, pricing in " << duration_pricing << " ms" << endl;
 
     return new_routes;
 }

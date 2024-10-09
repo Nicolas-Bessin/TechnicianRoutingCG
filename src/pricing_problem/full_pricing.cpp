@@ -215,7 +215,8 @@ std::vector<Route> full_pricing_problems_basic_pulse(
     const Instance & instance,
     const std::vector<int> & vehicle_order,
     int delta,
-    int pool_size
+    int pool_size,
+    bool verbose
 ){
     using std::vector;
     using std::packaged_task;
@@ -263,7 +264,8 @@ std::vector<Route> full_pricing_problems_grouped_pulse(
     const Instance & instance,
     const std::map<int, std::vector<int>> & vehicle_groups,
     int delta,
-    int pool_size
+    int pool_size,
+    bool verbose
 ) {
     using std::vector;
     using std::packaged_task;
@@ -287,12 +289,11 @@ std::vector<Route> full_pricing_problems_grouped_pulse(
     vector<std::thread> threads(tasks.size());
     for (int i = 0; i < tasks.size(); i++){
         threads[i] = std::thread(std::move(tasks[i]), task_id_to_depot[i]);
-        threads[i].join(); // Non-parallel execution
     }
 
     vector<vector<Route>> new_routes_parallel(vehicle_groups.size());
     for (int i = 0; i < tasks.size(); i++){
-        //threads[i].join();
+        threads[i].join();
         new_routes_parallel[i] = futures[i].get();
     }
 
@@ -310,7 +311,8 @@ std::vector<Route> full_pricing_problems_multithreaded_pulse(
     const Instance & instance,
     const std::vector<int> & vehicle_order,
     int delta,
-    int pool_size
+    int pool_size,
+    bool verbose
 ) {
     // Solve each problem sequentially using the multi-threaded pulse algorithm
     using std::vector;
@@ -329,7 +331,28 @@ std::vector<Route> full_pricing_problems_grouped_pulse_multithreaded(
     const Instance & instance,
     const std::map<int, std::vector<int>> & vehicle_groups,
     int delta,
-    int pool_size
+    int pool_size,
+    bool verbose
+) {
+    using std::vector;
+
+    vector<Route> new_routes;
+    for (const auto& [id, vehicles] : vehicle_groups){
+        vector<Route> new_routes_v = solve_pricing_problem_pulse_grouped_par(instance, vehicles, solution, delta, pool_size);
+        new_routes.insert(new_routes.end(), new_routes_v.begin(), new_routes_v.end());
+    }
+
+    return new_routes;
+}
+
+
+std::vector<Route> full_pricing_problems_grouped_pulse_par_par(
+    const DualSolution & solution,
+    const Instance & instance,
+    const std::map<int, std::vector<int>> & vehicle_groups,
+    int delta,
+    int pool_size,
+    bool verbose
 ) {
     using std::vector;
     using std::packaged_task;
@@ -353,12 +376,11 @@ std::vector<Route> full_pricing_problems_grouped_pulse_multithreaded(
     vector<std::thread> threads(tasks.size());
     for (int i = 0; i < tasks.size(); i++){
         threads[i] = std::thread(std::move(tasks[i]), task_id_to_depot[i]);
-        threads[i].join(); // Non-parallel execution
     }
 
     vector<vector<Route>> new_routes_parallel(vehicle_groups.size());
     for (int i = 0; i < tasks.size(); i++){
-        //threads[i].join();
+        threads[i].join();
         new_routes_parallel[i] = futures[i].get();
     }
 

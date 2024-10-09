@@ -4,11 +4,14 @@
 
 #include <mutex>
 
-class PulseAlgorithmMultithreaded : public PulseAlgorithm {
+class PulseAlgorithmMultithreaded : virtual public PulseAlgorithm {
 public:
     // Constructor
     PulseAlgorithmMultithreaded(Problem* problem, int delta, int pool_size) : PulseAlgorithm(problem, delta, pool_size) {}
 
+    // Overload the pool update - we need to lock the pool
+    void update_pool(double cost, const PartialPath& path);
+    
     // Overloaded version of the pulse method - with mutex access to the solution pool
     void pulse(int vertex, int time, std::vector<int> quantities, double cost, const PartialPath& path);
 

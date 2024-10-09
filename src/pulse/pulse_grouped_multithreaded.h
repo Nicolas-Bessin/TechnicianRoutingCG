@@ -4,7 +4,7 @@
 #include "pulse_multithreaded.h"
 
 
-class PulseAlgorithmMultithreadedGrouped : public PulseAlgorithmMultithreaded {
+class PulseAlgorithmMultithreadedGrouped : public PulseAlgorithmMultithreaded, public PulseAlgorithmWithSubsets {
 public:
     // Constructor
     PulseAlgorithmMultithreadedGrouped(Problem* problem, int delta, int pool_size);
@@ -21,13 +21,4 @@ public:
     // Parallelized version of the solving part
     int solve(double fixed_cost, double dual_value, std::vector<int> available_interventions);
 
-    // Sets the available interventions for the pulse feasibility check
-    void set_available_interventions(std::vector<int> available_interventions);
-
-    // Reset is also overloaded to reset the available interventions
-    void reset();
-
-protected:
-    // Available interventions
-    std::vector<int> available_interventions;
 };

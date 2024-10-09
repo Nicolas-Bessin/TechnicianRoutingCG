@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <random>
+#include <array>
 
 inline constexpr int RANDOM_SEED = -1;
 
@@ -65,7 +66,8 @@ std::vector<Route> full_pricing_problems_basic_pulse(
     const Instance & instance,
     const std::vector<int> & vehicle_order,
     int delta = 10,
-    int pool_size = 10
+    int pool_size = 10,
+    bool verbose = false
     );
 
 
@@ -75,7 +77,8 @@ std::vector<Route> full_pricing_problems_grouped_pulse(
     const Instance & instance,
     const std::map<int, std::vector<int>> & vehicle_groups,
     int delta = 10,
-    int pool_size = 10
+    int pool_size = 10,
+    bool verbose = false
     );
 
 // Solve the pricing problems using the multithreaded PA, sequentially
@@ -85,7 +88,8 @@ std::vector<Route> full_pricing_problems_multithreaded_pulse(
     const Instance & instance,
     const std::vector<int> & vehicle_order,
     int delta = 10,
-    int pool_size = 10
+    int pool_size = 10,
+    bool verbose = false
     );
 
 
@@ -96,5 +100,28 @@ std::vector<Route> full_pricing_problems_grouped_pulse_multithreaded(
     const Instance & instance,
     const std::map<int, std::vector<int>> & vehicle_groups,
     int delta = 10,
-    int pool_size = 10
+    int pool_size = 10,
+    bool verbose = false
     );
+
+
+// Solve the grouped pricing problems in parallel, using the multithreaded PA
+inline constexpr std::string PRICING_PULSE_GROUPED_PAR_PAR = "grouped_par_par";
+std::vector<Route> full_pricing_problems_grouped_pulse_par_par(
+    const DualSolution & solution,
+    const Instance & instance,
+    const std::map<int, std::vector<int>> & vehicle_groups,
+    int delta = 10,
+    int pool_size = 10,
+    bool verbose = false
+    );
+
+
+// Define the set of PA derived algorithms
+inline constexpr std::array<std::string, 5> PA_ALGORITHMS = {
+    PRICING_PULSE_BASIC,
+    PRICING_PULSE_GROUPED,
+    PRICING_PULSE_GROUPED_MULTITHREADED,
+    PRICING_PULSE_GROUPED_PAR_PAR,
+    PRICING_PULSE_MULTITHREADED
+};

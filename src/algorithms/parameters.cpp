@@ -51,6 +51,10 @@ ColumnGenerationParameters::ColumnGenerationParameters(std::map<std::string, std
     if (args.contains("pricing_function")) {
         pricing_function = std::any_cast<std::string>(args["pricing_function"]);
     }
+
+    if (args.contains("pricing_verbose")) {
+        pricing_verbose = std::any_cast<bool>(args["pricing_verbose"]);
+    }
 }
 
 

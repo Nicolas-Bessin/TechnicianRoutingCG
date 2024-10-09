@@ -104,6 +104,19 @@ void PulseAlgorithm::bound() {
 
 }
 
+
+bool PulseAlgorithm::is_feasible(int vertex, int time, std::vector<int> quantities, double cost, const PartialPath & path) {
+    // Check the feasibility of the partial path
+    bool feasible = true;
+    // Is the path elementary ?
+    feasible = feasible && !path.is_visited[vertex];
+    for (int c = 0; c < K; c++) {
+        feasible = feasible && problem->getRes(c)->isFeasible(quantities[c]);
+    }
+    feasible = feasible && problem->getRes(K)->isFeasible(time, vertex);
+    return feasible;
+}
+
 bool PulseAlgorithm::check_bounds(int vertex, int time, double cost) {
     using std::cout, std::endl;
     // We want to find the lowest j such that END_DAY - (j-1) * delta <= t
@@ -120,6 +133,7 @@ bool PulseAlgorithm::check_bounds(int vertex, int time, double cost) {
     // That is, we return true if we can potentially improve the best objective starting from the current path
     return cost + bounds[vertex][j] < best_objective;
 }
+
 
 bool PulseAlgorithm::rollback(int vertex, const PartialPath & path) {
     // First step is checking the lenght of the path - rollback is only possible for pathes of length at least 2
@@ -143,34 +157,42 @@ bool PulseAlgorithm::rollback(int vertex, const PartialPath & path) {
     return r_new <= r_old;
 }
 
+
+void PulseAlgorithm::update_pool(double cost, const PartialPath & path) {
+    if (cost < best_objective) {
+            best_objective = cost;
+            best_path = path;
+        }
+    if (cost < pool_bound) {
+        // Insert the new solution in the pool
+        solutions.insert(std::pair(cost, path));
+        // If the pool is too large, we remove the worst solution
+        if (solutions.size() > pool_size) {
+            auto it = std::prev(solutions.end());
+            solutions.erase(it);
+        }
+        // Update the pool bound
+        pool_bound = solutions.rbegin()->first;
+    }
+        
+    return;
+}
+
 void PulseAlgorithm::pulse(int vertex, int time, std::vector<int>quantities, double cost, const PartialPath& path) {
     using std::vector;
     using std::cout, std::endl;
     // Check the feasibility of the partial path
-    bool feasible = true;
-    // Is the path elementary ?
-    feasible = feasible && !path.is_visited[vertex];
-    for (int c = 0; c < K; c++) {
-        feasible = feasible && problem->getRes(c)->isFeasible(quantities[c]);
-    }
-    feasible = feasible && problem->getRes(K)->isFeasible(time, vertex);
-    if (!feasible) {
-        //cout << "Pruning because of infeasibility at vertex " << vertex << " with time " << time << " and cost " << cost;
-        //print_path_inline(path);
+    if (!is_feasible(vertex, time, quantities, cost, path)) {
         return;
     }
-    if (!check_bounds(vertex, time, cost) ) {
-        //cout << "Pruning because of bound at vertex " << vertex << " with time " << time << ", bounding index " << get_bound_index(time, delta) << " and cost " << cost;
-        //print_path_inline(path);
+    // Check the bounds
+    if (!check_bounds(vertex, time, cost)) {
         return;
     }
+    // Check if we need to rollback
     if (rollback(vertex, path)) {
-        //cout << "Pruning because of rollback at vertex " << vertex << " with time " << time << " and cost " << cost;
-        //print_path_inline(path);
         return;
-    }
-
-    
+    }      
     // Extend the capacities
     for (int c = 0; c < K; c++) {
         int back = -1; // We don't care about the previous node for the capacities extension
@@ -181,22 +203,7 @@ void PulseAlgorithm::pulse(int vertex, int time, std::vector<int>quantities, dou
 
     // Check if we are at the destination
     if (vertex == destination) {
-        if (cost < best_objective) {
-            best_objective = cost;
-            best_path = p_new;
-        }
-        if (cost < pool_bound) {
-            // Insert the new solution in the pool
-            solutions.insert(std::pair(cost, p_new));
-            // If the pool is too large, we remove the worst solution
-            if (solutions.size() > pool_size) {
-                auto it = std::prev(solutions.end());
-                solutions.erase(it);
-            }
-            // Update the pool bound
-            pool_bound = solutions.rbegin()->first;
-        return;
-        }
+        update_pool(cost, p_new);
     }
 
     // Pulse from all the forward neighborsj

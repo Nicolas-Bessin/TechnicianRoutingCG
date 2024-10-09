@@ -31,6 +31,7 @@ struct ColumnGenerationParameters {
 
     // Pricing function
     std::string pricing_function = PRICING_PATHWYSE_BASIC;
+    bool pricing_verbose = false;
 
     // ALl default values
     ColumnGenerationParameters() {};

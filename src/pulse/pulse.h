@@ -38,6 +38,12 @@ public :
     // Reset the best path and best objective value (Used during the bounding phase)
     void reset();
 
+    // Feasibility check for the pulse algorithm
+    bool is_feasible(int vertex, int time, std::vector<int> quantities, double cost, const PartialPath & path);
+
+    // Update the solution pool with a new solution
+    void update_pool(double cost, const PartialPath & path);
+
     // Main pulse algorithm
     void pulse(int vertex, int time, std::vector<int> quantities, double cost, const PartialPath & path);
 

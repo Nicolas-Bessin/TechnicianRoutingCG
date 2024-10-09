@@ -48,18 +48,34 @@ void PulseAlgorithmMultithreaded::bound_parallel() {
 }
 
 
+void PulseAlgorithmMultithreaded::update_pool(double cost, const PartialPath& path) {
+    // Acquire the lock
+    pool_mutex.lock();
+    if (cost < best_objective) {
+        best_objective = cost;
+        best_path = path;
+    }
+    if (cost < pool_bound) {
+        // Insert the new solution in the pool
+        solutions.insert(std::pair<double, PartialPath>(cost, path));
+        // If the pool is too large, we remove the worst solution
+        if (solutions.size() > pool_size) {
+            auto it = std::prev(solutions.end());
+            solutions.erase(it);
+        }
+        // Update the pool bound
+        pool_bound = solutions.rbegin()->first;;
+    }
+    // Release the lock
+    pool_mutex.unlock();
+}
+
+
 void PulseAlgorithmMultithreaded::pulse(int vertex, int time, std::vector<int>quantities, double cost, const PartialPath& path) {
     using std::vector;
     using std::cout, std::endl;
     // Check the feasibility of the partial path
-    bool feasible = true;
-    // Is the path elementary ?
-    feasible = feasible && !path.is_visited[vertex];
-    for (int c = 0; c < K; c++) {
-        feasible = feasible && problem->getRes(c)->isFeasible(quantities[c]);
-    }
-    feasible = feasible && problem->getRes(K)->isFeasible(time, vertex);
-    if (!feasible) {
+    if (!is_feasible(vertex, time, quantities, cost, path)) {
         return;
     }
     if (!check_bounds(vertex, time, cost) ) {
@@ -68,7 +84,6 @@ void PulseAlgorithmMultithreaded::pulse(int vertex, int time, std::vector<int>qu
     if (rollback(vertex, path)) {
         return;
     }
-
     // Extend the capacities
     for (int c = 0; c < K; c++) {
         int back = -1; // We don't care about the previous node for the capacities extension
@@ -79,27 +94,7 @@ void PulseAlgorithmMultithreaded::pulse(int vertex, int time, std::vector<int>qu
 
     // Check if we are at the destination
     if (vertex == destination) {
-        // Acquire the lock
-        pool_mutex.lock();
-        if (cost < best_objective) {
-            best_objective = cost;
-            best_path = p_new;
-        }
-        if (cost < pool_bound) {
-            // Insert the new solution in the pool
-            solutions.insert(std::pair<double, PartialPath>(cost, p_new));
-            // If the pool is too large, we remove the worst solution
-            if (solutions.size() > pool_size) {
-                auto it = std::prev(solutions.end());
-                solutions.erase(it);
-            }
-            // Update the pool bound
-            pool_bound = solutions.rbegin()->first;;
-        }
-
-        // Release the lock
-        pool_mutex.unlock();
-        return;
+        update_pool(cost, p_new);
     }
 
     // Pulse from all the forward neighborsj
@@ -118,26 +113,15 @@ void PulseAlgorithmMultithreaded::pulse_parallel(int vertex, int time, std::vect
     using std::vector;
     using std::cout, std::endl;
     // Check the feasibility of the partial path
-    bool feasible = true;
-    // Is the path elementary ?
-    feasible = feasible && !path.is_visited[vertex];
-    for (int c = 0; c < K; c++) {
-        feasible = feasible && problem->getRes(c)->isFeasible(quantities[c]);
-    }
-    feasible = feasible && problem->getRes(K)->isFeasible(time, vertex);
-    if (!feasible) {
-        //print_path_inline(path);
+    if (!is_feasible(vertex, time, quantities, cost, path)) {
         return;
     }
     if (!check_bounds(vertex, time, cost) ) {
-        //print_path_inline(path);
         return;
     }
     if (rollback(vertex, path)) {
-        //print_path_inline(path);
         return;
     }
-
     // Extend the capacities
     for (int c = 0; c < K; c++) {
         int back = -1; // We don't care about the previous node for the capacities extension
@@ -148,26 +132,7 @@ void PulseAlgorithmMultithreaded::pulse_parallel(int vertex, int time, std::vect
 
     // Check if we are at the destination
     if (vertex == destination) {
-        // Acquire the lock
-        pool_mutex.lock();
-        if (cost < best_objective) {
-            best_objective = cost;
-            best_path = p_new;
-        }
-        if (cost < pool_bound) {
-            // Insert the new solution in the pool
-            solutions.insert(std::pair<double, PartialPath>(cost, p_new));
-            // If the pool is too large, we remove the worst solution
-            if (solutions.size() > pool_size) {
-                auto it = std::prev(solutions.end());
-                solutions.erase(it);
-            }
-            // Update the pool bound
-            pool_bound = solutions.rbegin()->first;;
-        }
-
-        // Release the lock
-        pool_mutex.unlock();
+        std::cerr << "Error: destination reached in pulse_parallel" << std::endl;
         return;
     }
 
@@ -178,7 +143,6 @@ void PulseAlgorithmMultithreaded::pulse_parallel(int vertex, int time, std::vect
         int t_new = problem->getRes(K)->extend(time, vertex, neighbors[i], FORWARD);
         double r_new = problem->getObj()->extend(cost, vertex, neighbors[i], FORWARD);
         threads[i] = std::thread(&PulseAlgorithmMultithreaded::pulse, this, neighbors[i], t_new, quantities, r_new, p_new);
-        //threads[i].join();
     }
     // Wait for completion
     for (int i = 0; i < neighbors.size(); i++) {

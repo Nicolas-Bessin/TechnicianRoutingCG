@@ -11,9 +11,8 @@ void PulseAlgorithmWithSubsets::set_available_interventions(std::vector<int> ava
     available_interventions = available;
 }
 
-void PulseAlgorithmWithSubsets::pulse(int vertex, int time, std::vector<int> quantities, double cost, const PartialPath& path) {
-    using std::vector;
-    using std::cout, std::endl;
+
+bool PulseAlgorithmWithSubsets::is_feasible(int vertex, int time, std::vector<int> quantities, double cost, const PartialPath& path) {
     // Check the feasibility of the partial path
     bool feasible = true;
     // Check that the vertex is available
@@ -24,22 +23,22 @@ void PulseAlgorithmWithSubsets::pulse(int vertex, int time, std::vector<int> qua
         feasible = feasible && problem->getRes(c)->isFeasible(quantities[c]);
     }
     feasible = feasible && problem->getRes(K)->isFeasible(time, vertex);
-    if (!feasible) {
-        //cout << "Pruning because of infeasibility at vertex " << vertex << " with time " << time << " and cost " << cost;
-        //print_path_inline(path);
+    return feasible;
+}
+
+void PulseAlgorithmWithSubsets::pulse(int vertex, int time, std::vector<int> quantities, double cost, const PartialPath& path) {
+    using std::vector;
+    using std::cout, std::endl;
+    // Check the feasibility of the partial path
+    if (!is_feasible(vertex, time, quantities, cost, path)) {
         return;
     }
     if (!check_bounds(vertex, time, cost) ) {
-        //cout << "Pruning because of bound at vertex " << vertex << " with time " << time << ", bounding index " << get_bound_index(time, delta) << " and cost " << cost;
-        //print_path_inline(path);
         return;
     }
     if (rollback(vertex, path)) {
-        //cout << "Pruning because of rollback at vertex " << vertex << " with time " << time << " and cost " << cost;
-        //print_path_inline(path);
         return;
     }
-
     
     // Extend the capacities
     for (int c = 0; c < K; c++) {
@@ -51,22 +50,7 @@ void PulseAlgorithmWithSubsets::pulse(int vertex, int time, std::vector<int> qua
 
     // Check if we are at the destination
     if (vertex == destination) {
-        if (cost < best_objective) {
-            best_objective = cost;
-            best_path = p_new;
-        }
-        if (cost < pool_bound) {
-            // Insert the new solution in the pool
-            solutions.insert(std::pair<double, PartialPath>(cost, p_new));
-            // If the pool is too large, we remove the worst solution
-            if (solutions.size() > pool_size) {
-                auto it = std::prev(solutions.end());
-                solutions.erase(it);
-            }
-            // Update the pool bound
-            pool_bound = solutions.rbegin()->first;
-        return;
-        }
+        update_pool(cost, p_new);
     }
 
     // Pulse from all the forward neighborsj
@@ -78,7 +62,6 @@ void PulseAlgorithmWithSubsets::pulse(int vertex, int time, std::vector<int> qua
     }
 
     return;
-
 }
 
 
