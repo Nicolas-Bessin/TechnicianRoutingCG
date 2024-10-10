@@ -12,19 +12,30 @@
 struct PartialPath {
     std::vector<bool> is_visited;
     std::vector<int> sequence;
-
-    // Extension of the path by adding a vertex
-    void extend(int vertex) {
-        sequence.push_back(vertex);
-        is_visited[vertex] = true;
-    }
+    std::vector<int> start_times;
 };
 
 // Return an empty path corresponding to a graph with N vertices
 PartialPath EmptyPath(const int N);
 
 // Extend a path by adding a vertex to it
-PartialPath extend_path(const PartialPath& path, const int vertex);
+PartialPath extend_path(const PartialPath& path, int vertex, int time);
+
+struct BoundData {
+    double cost;
+    PartialPath path;
+    std::vector<int> quantities;
+    int latest_start_time;
+};
+
+// Return a bound with a cost of +infinity
+BoundData InfeasibleBound(const int N, const int K);
+
+// Return a bound with a cost of -infinity
+BoundData NonComputedBound(const int N, const int K);
+
+// Return a bound with a cost of 0
+BoundData EmptyBound(const int N, const int K);
 
 class PulseAlgorithm {
 
@@ -46,6 +57,9 @@ public :
 
     // Main pulse algorithm
     void pulse(int vertex, int time, std::vector<int> quantities, double cost, const PartialPath & path);
+
+    // Update the conditionnal lower bound on the best path from vertex to the destination
+    void update_bound(int vertex, int tau, double cost, const PartialPath & path, std::vector<int> quantities);
 
     // Bounding phase
     void bound();
@@ -94,7 +108,7 @@ protected :
 
     // Matrix of bounds
     // bounds[i][j] is a lower bound on the best path from v_i to the destination using less than (j-1)*delta units of time
-    std::vector<std::vector<double>> bounds;
+    std::vector<std::vector<BoundData>> bounds;
 };
 
 

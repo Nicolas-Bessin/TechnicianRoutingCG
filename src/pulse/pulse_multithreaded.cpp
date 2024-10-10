@@ -15,7 +15,7 @@ void PulseAlgorithmMultithreaded::bound_parallel() {
         std::cerr << "Error: delta is too large" << std::endl;
         return;
     }
-    bounds = std::vector<std::vector<double>>(N, std::vector<double>(num_bounds, - std::numeric_limits<double>::infinity()));
+    bounds = std::vector<std::vector<BoundData>>(N, std::vector<BoundData>(num_bounds, NonComputedBound(N, K)));
 
     // Begin the bounding process with 0 time available (i.e. launch pulse from time END_DAY)
     int tau = END_DAY;
@@ -35,15 +35,15 @@ void PulseAlgorithmMultithreaded::bound_parallel() {
             PartialPath p = EmptyPath(N);
             pulse_parallel(v, tau, std::vector<int>(K, 0), 0, p);
             // If no path was found, the objective will have value +inf and thus bound is +infinity
-            bounds[v][bound_level] = best_objective;
+            update_bound(v, tau, best_objective, best_path, std::vector<int>(K, 0));
             reset();
         }
         bound_level++;
     }
     // Finally, the bound on the origin is -infinity, and the bound on the destination is 0
     for (int j = 0; j < num_bounds; j++) {
-        bounds[origin][j] = -std::numeric_limits<double>::infinity();
-        bounds[destination][j] = 0;
+        bounds[origin][j] = NonComputedBound(N, K);
+        bounds[destination][j] = EmptyBound(N, K);
     }
 }
 
@@ -90,7 +90,7 @@ void PulseAlgorithmMultithreaded::pulse(int vertex, int time, std::vector<int>qu
         quantities[c] = problem->getRes(c)->extend(quantities[c], -1, vertex, FORWARD);
     }
     // Extend the path
-    PartialPath p_new = extend_path(path, vertex);
+    PartialPath p_new = extend_path(path, vertex, time);
 
     // Check if we are at the destination
     if (vertex == destination) {
@@ -128,7 +128,7 @@ void PulseAlgorithmMultithreaded::pulse_parallel(int vertex, int time, std::vect
         quantities[c] = problem->getRes(c)->extend(quantities[c], -1, vertex, FORWARD);
     }
     // Extend the path
-    PartialPath p_new = extend_path(path, vertex);
+    PartialPath p_new = extend_path(path, vertex, time);
 
     // Check if we are at the destination
     if (vertex == destination) {

@@ -46,7 +46,7 @@ void PulseAlgorithmWithSubsets::pulse(int vertex, int time, std::vector<int> qua
         quantities[c] = problem->getRes(c)->extend(quantities[c], -1, vertex, FORWARD);
     }
     // Extend the path
-    PartialPath p_new = extend_path(path, vertex);
+    PartialPath p_new = extend_path(path, vertex, time);
 
     // Check if we are at the destination
     if (vertex == destination) {

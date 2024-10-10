@@ -23,7 +23,7 @@
 #include <format>
 
 inline constexpr std::string INSTANCE_FILE = "instance_1";
-inline constexpr int N_INTERVENTIONS = 75;
+inline constexpr int N_INTERVENTIONS = 25;
 
 inline constexpr int TIME_LIMIT = 300;
 inline constexpr bool VERBOSE = true;
@@ -79,7 +79,7 @@ int main(int argc, char *argv[]){
         {"solution_pool_size", 10},
         {"alpha", 0.5},
         {"use_stabilisation", false},
-        {"pricing_function", PRICING_MPA},
+        {"pricing_function", PRICING_PA_BASIC},
         {"pricing_verbose", false}
     });
     // Create a root node for the algorithm

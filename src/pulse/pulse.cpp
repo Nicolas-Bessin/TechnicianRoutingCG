@@ -8,12 +8,14 @@ PartialPath EmptyPath(const int N) {
     PartialPath p{};
     p.is_visited = std::vector<bool>(N, false);
     p.sequence = std::vector<int>();
+    p.start_times = std::vector<int>();
     return p;
 }
 
-PartialPath extend_path(const PartialPath& path, const int vertex) {
+PartialPath extend_path(const PartialPath& path, int vertex, int time) {
     PartialPath new_path = path;
     new_path.sequence.push_back(vertex);
+    new_path.start_times.push_back(time);
     new_path.is_visited[vertex] = true;
     return new_path;
 }
@@ -56,8 +58,77 @@ void PulseAlgorithm::reset() {
 }
 
 
-int get_bound_index(int time, int delta) {
+inline int get_bound_index(int time, int delta) {
     return ceil( (double) (END_DAY - time) / (double) delta) - 1;
+}
+
+
+BoundData InfeasibleBound(const int N, const int K) {
+    return BoundData {
+        std::numeric_limits<double>::infinity(),
+        EmptyPath(N),
+        std::vector<int>(K, 0),
+        END_DAY
+    };
+}
+
+BoundData NonComputedBound(const int N, const int K) {
+    return BoundData {
+        -std::numeric_limits<double>::infinity(),
+        EmptyPath(N),
+        std::vector<int>(K, 0),
+        END_DAY
+    };
+}
+
+BoundData EmptyBound(const int N, const int K) {
+    return BoundData {
+        0,
+        EmptyPath(N),
+        std::vector<int>(K, 0),
+        END_DAY
+    };
+}
+
+void PulseAlgorithm::update_bound(int vertex, int tau, double cost, const PartialPath & path, std::vector<int> quantities) {
+    // Check if the path is feasible
+    if (cost == std::numeric_limits<double>::infinity() || path.sequence.size() < 2){
+        bounds[vertex][get_bound_index(tau, delta)] = InfeasibleBound(N, K);
+        return;
+    }
+    // Compute the latest start time
+    auto start_times = path.start_times;
+    // We start backwards and add the available slack time to the start time of each node
+    for (int i = path.sequence.size() - 2; i >= 0; i--) {
+        // Get the slack along edge (a, b)
+        int a = path.sequence[i];
+        int b = path.sequence[i + 1];
+        // Is there margin after the intervention - waiting time ?
+        int start_time_b = b == destination ? END_DAY : start_times[i + 1];
+        int travel_time = problem->getRes(K)->getArcCost(a, b);
+        int duration = problem->getRes(K)->getNodeCost(a);
+        int arrival_slack = std::max(0, start_time_b - (start_times[i] + duration + travel_time));
+        // Is there margin to move the intervention later in the time window ?
+        int end_time_a = problem->getRes(K)->getNodeUB(a); // In the problem, the time windows are [sw_i, ew_i - d_i] and we check the exact time point.
+        int tw_slack = std::max(0, end_time_a - start_times[i] );
+        // The available slack is the minimum of the two
+        int available_slack = std::min(arrival_slack, tw_slack);
+
+        // Update the latest start time
+        start_times[i] = start_times[i] + available_slack;
+    }
+    // The latest start time is the start time of the first node
+    int latest_start_time = start_times[0];
+
+    // Update the bound
+    bounds[vertex][get_bound_index(tau, delta)] = BoundData {
+        cost,
+        path,
+        quantities,
+        latest_start_time
+    };
+
+    return;
 }
 
 void PulseAlgorithm::bound() {
@@ -71,7 +142,7 @@ void PulseAlgorithm::bound() {
         std::cerr << "Error: delta is too large" << std::endl;
         return;
     }
-    bounds = std::vector<std::vector<double>>(N, std::vector<double>(num_bounds, - std::numeric_limits<double>::infinity()));
+    bounds = std::vector<std::vector<BoundData>>(N, std::vector<BoundData>(num_bounds, NonComputedBound(N, K)));
 
     // Begin the bounding process with 0 time available (i.e. launch pulse from time END_DAY)
     int tau = END_DAY;
@@ -91,17 +162,17 @@ void PulseAlgorithm::bound() {
             PartialPath p = EmptyPath(N);
             pulse(v, tau, std::vector<int>(K, 0), 0, p);
             // If no path was found, the objective will have value +inf and thus bound is +infinity
-            bounds[v][bound_level] = best_objective;
+            update_bound(v, tau, best_objective, best_path, std::vector<int>(K, 0));
             reset();
         }
         bound_level++;
     }
     // Finally, the bound on the origin is -infinity, and the bound on the destination is 0
     for (int j = 0; j < num_bounds; j++) {
-        bounds[origin][j] = -std::numeric_limits<double>::infinity();
-        bounds[destination][j] = 0;
+        bounds[origin][j] = NonComputedBound(N, K);
+        bounds[destination][j] = EmptyBound(N, K);
     }
-
+ 
 }
 
 
@@ -131,7 +202,7 @@ bool PulseAlgorithm::check_bounds(int vertex, int time, double cost) const {
     }
     // We return true if the value along the current path + the lowest we can achieve to the destination is less than the best objective
     // That is, we return true if we can potentially improve the best objective starting from the current path
-    return cost + bounds[vertex][j] < best_objective;
+    return cost + bounds[vertex][j].cost < best_objective;
 }
 
 
@@ -199,7 +270,7 @@ void PulseAlgorithm::pulse(int vertex, int time, std::vector<int>quantities, dou
         quantities[c] = problem->getRes(c)->extend(quantities[c], -1, vertex, FORWARD);
     }
     // Extend the path
-    PartialPath p_new = extend_path(path, vertex);
+    PartialPath p_new = extend_path(path, vertex, time);
 
     // Check if we are at the destination
     if (vertex == destination) {
