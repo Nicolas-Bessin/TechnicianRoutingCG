@@ -143,7 +143,7 @@ CGResult column_generation(
                 n_ressources_dominance,
                 iteration
             );
-        } else if (parameters.pricing_function == PRICING_PULSE_BASIC){
+        } else if (parameters.pricing_function == PRICING_PA_BASIC){
             new_routes = full_pricing_problems_basic_pulse(
                 convex_dual_solution,
                 instance,
@@ -152,7 +152,7 @@ CGResult column_generation(
                 parameters.solution_pool_size,
                 parameters.pricing_verbose
             );
-        } else if (parameters.pricing_function == PRICING_PULSE_GROUPED){
+        } else if (parameters.pricing_function == PRICING_PA_GROUPED){
             auto vehicle_groups = regroup_vehicles_by_depot(instance.vehicles);
             new_routes = full_pricing_problems_grouped_pulse(
                 convex_dual_solution,
@@ -162,17 +162,7 @@ CGResult column_generation(
                 parameters.solution_pool_size,
                 parameters.pricing_verbose
             );
-        } else if (parameters.pricing_function == PRICING_PULSE_GROUPED_PAR_PAR) {
-            auto vehicle_groups = regroup_vehicles_by_depot(instance.vehicles);
-            new_routes = full_pricing_problems_grouped_pulse_par_par(
-                convex_dual_solution,
-                instance,
-                vehicle_groups,
-                parameters.delta,
-                parameters.solution_pool_size,
-                parameters.pricing_verbose
-            );
-        } else if (parameters.pricing_function == PRICING_PULSE_MULTITHREADED){
+        } else if (parameters.pricing_function == PRICING_MPA) {
             new_routes = full_pricing_problems_multithreaded_pulse(
                 convex_dual_solution,
                 instance,
@@ -181,9 +171,19 @@ CGResult column_generation(
                 parameters.solution_pool_size,
                 parameters.pricing_verbose
             );
-        } else if (parameters.pricing_function == PRICING_PULSE_GROUPED_MULTITHREADED){
+        } else if (parameters.pricing_function == PRICING_MPA_GROUPED){
             auto vehicle_groups = regroup_vehicles_by_depot(instance.vehicles);
             new_routes = full_pricing_problems_grouped_pulse_multithreaded(
+                convex_dual_solution,
+                instance,
+                vehicle_groups,
+                parameters.delta,
+                parameters.solution_pool_size,
+                parameters.pricing_verbose
+            );
+        } else if (parameters.pricing_function == PRICING_MPA_GROUPED_PAR){
+            auto vehicle_groups = regroup_vehicles_by_depot(instance.vehicles);
+            new_routes = full_pricing_problems_grouped_pulse_par_par(
                 convex_dual_solution,
                 instance,
                 vehicle_groups,

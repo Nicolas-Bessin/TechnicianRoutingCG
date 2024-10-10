@@ -14,7 +14,7 @@ public:
     void set_available_interventions(std::vector<int> available_interventions);
 
     // Overload the feasibility check to handle the available interventions
-    bool is_feasible(int vertex, int time, std::vector<int> quantities, double cost, const PartialPath& path);
+    bool is_feasible(int vertex, int time, std::vector<int> quantities, double cost, const PartialPath& path) const;
 
     // Pulse methods is overloaded to handle the available interventions
     void pulse(int vertex, int time, std::vector<int> quantities, double cost, const PartialPath& path);

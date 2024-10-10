@@ -39,7 +39,7 @@ public :
     void reset();
 
     // Feasibility check for the pulse algorithm
-    bool is_feasible(int vertex, int time, std::vector<int> quantities, double cost, const PartialPath & path);
+    bool is_feasible(int vertex, int time, std::vector<int> quantities, double cost, const PartialPath & path) const;
 
     // Update the solution pool with a new solution
     void update_pool(double cost, const PartialPath & path);
@@ -51,10 +51,10 @@ public :
     void bound();
 
     // Returns true if the bound is respected, that is, if we might reach a better solution
-    bool check_bounds(int vertex, int time, double cost);
+    bool check_bounds(int vertex, int time, double cost) const;
 
     // If going through the last vertex in p was a mistake, we rollback the choice
-    bool rollback(int vertex, const PartialPath & path);
+    bool rollback(int vertex, const PartialPath & path) const;
 
     // Only the solving part of the pulse algorithm
     int solve(double fixed_cost, double dual_value);

@@ -101,15 +101,12 @@ void PulseAlgorithmMultithreadedGrouped::pulse_parallel(int vertex, int time, st
     using std::cout, std::endl;
     // Check the feasibility of the partial path
     if (!PulseAlgorithmWithSubsets::is_feasible(vertex, time, quantities, cost, path)) {
-        //print_path_inline(path);
         return;
     }
     if (!check_bounds(vertex, time, cost) ) {
-        //print_path_inline(path);
         return;
     }
     if (rollback(vertex, path)) {
-        //print_path_inline(path);
         return;
     }
 
@@ -133,7 +130,7 @@ void PulseAlgorithmMultithreadedGrouped::pulse_parallel(int vertex, int time, st
     for (int i = 0; i < neighbors.size(); i++) {
         int t_new = problem->getRes(K)->extend(time, vertex, neighbors[i], FORWARD);
         double r_new = problem->getObj()->extend(cost, vertex, neighbors[i], FORWARD);
-        threads[i] = std::thread(&PulseAlgorithmMultithreaded::pulse, this, neighbors[i], t_new, quantities, r_new, p_new);
+        threads[i] = std::thread(&PulseAlgorithmMultithreadedGrouped::pulse, this, neighbors[i], t_new, quantities, r_new, p_new);
         //threads[i].join();
     }
     // Wait for completion

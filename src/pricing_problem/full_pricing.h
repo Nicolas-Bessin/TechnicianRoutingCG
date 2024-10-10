@@ -60,7 +60,7 @@ std::vector<Route> full_pricing_problems_tabu_search(
     );
 
 
-inline constexpr std::string PRICING_PULSE_BASIC = "basic_pulse";
+inline constexpr std::string PRICING_PA_BASIC = "basic_pulse";
 std::vector<Route> full_pricing_problems_basic_pulse(
     const DualSolution & solution,
     const Instance & instance,
@@ -71,7 +71,7 @@ std::vector<Route> full_pricing_problems_basic_pulse(
     );
 
 
-inline constexpr std::string PRICING_PULSE_GROUPED = "grouped_pulse";
+inline constexpr std::string PRICING_PA_GROUPED = "grouped_pulse";
 std::vector<Route> full_pricing_problems_grouped_pulse(
     const DualSolution & solution,
     const Instance & instance,
@@ -82,7 +82,7 @@ std::vector<Route> full_pricing_problems_grouped_pulse(
     );
 
 // Solve the pricing problems using the multithreaded PA, sequentially
-inline constexpr std::string PRICING_PULSE_MULTITHREADED = "multi_pulse";
+inline constexpr std::string PRICING_MPA = "multi_pulse";
 std::vector<Route> full_pricing_problems_multithreaded_pulse(
     const DualSolution & solution,
     const Instance & instance,
@@ -94,7 +94,7 @@ std::vector<Route> full_pricing_problems_multithreaded_pulse(
 
 
 // Solve the pricing problems in groups using the multithreaded PA, sequentially
-inline constexpr std::string PRICING_PULSE_GROUPED_MULTITHREADED = "mult_grouped_pa";
+inline constexpr std::string PRICING_MPA_GROUPED = "mult_grouped_pa";
 std::vector<Route> full_pricing_problems_grouped_pulse_multithreaded(
     const DualSolution & solution,
     const Instance & instance,
@@ -106,7 +106,7 @@ std::vector<Route> full_pricing_problems_grouped_pulse_multithreaded(
 
 
 // Solve the grouped pricing problems in parallel, using the multithreaded PA
-inline constexpr std::string PRICING_PULSE_GROUPED_PAR_PAR = "grouped_par_par";
+inline constexpr std::string PRICING_MPA_GROUPED_PAR = "grouped_par_par";
 std::vector<Route> full_pricing_problems_grouped_pulse_par_par(
     const DualSolution & solution,
     const Instance & instance,
@@ -119,9 +119,9 @@ std::vector<Route> full_pricing_problems_grouped_pulse_par_par(
 
 // Define the set of PA derived algorithms
 inline constexpr std::array<std::string, 5> PA_ALGORITHMS = {
-    PRICING_PULSE_BASIC,
-    PRICING_PULSE_GROUPED,
-    PRICING_PULSE_GROUPED_MULTITHREADED,
-    PRICING_PULSE_GROUPED_PAR_PAR,
-    PRICING_PULSE_MULTITHREADED
+    PRICING_PA_BASIC,
+    PRICING_PA_GROUPED,
+    PRICING_MPA,
+    PRICING_MPA_GROUPED,
+    PRICING_MPA_GROUPED_PAR
 };

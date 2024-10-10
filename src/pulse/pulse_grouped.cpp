@@ -12,7 +12,7 @@ void PulseAlgorithmWithSubsets::set_available_interventions(std::vector<int> ava
 }
 
 
-bool PulseAlgorithmWithSubsets::is_feasible(int vertex, int time, std::vector<int> quantities, double cost, const PartialPath& path) {
+bool PulseAlgorithmWithSubsets::is_feasible(int vertex, int time, std::vector<int> quantities, double cost, const PartialPath& path) const {
     // Check the feasibility of the partial path
     bool feasible = true;
     // Check that the vertex is available

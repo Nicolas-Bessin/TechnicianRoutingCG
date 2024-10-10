@@ -105,7 +105,7 @@ void PulseAlgorithm::bound() {
 }
 
 
-bool PulseAlgorithm::is_feasible(int vertex, int time, std::vector<int> quantities, double cost, const PartialPath & path) {
+bool PulseAlgorithm::is_feasible(int vertex, int time, std::vector<int> quantities, double cost, const PartialPath & path) const {
     // Check the feasibility of the partial path
     bool feasible = true;
     // Is the path elementary ?
@@ -117,7 +117,7 @@ bool PulseAlgorithm::is_feasible(int vertex, int time, std::vector<int> quantiti
     return feasible;
 }
 
-bool PulseAlgorithm::check_bounds(int vertex, int time, double cost) {
+bool PulseAlgorithm::check_bounds(int vertex, int time, double cost) const {
     using std::cout, std::endl;
     // We want to find the lowest j such that END_DAY - (j-1) * delta <= t
     // That is, j = ceil((END_DAY - t) / delta) - 1
@@ -135,7 +135,7 @@ bool PulseAlgorithm::check_bounds(int vertex, int time, double cost) {
 }
 
 
-bool PulseAlgorithm::rollback(int vertex, const PartialPath & path) {
+bool PulseAlgorithm::rollback(int vertex, const PartialPath & path) const {
     // First step is checking the lenght of the path - rollback is only possible for pathes of length at least 2
     if (path.sequence.size() < 2) {
         return false;
@@ -225,7 +225,7 @@ int PulseAlgorithm::solve(double fixed_cost, double dual_value) {
     double initial_cost = fixed_cost - dual_value;
     pulse(origin, 0, std::vector<int>(K, 0), initial_cost, path);
 
-    if(best_path.sequence.size() == 0) {
+    if(best_objective == std::numeric_limits<double>::infinity()) {
         return 1;
     }
 

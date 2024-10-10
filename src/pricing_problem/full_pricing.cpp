@@ -223,7 +223,7 @@ std::vector<Route> full_pricing_problems_basic_pulse(
     using std::future;
     
     auto single_pricer = [&](int v){
-            return solve_pricing_problem_pulse(instance, instance.vehicles.at(v), solution, delta, pool_size);
+            return solve_pricing_problem_pulse(instance, instance.vehicles.at(v), solution, delta, pool_size, verbose);
         };
 
     vector<packaged_task<vector<Route>(int)>> tasks;
@@ -272,7 +272,7 @@ std::vector<Route> full_pricing_problems_grouped_pulse(
     using std::future;
 
     auto single_pricer = [&](int id){
-            return solve_pricing_problem_pulse_grouped(instance, vehicle_groups.at(id), solution, delta, pool_size);
+            return solve_pricing_problem_pulse_grouped(instance, vehicle_groups.at(id), solution, delta, pool_size, verbose);
         };
 
     vector<packaged_task<vector<Route>(int)>> tasks;
@@ -318,7 +318,7 @@ std::vector<Route> full_pricing_problems_multithreaded_pulse(
     using std::vector;
     vector<Route> new_routes;
     for (int v : vehicle_order){
-        vector<Route> new_routes_v = solve_pricing_problem_pulse_parallel(instance, instance.vehicles.at(v), solution, delta, pool_size);
+        vector<Route> new_routes_v = solve_pricing_problem_pulse_parallel(instance, instance.vehicles.at(v), solution, delta, pool_size, verbose);
         new_routes.insert(new_routes.end(), new_routes_v.begin(), new_routes_v.end());
     }
 
@@ -338,7 +338,7 @@ std::vector<Route> full_pricing_problems_grouped_pulse_multithreaded(
 
     vector<Route> new_routes;
     for (const auto& [id, vehicles] : vehicle_groups){
-        vector<Route> new_routes_v = solve_pricing_problem_pulse_grouped_par(instance, vehicles, solution, delta, pool_size);
+        vector<Route> new_routes_v = solve_pricing_problem_pulse_grouped_par(instance, vehicles, solution, delta, pool_size, verbose);
         new_routes.insert(new_routes.end(), new_routes_v.begin(), new_routes_v.end());
     }
 
@@ -359,7 +359,7 @@ std::vector<Route> full_pricing_problems_grouped_pulse_par_par(
     using std::future;
 
     auto single_pricer = [&](int id){
-            return solve_pricing_problem_pulse_grouped_par(instance, vehicle_groups.at(id), solution, delta, pool_size);
+            return solve_pricing_problem_pulse_grouped_par(instance, vehicle_groups.at(id), solution, delta, pool_size, verbose);
         };
 
     vector<packaged_task<vector<Route>(int)>> tasks;

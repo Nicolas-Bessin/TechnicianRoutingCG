@@ -443,6 +443,18 @@ Vehicle create_virtual_vehicle(const Instance & instance, const std::vector<int>
 }
 
 
+std::vector<int> get_available_interventions(const Vehicle & true_vehicle, const Vehicle & virtual_vehicle) {
+    std::vector<int> available_interventions_v(virtual_vehicle.interventions.size() + 2, 0);
+    for (int i : true_vehicle.interventions) {
+        available_interventions_v[virtual_vehicle.reverse_interventions.at(i)] = 1;
+    }
+    // Last two nodes are the depot and the destination, always available
+    available_interventions_v[available_interventions_v.size() - 2] = 1;
+    available_interventions_v[available_interventions_v.size() - 1] = 1;
+    return available_interventions_v;
+}
+
+
 std::vector<Route> solve_pricing_problem_pulse_grouped(
     const Instance &instance, 
     const std::vector<int> & vehicle_indexes,
@@ -480,11 +492,7 @@ std::vector<Route> solve_pricing_problem_pulse_grouped(
     for (int v : vehicle_indexes) {
         // Get the vehicle
         const Vehicle& vehicle = instance.vehicles[v];
-        // Get the available interventions
-        vector<int> available_interventions(n_interventions_v, 0);
-        for (int i : vehicle.interventions) {
-            available_interventions[virtual_vehicle.reverse_interventions[i]] = 1;
-        }
+        auto available_interventions = get_available_interventions(vehicle, virtual_vehicle);
         // Solve the pricing problem
         int error = pulse_algorithm.solve(vehicle.cost, dual_solution.betas[v], available_interventions);
         if (error != 0) {
@@ -597,11 +605,7 @@ std::vector<Route> solve_pricing_problem_pulse_grouped_par(
     for (int v : vehicle_indexes) {
         // Get the vehicle
         const Vehicle& vehicle = instance.vehicles[v];
-        // Get the available interventions
-        vector<int> available_interventions(n_interventions_v, 0);
-        for (int i : vehicle.interventions) {
-            available_interventions[virtual_vehicle.reverse_interventions[i]] = 1;
-        }
+        auto available_interventions = get_available_interventions(vehicle, virtual_vehicle);
         // Solve the pricing problem
         int error = pulse_algorithm.solve(vehicle.cost, dual_solution.betas[v], available_interventions);
         if (error != 0) {
