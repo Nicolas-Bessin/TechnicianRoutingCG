@@ -80,7 +80,7 @@ int main(int argc, char *argv[]){
     }
     end = chrono::steady_clock::now();
     diff = chrono::duration_cast<chrono::milliseconds>(end - begin).count();
-
+  
     // Print the routes
     for (const auto& route : new_routes){
         print_route_reduced(route, instance);

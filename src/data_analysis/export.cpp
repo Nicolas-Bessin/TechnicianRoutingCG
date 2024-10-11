@@ -69,7 +69,9 @@ void export_solution(
     const IntegerSolution& solution, 
     const std::vector<Route>& routes, 
     int elapsed_time,
-    const ColumnGenerationParameters& parameters
+    const ColumnGenerationParameters& parameters,
+    const std::vector<double>& objective_values,
+    const std::vector<int>& objective_time_points
     ){
 
     using namespace nlohmann;
@@ -107,6 +109,13 @@ void export_solution(
 
     // Add the parameters
     j["parameters"] = export_parameters(parameters);
+
+
+    // Add the evolution of the relaxed RMP objective
+    j["evolution"] = {
+        {"objective_values", objective_values},
+        {"time_points", objective_time_points}
+    };
 
     // Write the json to a file
     std::string output = j.dump(4);

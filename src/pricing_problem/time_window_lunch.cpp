@@ -15,6 +15,10 @@ void CustomTimeWindow::setLunchConstraint(int node, bool has_constraint) {
     has_lunch_constraint.at(node) = has_constraint;
 }
 
+bool CustomTimeWindow::hasLunchConstraint(int node) const {
+    return has_lunch_constraint.at(node);
+}
+
 
 //Computes the upperbound.
 //Represents the overall resource availability, i.e. the maximum feasible arrival time at destination.

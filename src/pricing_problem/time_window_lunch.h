@@ -25,6 +25,8 @@ public:
     bool isFeasible(int current_value, int current_node, double bounding = 1.0, bool direction = true) override;
 
     void setLunchConstraint(int node, bool has_constraint);
+
+    bool hasLunchConstraint(int node) const;
 private:
     std::vector<bool> has_lunch_constraint;
 

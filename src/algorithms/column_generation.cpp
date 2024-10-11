@@ -57,6 +57,10 @@ CGResult column_generation(
     DualSolution previous_dual_solution = DualSolution{};
     MasterSolution solution;
 
+    // Objective values tracking
+    vector<double> objective_values = {};
+    vector<int> objective_time_points = {};
+
     // Order of exploration of the vehicles for the pricing problem (does not matter, we simply remove the vehicles that can not be used)
     vector<int> vehicle_order = {};
     for (int v = 0; v < instance.number_vehicles; v++){
@@ -72,6 +76,8 @@ CGResult column_generation(
     if (max_resources_dominance == ALL_RESOURCES_DOMINANCE){
         max_resources_dominance = instance.capacities_labels.size() + 1;
     }
+
+    auto start_time = chrono::steady_clock::now();
 
     while (
         !stop && 
@@ -95,10 +101,14 @@ CGResult column_generation(
         // Extract the dual solution from the master solution
         DualSolution& dual_solution = solution.dual_solution;
 
+        // Update the objective tracking
+        objective_values.push_back(solution.objective_value);
+        objective_time_points.push_back(chrono::duration_cast<chrono::milliseconds>(end - start_time).count());
+
         if (parameters.verbose) {
             cout << "Iteration " << iteration << " - Objective value : " << solution.objective_value;
             cout << " - Master problem solved in " << diff << " ms \n";
-            cout << "Number of interventions covered : " << setprecision(2) << count_covered_interventions(solution, routes, instance);
+            cout << "Number of interventions covered : " << setprecision(3) << count_covered_interventions(solution, routes, instance);
             std::pair<double, int> used_vehicles = count_used_vehicles(solution, routes, instance);
             cout << " - Number of vehicles used : " << used_vehicles.first << " - Unique vehicles used : " << used_vehicles.second << "\n";
         }
@@ -312,11 +322,12 @@ CGResult column_generation(
     CGResult result = CGResult{
         solution,
         integer_solution,
-        routes,
         iteration,
         master_time,
         pricing_time,
-        integer_time
+        integer_time,
+        objective_values,
+        objective_time_points
     };
 
     return result;
