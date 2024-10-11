@@ -2,6 +2,8 @@
 
 #include "instance/constants.h"
 
+#include "pricing_problem/time_window_lunch.h"
+
 #include <chrono>
 
 PartialPath EmptyPath(const int N) {
@@ -90,7 +92,7 @@ BoundData EmptyBound(const int N, const int K) {
     };
 }
 
-void PulseAlgorithm::update_bound(int vertex, int tau, double cost, const PartialPath & path, std::vector<int> quantities) {
+void PulseAlgorithm::update_bound(int vertex, int tau, double cost, PartialPath path, std::vector<int> quantities) {
     // Check if the path is feasible
     if (cost == std::numeric_limits<double>::infinity() || path.sequence.size() < 2){
         bounds[vertex][get_bound_index(tau, delta)] = InfeasibleBound(N, K);
@@ -111,14 +113,28 @@ void PulseAlgorithm::update_bound(int vertex, int tau, double cost, const Partia
         // Is there margin to move the intervention later in the time window ?
         int end_time_a = problem->getRes(K)->getNodeUB(a); // In the problem, the time windows are [sw_i, ew_i - d_i] and we check the exact time point.
         int tw_slack = std::max(0, end_time_a - start_times[i] );
+        // If intervention a is subject to the lunch constraint, we need to make sure we are not shifting it over lunch time
+        int lunch_slack = std::numeric_limits<int>::max();
+        if (dynamic_cast<CustomTimeWindow*>(problem->getRes(K))->hasLunchConstraint(i) && start_times[i] + duration <= MID_DAY) {
+            lunch_slack = MID_DAY - (start_times[i] + duration);
+        }
+
         // The available slack is the minimum of the two
         int available_slack = std::min(arrival_slack, tw_slack);
+        available_slack = std::min(available_slack, lunch_slack);
 
         // Update the latest start time
         start_times[i] = start_times[i] + available_slack;
+        // If b is the destination, also update the latest start time of the destination
+        if (b == destination) {
+            start_times[i + 1] = problem->getRes(K)->extend(start_times[i], a, b, FORWARD);
+        }
     }
     // The latest start time is the start time of the first node
     int latest_start_time = start_times[0];
+
+    // Set the start times of this path to the latest start times
+    path.start_times = start_times;
 
     // Update the bound
     bounds[vertex][get_bound_index(tau, delta)] = BoundData {
@@ -229,6 +245,62 @@ bool PulseAlgorithm::rollback(int vertex, const PartialPath & path) const {
 }
 
 
+bool PulseAlgorithm::splice(const PartialPath& path, int vertex, int time, double cost, std::vector<int> quantities) {
+    BoundData& best_bound = bounds[vertex][get_bound_index(time, delta)];
+    // If the bound has an empty path, we return false
+    if (best_bound.path.sequence.size() == 0) {
+        return false;
+    }
+    // Ensure that the first vertex of the bound is the current vertex
+    if (best_bound.path.sequence[0] != vertex) {
+        std::cerr << "Error: bound path does not start at the current vertex" << std::endl;
+        return false;
+    }
+    PartialPath& extension = best_bound.path;
+    // Check wether we can splice the current partia path with the best path in the pool
+    // First step is checking wether the spliced path would be elementary
+    bool elementary = true;
+    for (int i = 0; i < N; i++) {
+        elementary = elementary && (extension.is_visited[i] ? !path.is_visited[i] : true);
+    }
+    // If the path is not elementary, we return false
+    if (!elementary) {
+        return false;
+    }
+    // We then check the time feasibility
+    if (time > best_bound.latest_start_time) {
+        return false;
+    }
+    // We then check the resource feasibility
+    for (int c = 0; c < K; c++) {
+        if (quantities[c] + best_bound.quantities[c] + problem->getRes(c)->getNodeCost(vertex) > problem->getRes(c)->getUB()) {
+            return false;
+        }
+    }
+
+    // Here we can splice the path
+    PartialPath new_path = path;
+    new_path.sequence.insert(new_path.sequence.end(), extension.sequence.begin(), extension.sequence.end());
+    // When the extension was set as a bound, its start times were set to the latest start times possible.
+    // We can thus directly append the start times of the extension to the start times of the path
+    // This might introduce some slack at the junction - but this slack will be removed when registering the bound
+    new_path.start_times.insert(new_path.start_times.end(), extension.start_times.begin(), extension.start_times.end());
+    // We also update the quantities
+    for (int c = 0; c < K; c++) {
+        quantities[c] += best_bound.quantities[c] + problem->getRes(c)->getNodeCost(vertex);
+    }
+    // And the visited nodes
+    for (int i = 0; i < N; i++) {
+        new_path.is_visited[i] = path.is_visited[i] || extension.is_visited[i];
+    }
+    // We also update the cost
+    cost += best_bound.cost;
+    // new_path is now a full path to the destination, we can pass it to the update_pool method
+    update_pool(cost, new_path);
+    return true;
+}
+    
+
 void PulseAlgorithm::update_pool(double cost, const PartialPath & path) {
     if (cost < best_objective) {
             best_objective = cost;
@@ -263,7 +335,11 @@ void PulseAlgorithm::pulse(int vertex, int time, std::vector<int>quantities, dou
     // Check if we need to rollback
     if (rollback(vertex, path)) {
         return;
-    }      
+    }   
+    // Check if we can splice the path with the best path in the pool
+    if (splice(path, vertex, time, cost, quantities)) {
+        return;
+    }   
     // Extend the capacities
     for (int c = 0; c < K; c++) {
         int back = -1; // We don't care about the previous node for the capacities extension
