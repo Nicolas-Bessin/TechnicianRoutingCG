@@ -23,9 +23,9 @@
 #include <format>
 
 inline constexpr std::string INSTANCE_FILE = "instance_1";
-inline constexpr int N_INTERVENTIONS = 25;
+inline constexpr int N_INTERVENTIONS = 75;
 
-inline constexpr int TIME_LIMIT = 300;
+inline constexpr int TIME_LIMIT = 1200;
 inline constexpr bool VERBOSE = true;
 
 
@@ -143,7 +143,7 @@ int main(int argc, char *argv[]){
     string date = std::format("{:%Y-%m-%d-%H-%M-%OS}", now);
     string output_filename = "../results/" + fileprefix + "_" + date + ".json";
     double seconds = elapsed_time / 1000.0;
-    export_solution(output_filename, instance, integer_solution, routes, seconds, parameters);
+    export_solution(output_filename, instance, integer_solution, routes, seconds, parameters, result.objective_values, result.objective_time_points);
     
 
     return 0;

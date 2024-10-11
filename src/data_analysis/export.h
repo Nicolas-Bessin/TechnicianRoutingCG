@@ -13,5 +13,7 @@ void export_solution(
     const IntegerSolution& solution, 
     const std::vector<Route>& routes, 
     int elapsed_time, 
-    const ColumnGenerationParameters& parameters
+    const ColumnGenerationParameters& parameters,
+    const std::vector<double>& objective_values,
+    const std::vector<int>& objective_time_points
 );

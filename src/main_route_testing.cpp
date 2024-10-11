@@ -75,23 +75,28 @@ int main(int argc, char *argv[]){
     cout << "Solving each vehicle with one thread, sequentially" << endl;
     begin = chrono::steady_clock::now();
     for (int v : vehicle_order){
-        vector<Route> new_routes_v = solve_pricing_problem_pulse(instance, instance.vehicles.at(v), dual_solution, DELTA, 10, true);
+        vector<Route> new_routes_v = solve_pricing_problem_pulse(instance, instance.vehicles.at(v), dual_solution, DELTA, 1, true);
         new_routes.insert(new_routes.end(), new_routes_v.begin(), new_routes_v.end());
     }
     end = chrono::steady_clock::now();
     diff = chrono::duration_cast<chrono::milliseconds>(end - begin).count();
 
+    // print the routes
+    for (const auto& route : new_routes){
+        print_route_reduced(route, instance);
+    }
+
     cout << "Time spent : " << diff << " ms" << endl;
 
     cout << "-----------------------------------" << endl;
-    cout << "Solving each vehicle with one thread, in parallel" << endl;
+    // cout << "Solving each vehicle with one thread, in parallel" << endl;
 
-    begin = chrono::steady_clock::now();
-    new_routes = full_pricing_problems_basic_pulse(dual_solution, instance, vehicle_order, DELTA, 1, true);
+    // begin = chrono::steady_clock::now();
+    // new_routes = full_pricing_problems_basic_pulse(dual_solution, instance, vehicle_order, DELTA, 1, true);
 
-    end = chrono::steady_clock::now();
-    diff = chrono::duration_cast<chrono::milliseconds>(end - begin).count();
-    cout << "Time spent : " << diff << " ms" << endl;
+    // end = chrono::steady_clock::now();
+    // diff = chrono::duration_cast<chrono::milliseconds>(end - begin).count();
+    // cout << "Time spent : " << diff << " ms" << endl;
 
     // cout << "-----------------------------------" << endl;
     // cout << "Solving each vehicle with the parallel PA, sequentially" << endl;

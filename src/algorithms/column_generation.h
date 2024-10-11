@@ -18,25 +18,8 @@ struct CGResult {
     int master_time;
     int pricing_time;
     int integer_time;
-    // Empty constructor
-    CGResult() {};
-    // Constructor
-    CGResult(
-        const MasterSolution& master_solution,
-        const IntegerSolution& integer_solution,
-        const std::vector<Route>& routes,
-        int number_of_iterations,
-        int master_time,
-        int pricing_time,
-        int integer_time
-    ) : 
-        master_solution(master_solution),
-        integer_solution(integer_solution),
-        number_of_iterations(number_of_iterations),
-        master_time(master_time),
-        pricing_time(pricing_time),
-        integer_time(integer_time)
-    {}
+    std::vector<double> objective_values;
+    std::vector<int> objective_time_points;
 };
 
 /*
