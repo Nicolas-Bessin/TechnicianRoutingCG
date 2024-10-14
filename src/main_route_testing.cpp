@@ -83,6 +83,9 @@ int main(int argc, char *argv[]){
   
     // Print the routes
     for (const auto& route : new_routes){
+        if (!is_route_feasible(route, instance)) {
+            cout << "Route for vehicle " << route.vehicle_id << " is not feasible" << endl;
+        }
         print_route_reduced(route, instance);
     }
 

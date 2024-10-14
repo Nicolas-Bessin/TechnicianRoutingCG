@@ -125,7 +125,7 @@ int PulseAlgorithm::latest_start_time(int vertex, int initial_time, int next_ver
 }
 
 
-void PulseAlgorithm::update_bound(int vertex, int tau, double cost, PartialPath path, std::vector<int> quantities) {
+void PulseAlgorithm::update_bound(int vertex, int tau, double cost, PartialPath path, const std::vector<int>& quantities) {
     // Check if the path is feasible
     if (cost == std::numeric_limits<double>::infinity() || path.sequence.size() < 2){
         bounds[vertex][get_bound_index(tau, delta)] = InfeasibleBound(N, K);
@@ -189,7 +189,7 @@ void PulseAlgorithm::bound() {
             PartialPath p = EmptyPath(N);
             pulse(v, tau, std::vector<int>(K, 0), 0, p);
             // If no path was found, the objective will have value +inf and thus bound is +infinity
-            update_bound(v, tau, best_objective, best_path, std::vector<int>(K, 0));
+            update_bound(v, tau, best_objective, best_path, best_quantities);
             reset();
         }
         bound_level++;
@@ -284,7 +284,7 @@ bool PulseAlgorithm::splice(const PartialPath& path, int vertex, int time, doubl
     }
     // We then check the resource feasibility
     for (int c = 0; c < K; c++) {
-        if (quantities[c] + best_bound.quantities[c] + problem->getRes(c)->getNodeCost(vertex) > problem->getRes(c)->getUB()) {
+        if (quantities[c] + best_bound.quantities[c] > problem->getRes(c)->getUB()) {
             return false;
         }
     }
@@ -297,8 +297,9 @@ bool PulseAlgorithm::splice(const PartialPath& path, int vertex, int time, doubl
     // This might introduce some slack at the junction - but this slack will be removed when registering the bound
     new_path.start_times.insert(new_path.start_times.end(), extension.start_times.begin(), extension.start_times.end());
     // We also update the quantities
+    std::vector<int> new_quantities = quantities;
     for (int c = 0; c < K; c++) {
-        quantities[c] += best_bound.quantities[c] + problem->getRes(c)->getNodeCost(vertex);
+        new_quantities[c] += best_bound.quantities[c];
     }
     // And the visited nodes
     for (int i = 0; i < N; i++) {
@@ -307,16 +308,18 @@ bool PulseAlgorithm::splice(const PartialPath& path, int vertex, int time, doubl
     // We also update the cost
     cost += best_bound.cost;
     // new_path is now a full path to the destination, we can pass it to the update_pool method
-    update_pool(cost, new_path);
+    update_pool(cost, new_path, new_quantities);
     return true;
 }
     
 
-void PulseAlgorithm::update_pool(double cost, const PartialPath & path) {
+void PulseAlgorithm::update_pool(double cost, const PartialPath & path, const std::vector<int> & quantities) {
     if (cost < best_objective) {
             best_objective = cost;
             best_path = path;
+            best_quantities = quantities;
         }
+    // We only care about the quantities for the very best path
     if (cost < pool_bound) {
         // Insert the new solution in the pool
         solutions.insert(std::pair(cost, path));
@@ -353,15 +356,14 @@ void PulseAlgorithm::pulse(int vertex, int time, std::vector<int>quantities, dou
     }   
     // Extend the capacities
     for (int c = 0; c < K; c++) {
-        int back = -1; // We don't care about the previous node for the capacities extension
-        quantities[c] = problem->getRes(c)->extend(quantities[c], -1, vertex, FORWARD);
+        quantities[c] += problem->getRes(c)->getNodeCost(vertex);
     }
     // Extend the path
     PartialPath p_new = extend_path(path, vertex, time);
 
     // Check if we are at the destination
     if (vertex == destination) {
-        update_pool(cost, p_new);
+        update_pool(cost, p_new, quantities);
     }
 
     // Pulse from all the forward neighborsj

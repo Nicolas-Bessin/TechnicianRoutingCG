@@ -50,7 +50,7 @@ void PulseAlgorithmWithSubsets::pulse(int vertex, int time, std::vector<int> qua
 
     // Check if we are at the destination
     if (vertex == destination) {
-        update_pool(cost, p_new);
+        update_pool(cost, p_new, quantities);
     }
 
     // Pulse from all the forward neighborsj

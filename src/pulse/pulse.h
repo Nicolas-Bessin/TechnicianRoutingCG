@@ -70,10 +70,10 @@ public :
 
 
     // Update the conditionnal lower bound on the best path from vertex to the destination
-    void update_bound(int vertex, int tau, double cost, PartialPath path, std::vector<int> quantities);
+    void update_bound(int vertex, int tau, double cost, PartialPath path, const std::vector<int> & quantities);
 
     // Update the solution pool with a new solution
-    void update_pool(double cost, const PartialPath & path);
+    void update_pool(double cost, const PartialPath & path, const std::vector<int> & quantities);
 
     // Bounding phase
     void bound();
@@ -103,6 +103,7 @@ protected :
     // Best path and best objective value
     PartialPath best_path;
     double best_objective;
+    std::vector<int> best_quantities;
 
     // Size of the solution pool
     const int pool_size = 10;
