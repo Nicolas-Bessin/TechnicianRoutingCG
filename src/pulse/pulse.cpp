@@ -92,6 +92,39 @@ BoundData EmptyBound(const int N, const int K) {
     };
 }
 
+int PulseAlgorithm::latest_start_time(int vertex, int initial_time, int next_vertex, int next_time) const {
+    // Get the slack along edge (a, b)
+    // Is there margin after the intervention - waiting time ?
+    int travel_time = problem->getRes(K)->getArcCost(vertex, next_vertex);
+    int duration = problem->getRes(K)->getNodeCost(vertex);
+    int arrival_slack = std::max(0, next_time - (initial_time + duration + travel_time));
+    // Is there margin to move the intervention later in the time window ?
+    int end_time_a = problem->getRes(K)->getNodeUB(vertex); // In the problem, the time windows are [sw_i, ew_i - d_i] and we check the exact time point.
+    int tw_slack = std::max(0, end_time_a - initial_time);
+    // If intervention a is subject to the lunch constraint, we need to make sure we are not shifting it over lunch time
+    int lunch_slack = std::numeric_limits<int>::max();
+    bool has_lunch_constraint = dynamic_cast<CustomTimeWindow*>(problem->getRes(K))->hasLunchConstraint(vertex);
+    if (has_lunch_constraint && initial_time + duration <= MID_DAY) {
+            lunch_slack = MID_DAY - (initial_time + duration);
+        }
+
+    // The available slack is the minimum of the three
+    int available_slack = std::min(arrival_slack, tw_slack);
+    available_slack = std::min(available_slack, lunch_slack);
+
+    int new_start_time = initial_time + available_slack;
+
+    // Also check wether we could move the intervention to the afternoon
+    if (has_lunch_constraint && initial_time + duration <= MID_DAY) {
+        if(MID_DAY + duration + travel_time <= next_time && MID_DAY + duration <= end_time_a) {
+            new_start_time = latest_start_time(vertex, MID_DAY, next_vertex, next_time);
+        }
+    }
+
+    return new_start_time;
+}
+
+
 void PulseAlgorithm::update_bound(int vertex, int tau, double cost, PartialPath path, std::vector<int> quantities) {
     // Check if the path is feasible
     if (cost == std::numeric_limits<double>::infinity() || path.sequence.size() < 2){
@@ -100,35 +133,13 @@ void PulseAlgorithm::update_bound(int vertex, int tau, double cost, PartialPath 
     }
     // Compute the latest start time
     auto start_times = path.start_times;
+    // Set the last time to END_DAY - we can introduce virtual waiting time at the destination
+    start_times.back() = END_DAY;
     // We start backwards and add the available slack time to the start time of each node
     for (int i = path.sequence.size() - 2; i >= 0; i--) {
-        // Get the slack along edge (a, b)
-        int a = path.sequence[i];
-        int b = path.sequence[i + 1];
-        // Is there margin after the intervention - waiting time ?
-        int start_time_b = b == destination ? END_DAY : start_times[i + 1];
-        int travel_time = problem->getRes(K)->getArcCost(a, b);
-        int duration = problem->getRes(K)->getNodeCost(a);
-        int arrival_slack = std::max(0, start_time_b - (start_times[i] + duration + travel_time));
-        // Is there margin to move the intervention later in the time window ?
-        int end_time_a = problem->getRes(K)->getNodeUB(a); // In the problem, the time windows are [sw_i, ew_i - d_i] and we check the exact time point.
-        int tw_slack = std::max(0, end_time_a - start_times[i] );
-        // If intervention a is subject to the lunch constraint, we need to make sure we are not shifting it over lunch time
-        int lunch_slack = std::numeric_limits<int>::max();
-        if (dynamic_cast<CustomTimeWindow*>(problem->getRes(K))->hasLunchConstraint(i) && start_times[i] + duration <= MID_DAY) {
-            lunch_slack = MID_DAY - (start_times[i] + duration);
-        }
-
-        // The available slack is the minimum of the two
-        int available_slack = std::min(arrival_slack, tw_slack);
-        available_slack = std::min(available_slack, lunch_slack);
-
         // Update the latest start time
-        start_times[i] = start_times[i] + available_slack;
-        // If b is the destination, also update the latest start time of the destination
-        if (b == destination) {
-            start_times[i + 1] = problem->getRes(K)->extend(start_times[i], a, b, FORWARD);
-        }
+        int new_start_time = latest_start_time(path.sequence[i], start_times[i], path.sequence[i + 1], start_times[i + 1]);
+        start_times[i] = new_start_time;
     }
     // The latest start time is the start time of the first node
     int latest_start_time = start_times[0];

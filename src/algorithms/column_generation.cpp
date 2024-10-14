@@ -35,9 +35,11 @@ CGResult column_generation(
     using std::unique_ptr;
     namespace chrono = std::chrono;
 
+    auto start_time = chrono::steady_clock::now();
+
     int master_time = 0;
     int pricing_time = 0;
-
+    
     // Create the underlying RMP model
     vector<GRBVar> route_vars;
     vector<GRBVar> postpone_vars;
@@ -53,9 +55,11 @@ CGResult column_generation(
     int consecutive_non_improvement = 0;
     double previous_solution_objective = std::numeric_limits<double>::infinity();
 
-    // Master Solutions
-    DualSolution previous_dual_solution = DualSolution{};
-    MasterSolution solution;
+    // Master Solutions - Do a first solve before the loop
+    int status = solve_model(model);
+    MasterSolution solution = extract_solution(model, route_vars, intervention_ctrs, vehicle_ctrs);
+    DualSolution& dual_solution = solution.dual_solution;
+    DualSolution previous_dual_solution{};
 
     // Objective values tracking
     vector<double> objective_values = {};
@@ -77,43 +81,12 @@ CGResult column_generation(
         max_resources_dominance = instance.capacities_labels.size() + 1;
     }
 
-    auto start_time = chrono::steady_clock::now();
-
     while (
         !stop && 
         !(consecutive_non_improvement == parameters.max_consecutive_non_improvement) && 
         master_time + pricing_time < S_TO_MS * parameters.time_limit){
-        // Solve the master problem
-        auto start = chrono::steady_clock::now();
-        int status = solve_model(model);
-        if (status != GRB_OPTIMAL){
-            cout << "The master problem is not optimal" << endl;
-            break;
-        }
-        solution = extract_solution(model, route_vars, intervention_ctrs, vehicle_ctrs);
-        auto end = chrono::steady_clock::now();
-        int diff = chrono::duration_cast<chrono::milliseconds>(end - start).count();
-        // At this point, if the solution is not feasible, it it because the cuts give a non feasible problem
-        // We can stop the algorithm
-        if (!solution.is_feasible){
-            return CGResult{};
-        }
-        // Extract the dual solution from the master solution
-        DualSolution& dual_solution = solution.dual_solution;
 
-        // Update the objective tracking
-        objective_values.push_back(solution.objective_value);
-        objective_time_points.push_back(chrono::duration_cast<chrono::milliseconds>(end - start_time).count());
-
-        if (parameters.verbose) {
-            cout << "Iteration " << iteration << " - Objective value : " << solution.objective_value;
-            cout << " - Master problem solved in " << diff << " ms \n";
-            cout << "Number of interventions covered : " << setprecision(3) << count_covered_interventions(solution, routes, instance);
-            std::pair<double, int> used_vehicles = count_used_vehicles(solution, routes, instance);
-            cout << " - Number of vehicles used : " << used_vehicles.first << " - Unique vehicles used : " << used_vehicles.second << "\n";
-        }
-        master_time += diff;
-
+        // ----------------- Pricing sub problem -----------------
         // Solve each pricing sub problem
         auto start_pricing = chrono::steady_clock::now();
         int n_added_routes = 0;
@@ -224,10 +197,39 @@ CGResult column_generation(
             cout << "Pricing sub problems solved in " << diff_pricing << " ms - Added " << n_added_routes << " routes";
             cout << " - Min reduced cost : " << setprecision(15) << min_reduced_cost << "\n";
         }
+
+        // ----------------- Master problem -----------------
+        // Solve the master problem
+        auto start = chrono::steady_clock::now();
+        int status = solve_model(model);
+        solution = extract_solution(model, route_vars, intervention_ctrs, vehicle_ctrs);
+        auto end = chrono::steady_clock::now();
+        int diff = chrono::duration_cast<chrono::milliseconds>(end - start).count();
+        // At this point, if the solution is not feasible, it it because the cuts give a non feasible problem
+        // We can stop the algorithm
+        if (!solution.is_feasible){
+            return CGResult{};
+        }
+        // Extract the dual solution from the master solution
+        DualSolution& dual_solution = solution.dual_solution;
+
+        // Update the objective tracking
+        objective_values.push_back(solution.objective_value);
+        objective_time_points.push_back(chrono::duration_cast<chrono::milliseconds>(end - start_time).count());
+
+        if (parameters.verbose) {
+            cout << "Iteration " << iteration << " - Objective value : " << solution.objective_value;
+            cout << " - Master problem solved in " << diff << " ms \n";
+            cout << "Number of interventions covered : " << setprecision(3) << count_covered_interventions(solution, routes, instance);
+            std::pair<double, int> used_vehicles = count_used_vehicles(solution, routes, instance);
+            cout << " - Number of vehicles used : " << used_vehicles.first << " - Unique vehicles used : " << used_vehicles.second << "\n";
+        }
+        master_time += diff;
+
         // ----------------- Stop conditions -----------------
         // If we added no routes but are not using the cyclic pricing yet, we switch to it
         // Only for non PA algorithms
-        if (std::find(PA_ALGORITHMS.begin(), PA_ALGORITHMS.end(), parameters.pricing_function) == PA_ALGORITHMS.end()){
+        if (std::find(PA_VARIATIONS.begin(), PA_VARIATIONS.end(), parameters.pricing_function) == PA_VARIATIONS.end()){
             if (n_added_routes == 0 && parameters.switch_to_cyclic_pricing && !using_cyclic_pricing){
                 using_cyclic_pricing = true;
                 // Reset the number of resources used for the dominance test

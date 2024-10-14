@@ -118,7 +118,7 @@ std::vector<Route> full_pricing_problems_grouped_pulse_par_par(
 
 
 // Define the set of PA derived algorithms
-inline constexpr std::array<std::string, 5> PA_ALGORITHMS = {
+inline constexpr std::array<std::string, 5> PA_VARIATIONS = {
     PRICING_PA_BASIC,
     PRICING_PA_GROUPED,
     PRICING_MPA,

@@ -51,3 +51,10 @@ struct BranchAndPriceParameters : ColumnGenerationParameters {
     // Constructor : all values in the map are set, other set to default (see parameters.h)
     BranchAndPriceParameters(std::map<std::string, std::any>);
 };
+
+struct FullParameter : ColumnGenerationParameters {
+    std::string instance_file = "instance_1";
+    int n_interventions = 25;
+    int time_limit = 300;
+    bool verbose = true;
+};

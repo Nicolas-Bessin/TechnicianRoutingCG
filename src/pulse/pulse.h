@@ -64,6 +64,11 @@ public :
     // Main pulse algorithm
     void pulse(int vertex, int time, std::vector<int> quantities, double cost, const PartialPath & path);
 
+    // Given a vertex, an initial time, a next vertex and a next time we suppose to be the latest possible for next_vertex,
+    // return the latest possible start time for vertex
+    int latest_start_time(int vertex, int initial_time, int next_vertex, int next_time) const;
+
+
     // Update the conditionnal lower bound on the best path from vertex to the destination
     void update_bound(int vertex, int tau, double cost, PartialPath path, std::vector<int> quantities);
 

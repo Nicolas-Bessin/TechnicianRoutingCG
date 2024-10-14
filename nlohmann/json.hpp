@@ -18122,7 +18122,7 @@ class serializer
         bool pretty_print_array = pretty_print;
         if (val.is_array() && val.size() > 0)
         {
-            if (val.front().is_string() || val.front().is_number_integer())
+            if (val.front().is_string() || val.front().is_number())
             {
                 pretty_print_array = false;
             }

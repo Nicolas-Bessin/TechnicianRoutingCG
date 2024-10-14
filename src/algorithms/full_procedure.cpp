@@ -1,5 +1,4 @@
-#include "instance/parser.h"
-#include "instance/preprocessing.h"
+#include "full_procedure.h"
 
 #include "master_problem/master.h"
 #include "master_problem/rmp_solver.h"
@@ -16,72 +15,22 @@
 #include "data_analysis/analysis.h"
 #include "data_analysis/export.h"
 
-#include <memory>   
 #include <iostream>
 #include <iomanip>
-#include <chrono>
-#include <format>
 
-inline constexpr std::string INSTANCE_FILE = "instance_2";
-inline constexpr int N_INTERVENTIONS = 150;
-
-inline constexpr int TIME_LIMIT = 300;
-inline constexpr bool VERBOSE = true;
-
-
-int main(int argc, char *argv[]){
-
-    using std::cout, std::endl;
-    using std::setprecision, std::fixed;
-    using std::vector, std::string, std::to_string, std::pair;
-    using std::tuple, std::set;
-    using std::unique_ptr;
+CGResult full_cg_procedure(const Instance & instance, const ColumnGenerationParameters& parameters) {
+    using std::vector, std::string;
+    using std::cout, std::endl, std::setprecision;
     namespace chrono = std::chrono;
 
-    // Parse the instance from a JSON file
-    auto start_parse = chrono::steady_clock::now();
-    cout << "Technician Routing Problem using Column Generation" << endl;
-    cout << "-----------------------------------" << endl;
-    string fileprefix = INSTANCE_FILE;
-    string filename = "../data/" + fileprefix + ".json";
-    Instance instance = parse_file(filename, fileprefix, N_INTERVENTIONS, VERBOSE);
-    instance.M = compute_M_naive(instance);
+    auto procedure_start = chrono::steady_clock::now();
 
-    preprocess_interventions(instance);
-
-    auto end_parse = chrono::steady_clock::now();
-    int diff_parse = chrono::duration_cast<chrono::milliseconds>(end_parse - start_parse).count();
-
-    cout << "Total time spent parsing the instance : " << diff_parse << " ms" << endl;
-
-    cout << "-----------------------------------" << endl;
     vector<Route> routes;
     cout << "Initializing the routes with an empty route" << endl;
     routes = vector<Route>();
     routes.push_back(EmptyRoute(instance.nodes.size()));
-    
-    cout << "-----------------------------------" << endl;
-    cout << "Starting the column generation algorithm" << endl;
-    
 
     int MAX_RESOURCES_DOMINANCE = instance.capacities_labels.size() + 1;
-    // Create the parameters for the column generation algorithm
-    ColumnGenerationParameters parameters = ColumnGenerationParameters({
-        {"time_limit", TIME_LIMIT},
-        {"reduced_cost_threshold", 1e-6},
-        {"verbose", VERBOSE},
-        {"max_iterations", 1000},
-        {"max_consecutive_non_improvement", 5},
-        {"compute_integer_solution", true},
-        {"max_resources_dominance", MAX_RESOURCES_DOMINANCE},
-        {"switch_to_cyclic_price", true},
-        {"delta ", 50},
-        {"solution_pool_size", 10},
-        {"alpha", 0.5},
-        {"use_stabilisation", false},
-        {"pricing_function", PRICING_PA_BASIC},
-        {"pricing_verbose", false}
-    });
     // Create a root node for the algorithm
     BPNode root = RootNode(routes);
     CGResult result = column_generation(
@@ -104,7 +53,7 @@ int main(int argc, char *argv[]){
     if (!integer_solution.is_feasible){
         cout << "-----------------------------------" << endl;
         cout << "The integer solution is not feasible" << endl;
-        return 1;
+        return CGResult{};
     }
 
     int n_routes_generated = routes.size();
@@ -122,7 +71,7 @@ int main(int argc, char *argv[]){
     // Print the routes in the integer solution (in detail)
     // full_analysis(integer_solution, routes, instance);
 
-    int elapsed_time = chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - start_parse).count();
+    int elapsed_time = chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - procedure_start).count();
     // Print the time it took to solve the master problem
     cout << "-----------------------------------" << endl;
     cout << "Total time spent solving the master problem : " << master_time << " ms" << endl;
@@ -141,10 +90,8 @@ int main(int argc, char *argv[]){
     // Append the time to the filename
     const auto now = chrono::zoned_time(std::chrono::current_zone(), chrono::system_clock::now());
     string date = std::format("{:%Y-%m-%d-%H-%M-%OS}", now);
-    string output_filename = "../results/" + fileprefix + "_" + date + ".json";
+    string output_filename = "../results/" + instance.name + "_" + date + ".json";
     double seconds = elapsed_time / 1000.0;
     export_solution(output_filename, instance, integer_solution, routes, seconds, parameters, result.objective_values, result.objective_time_points);
-    
 
-    return 0;
 }
