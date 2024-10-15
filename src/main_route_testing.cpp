@@ -21,8 +21,8 @@
 #include <random>
 
 
-inline constexpr std::string INSTANCE_FILE = "instance_2";
-inline constexpr int N_INTERVENTIONS = 150;
+inline constexpr std::string INSTANCE_FILE = "instance_1";
+inline constexpr int N_INTERVENTIONS = 75;
 
 inline constexpr int TIME_LIMIT = 1200;
 inline constexpr bool VERBOSE = true;
@@ -82,6 +82,9 @@ int main(int argc, char *argv[]){
     diff = chrono::duration_cast<chrono::milliseconds>(end - begin).count();
 
     for (auto & route : new_routes){
+        if (!is_route_feasible(route, instance)){
+            cout << "Route for vehicle " << route.vehicle_id << " is not feasible" << endl;
+        }
         print_route_reduced(route, instance);
     }
 
