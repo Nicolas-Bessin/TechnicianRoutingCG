@@ -62,8 +62,8 @@ CGResult column_generation(
     DualSolution previous_dual_solution{};
 
     // Objective values tracking
-    vector<double> objective_values = {};
-    vector<int> objective_time_points = {};
+    vector<double> objective_values = {solution.objective_value};
+    vector<int> objective_time_points = {0};
 
     // Order of exploration of the vehicles for the pricing problem (does not matter, we simply remove the vehicles that can not be used)
     vector<int> vehicle_order = {};

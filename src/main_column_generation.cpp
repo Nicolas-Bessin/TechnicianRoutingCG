@@ -22,8 +22,8 @@
 #include <chrono>
 #include <format>
 
-inline constexpr std::string INSTANCE_FILE = "instance_2";
-inline constexpr int N_INTERVENTIONS = 150;
+inline constexpr std::string INSTANCE_FILE = "instance_1";
+inline constexpr int N_INTERVENTIONS = 75;
 
 inline constexpr int TIME_LIMIT = 300;
 inline constexpr bool VERBOSE = true;
@@ -64,7 +64,7 @@ int main(int argc, char *argv[]){
     cout << "Starting the column generation algorithm" << endl;
     
 
-    int MAX_RESOURCES_DOMINANCE = instance.capacities_labels.size() + 1;
+    int MAX_RESOURCES_DOMINANCE = instance.capacities_labels.size();
     // Create the parameters for the column generation algorithm
     ColumnGenerationParameters parameters = ColumnGenerationParameters({
         {"time_limit", TIME_LIMIT},
@@ -79,7 +79,7 @@ int main(int argc, char *argv[]){
         {"solution_pool_size", 10},
         {"alpha", 0.5},
         {"use_stabilisation", false},
-        {"pricing_function", PRICING_PA_BASIC},
+        {"pricing_function", PRICING_PATHWYSE_BASIC},
         {"pricing_verbose", false}
     });
     // Create a root node for the algorithm
