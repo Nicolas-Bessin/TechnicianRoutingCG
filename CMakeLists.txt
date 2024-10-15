@@ -97,6 +97,8 @@ set(
     src/algorithms/heuristics.cpp
     src/algorithms/parameters.h
     src/algorithms/parameters.cpp
+    src/algorithms/full_procedure.h
+    src/algorithms/full_procedure.cpp
 
     src/data_analysis/analysis.h 
     src/data_analysis/analysis.cpp

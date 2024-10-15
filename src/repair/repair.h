@@ -23,5 +23,6 @@ void delete_intervention(Route& route, int intervention, const Instance& instanc
 // Given a vector of routes and a corresponding IntegerSolution
 // Repairs the solution by removing duplicate intervention coverings from the route
 // If the triangle inequality is respected, this can only improve the solution
-// Returns the new vector containing only the routes that are used
-std::vector<Route> repair_routes(const std::vector<Route>& routes, const IntegerSolution& solution, const Instance& instance);
+// Modifies only the routes used in the initial solution
+// Eventually, if after repair a route becomes empty, its coefficient in the solution is set to 0
+void repair_routes(std::vector<Route>& routes, IntegerSolution& solution, const Instance& instance);

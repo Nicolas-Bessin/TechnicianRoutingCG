@@ -18,19 +18,13 @@
 #include <iostream>
 #include <iomanip>
 
-CGResult full_cg_procedure(const Instance & instance, const ColumnGenerationParameters& parameters) {
+CGResult full_cg_procedure(const Instance & instance, std::vector<Route>& routes, const ColumnGenerationParameters& parameters) {
     using std::vector, std::string;
     using std::cout, std::endl, std::setprecision;
     namespace chrono = std::chrono;
 
     auto procedure_start = chrono::steady_clock::now();
 
-    vector<Route> routes;
-    cout << "Initializing the routes with an empty route" << endl;
-    routes = vector<Route>();
-    routes.push_back(EmptyRoute(instance.nodes.size()));
-
-    int MAX_RESOURCES_DOMINANCE = instance.capacities_labels.size() + 1;
     // Create a root node for the algorithm
     BPNode root = RootNode(routes);
     CGResult result = column_generation(
@@ -45,12 +39,8 @@ CGResult full_cg_procedure(const Instance & instance, const ColumnGenerationPara
     int pricing_time = result.pricing_time;
     int integer_time = result.integer_time;
 
-    MasterSolution master_solution = result.master_solution;
-    IntegerSolution integer_solution = result.integer_solution;
-
-
     // If the integer solution is not feasible, we can't do much
-    if (!integer_solution.is_feasible){
+    if (!result.integer_solution.is_feasible){
         cout << "-----------------------------------" << endl;
         cout << "The integer solution is not feasible" << endl;
         return CGResult{};
@@ -63,13 +53,9 @@ CGResult full_cg_procedure(const Instance & instance, const ColumnGenerationPara
     // Repair the integer solution
     cout << "-----------------------------------" << endl;
     cout << "Repairing the integer solution" << endl;
-    routes = repair_routes(routes, integer_solution, instance);
-    integer_solution = AllOnesSolution(routes.size());
-    integer_solution.objective_value = compute_integer_objective(integer_solution, routes, instance);
-    cout << "Objective value of the repaired solution : " << setprecision(15) << integer_solution.objective_value << endl;
-
-    // Print the routes in the integer solution (in detail)
-    // full_analysis(integer_solution, routes, instance);
+    repair_routes(routes, result.integer_solution, instance);
+    result.integer_solution.objective_value = compute_integer_objective(result.integer_solution, routes, instance);
+    cout << "Objective value of the repaired solution : " << setprecision(15) << result.integer_solution.objective_value << endl;
 
     int elapsed_time = chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - procedure_start).count();
     // Print the time it took to solve the master problem
@@ -79,19 +65,9 @@ CGResult full_cg_procedure(const Instance & instance, const ColumnGenerationPara
     cout << "Total time spent solving the integer problem : " << integer_time << " ms" << endl;
     cout << "Total elapsed time : " << elapsed_time << " ms" << endl;
 
-    full_analysis(integer_solution, routes, instance);
-    cout << "True cost of the integer solution : " << compute_integer_objective(integer_solution, routes, instance) << endl;
+    full_analysis(result.integer_solution, routes, instance);
 
     cout << "-----------------------------------" << endl;
 
-    //print_used_routes(integer_solution, routes, instance);
-
-    // Dump the results to a file
-    // Append the time to the filename
-    const auto now = chrono::zoned_time(std::chrono::current_zone(), chrono::system_clock::now());
-    string date = std::format("{:%Y-%m-%d-%H-%M-%OS}", now);
-    string output_filename = "../results/" + instance.name + "_" + date + ".json";
-    double seconds = elapsed_time / 1000.0;
-    export_solution(output_filename, instance, integer_solution, routes, seconds, parameters, result.objective_values, result.objective_time_points);
-
+    return result;
 }

@@ -36,7 +36,6 @@ int main(int argc, char** argv) {
     string fileprefix = INSTANCE_FILE;
     string filename = "../data/" + fileprefix + ".json";
     Instance instance = parse_file(filename, fileprefix, N_INTERVENTIONS, VERBOSE);
-    instance.M = compute_M_naive(instance);
 
     preprocess_interventions(instance);
 

@@ -4,4 +4,4 @@
 #include "column_generation.h"
 
 
-CGResult full_cg_procedure(const Instance & instance, const ColumnGenerationParameters & parameters);
+CGResult full_cg_procedure(const Instance & instance, std::vector<Route> & routes, const ColumnGenerationParameters & parameters);

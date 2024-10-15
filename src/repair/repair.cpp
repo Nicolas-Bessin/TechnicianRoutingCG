@@ -40,24 +40,15 @@ void delete_intervention(Route& route, int intervention, const Instance& instanc
     route.total_cost += (distance_added - distance_deleted) * instance.cost_per_km;
 }
 
-std::vector<Route> repair_routes(const std::vector<Route>& routes, const IntegerSolution& solution, const Instance& instance) {
+void repair_routes(std::vector<Route>& routes, IntegerSolution& solution, const Instance& instance) {
     using std::vector;
 
-    // First, create a vector with only the routes that are used
-    vector<Route> used_routes;
-    for (int i = 0; i < routes.size(); i++){
-        if (solution.coefficients[i] > 0){
-            used_routes.push_back(routes[i]);
-        }
-    }
-
-
-    // Then, for every intervention, build a vector of the routes that cover it
+    // For every intervention, build a vector of the routes that cover it
     int n_interventions = instance.number_interventions;
     vector<vector<int>> routes_covering_intervention = vector<vector<int>>(n_interventions);
-    for (int r = 0; r < used_routes.size(); r++){
+    for (int r = 0; r < routes.size(); r++){
         for (int i = 0; i < n_interventions; i++){
-            if (used_routes[r].is_in_route[i] > 0){
+            if (solution.coefficients[r] > 0 && routes[r].is_in_route[i] > 0){
                 routes_covering_intervention[i].push_back(r);
             }
         }
@@ -65,34 +56,31 @@ std::vector<Route> repair_routes(const std::vector<Route>& routes, const Integer
 
     // Finally, process the routes that cover it and remove the intervention where adventageous
     for (int i = 0; i < n_interventions; i++){
-        if (routes_covering_intervention[i].size() > 1){
-            // If there are multiple routes covering the intervention, compute the "delta" of removing the intervention from each route
-            vector<double> delta = vector<double>(routes_covering_intervention[i].size());
-            for (int r = 0; r < routes_covering_intervention[i].size(); r++){
-                Route route = used_routes[routes_covering_intervention[i][r]];
-                delta[r] = compute_delta(route, i , instance);
-            }
-            // Sort the routes by the delta
-            vector<int> indexes(routes_covering_intervention[i].size());
-            std::iota(indexes.begin(), indexes.end(), 0);
-            std::sort(indexes.begin(), indexes.end(), [&delta](int i1, int i2) {return delta[i1] > delta[i2];});
+        if (routes_covering_intervention[i].size() <= 1){
+            continue;
+        }
+        // If there are multiple routes covering the intervention, compute the "delta" of removing the intervention from each route
+        vector<double> delta = vector<double>(routes_covering_intervention[i].size());
+        for (int r = 0; r < routes_covering_intervention[i].size(); r++){
+            Route& route = routes[routes_covering_intervention[i][r]];
+            delta[r] = compute_delta(route, i , instance);
+        }
+        // Sort the routes by the delta
+        vector<int> indexes(routes_covering_intervention[i].size());
+        std::iota(indexes.begin(), indexes.end(), 0);
+        std::sort(indexes.begin(), indexes.end(), [&delta](int i1, int i2) {return delta[i1] > delta[i2];});
 
-            // Remove the intervention from all the routes except the one with the highest delta
-            for (int j = 0; j < indexes.size() - 1; j++){
-                int r = routes_covering_intervention[i][indexes[j]];
-                delete_intervention(used_routes[r], i, instance);
-            }
+        // Remove the intervention from all the routes except the one with the highest delta
+        for (int j = 0; j < indexes.size() - 1; j++){
+            int r = routes_covering_intervention[i][indexes[j]];
+            delete_intervention(routes[r], i, instance);
         }
     }
 
     // Remove the routes that are empty
-    for (auto it = used_routes.begin(); it != used_routes.end();){
-        if (it->id_sequence.size() == 2){
-            it = used_routes.erase(it);
-        } else {
-            it++;
+    for (int r = 0; r < routes.size(); r++){
+        if (routes[r].id_sequence.size() == 2){
+            solution.coefficients[r] = 0;
         }
     }
-
-    return used_routes;
 }
