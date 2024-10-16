@@ -43,7 +43,7 @@ int main(int argc, char *argv[]){
     ColumnGenerationParameters parameters = ColumnGenerationParameters({
         {"time_limit", TIME_LIMIT},
         {"reduced_cost_threshold", 1e-6},
-        {"verbose", VERBOSE},
+        {"verbose", false},
         {"max_iterations", 1000},
         {"max_consecutive_non_improvement", 5},
         {"compute_integer_solution", true},
@@ -59,8 +59,7 @@ int main(int argc, char *argv[]){
 
 
     vector<string> PRICING_FUNCTIONS = {
-        PRICING_PATHWYSE_BASIC,
-        PRICING_DIVERSIFICATION
+        PRICING_PATHWYSE_BASIC
     };
 
     for (const auto& name : SMALL_INSTANCES){
@@ -81,6 +80,8 @@ int main(int argc, char *argv[]){
         title("Objective value over time for small instances");
         xlabel("Time (s)");
         ylabel("Objective value");
+        // Set the axis size to the maximum time
+        xlim({0, TIME_LIMIT * 1.2});
         hold(on);
 
         for (const auto& algo_name : PRICING_FUNCTIONS) {

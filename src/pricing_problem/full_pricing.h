@@ -125,3 +125,6 @@ inline constexpr std::array<std::string, 5> PA_VARIATIONS = {
     PRICING_MPA_GROUPED,
     PRICING_MPA_GROUPED_PAR
 };
+
+
+inline constexpr std::string PRICING_PW_PA = "pathwyse+pulse";

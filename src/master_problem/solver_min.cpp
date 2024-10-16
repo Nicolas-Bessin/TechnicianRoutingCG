@@ -1,4 +1,4 @@
-#include "solver2.h"
+#include "solver_min.h"
 
 
 GRBModel create_model(
@@ -117,4 +117,35 @@ MasterSolution extract_solution(
 
     return MasterSolution{coefficients, alphas, betas, objective_value};
 
+}
+
+
+void set_integer_variables(
+    GRBModel& model,
+    std::vector<GRBVar>& route_vars,
+    std::vector<GRBVar>& postpone_vars
+) {
+    for (GRBVar& var : route_vars){
+        var.set(GRB_CharAttr_VType, GRB_BINARY);
+    }
+    for (GRBVar& var : postpone_vars){
+        var.set(GRB_CharAttr_VType, GRB_BINARY);
+    }
+}
+
+IntegerSolution extract_integer_solution(
+    const GRBModel& model,
+    const std::vector<GRBVar>& route_vars
+) {
+    using std::vector;
+    // Get the objective value
+    double objective_value = model.get(GRB_DoubleAttr_ObjVal);
+    
+    // Get the coefficients of the variables
+    vector<int> coefficients = vector<int>(route_vars.size());
+    for (int i = 0; i < route_vars.size(); i++){
+        coefficients[i] = route_vars[i].get(GRB_DoubleAttr_X);
+    }
+
+    return IntegerSolution{coefficients, objective_value};
 }

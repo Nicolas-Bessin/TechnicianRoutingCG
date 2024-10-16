@@ -55,3 +55,18 @@ MasterSolution extract_solution(
 );
 
 
+// Set the variables to integer values
+void set_integer_variables(
+    GRBModel& model,
+    std::vector<GRBVar>& route_vars,
+    std::vector<GRBVar>& postpone_vars
+);
+
+
+// Extracts an integer solution from the model
+IntegerSolution extract_integer_solution(
+    const GRBModel& model,
+    const std::vector<GRBVar>& route_vars
+);
+
+

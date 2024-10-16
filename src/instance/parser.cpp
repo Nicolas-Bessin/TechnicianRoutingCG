@@ -227,16 +227,35 @@ Instance parse_file(string filename, string instance_name, int nb_interventions,
             }
         }
         // Check that every technician in the team has the same operationnal base
-        string operationnal_base = technicians[team_ids[0]].operationnal_base;
+        vector<string> operationnal_bases = {};
+        set<string> operationnal_bases_set = set<string>();
         for (const string& id : team_ids){
-            if (technicians[id].operationnal_base != operationnal_base){
-                cout << "Warning : technicians in the same team must have the same operationnal base - team " << v << endl;
-                cout << "Technician " << id << " has operationnal base " << technicians[id].operationnal_base << endl;
-                cout << "Technician " << team_ids[0] << " has operationnal base " << technicians[team_ids[0]].operationnal_base << endl;
-                // operationnal_base = "ope_base5";
-                // cout << "HARD-CODING the operationnal base to " << operationnal_base << endl;
-            }
+            operationnal_bases.push_back(technicians[id].operationnal_base);
+            operationnal_bases_set.insert(technicians[id].operationnal_base);
         }
+        if (operationnal_bases_set.size() != 1){
+            cout << "Error: team " << v << " has technicians with different operationnal bases" << endl;
+            cout << "Operationnal bases: {";
+            for (const string &base : operationnal_bases){
+                cout << base << ", ";
+            }
+            cout << "} - Technicians: {";
+            for (const string &id : team_ids){
+                cout << id << ", ";
+            }
+            cout << "}" << endl;
+        }
+        // Set the operationnal base as to the first available one in operationnal_bases
+        string operationnal_base = operationnal_bases[0];
+        int operationnal_base_index = 0;
+        while (operationnal_base_index < operationnal_bases.size() && !node_id_to_index.contains(operationnal_base)){
+            operationnal_base = operationnal_bases[++operationnal_base_index];
+        }
+        if (!node_id_to_index.contains(operationnal_base)){
+            cout << "Error: team " << v << " has no available operationnal base" << endl;
+            exit(1);
+        }
+
         // Get the depot node
         int depot = node_id_to_index[operationnal_base];
         // Build the capacities of the vehicles as the min of the capacities of each technician for each ressource

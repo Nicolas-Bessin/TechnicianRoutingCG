@@ -1,6 +1,6 @@
 #include "column_generation.h"
 
-#include "master_problem/solver2.h"
+#include "master_problem/solver_min.h"
 #include "master_problem/rmp_solver.h"
 #include "master_problem/integer_solution.h"
 #include "master_problem/node.h"
@@ -174,7 +174,28 @@ CGResult column_generation(
                 parameters.solution_pool_size,
                 parameters.pricing_verbose
             );
-        } 
+        } else if (parameters.pricing_function == PRICING_PW_PA) {
+            // Begin by solving the Pathwyse heuristic
+            if (!using_cyclic_pricing){
+                new_routes = full_pricing_problems_basic(
+                    convex_dual_solution,
+                    instance,
+                    vehicle_order,
+                    using_cyclic_pricing,
+                    n_ressources_dominance
+                );
+            } else {
+                // Then, solve the PA
+                new_routes = full_pricing_problems_basic_pulse(
+                    convex_dual_solution,
+                    instance,
+                    vehicle_order,
+                    parameters.delta,
+                    parameters.solution_pool_size,
+                    parameters.pricing_verbose
+                );
+            }
+        }
 
         // We add the new routes to the global routes vector
         double min_reduced_cost = std::numeric_limits<double>::infinity();
@@ -304,7 +325,9 @@ CGResult column_generation(
     int integer_time = 0;
     if (compute_integer_solution) {
         auto start_integer = chrono::steady_clock::now();
-        integer_solution = integer_RMP(instance, routes, node, parameters.time_limit, false);
+        set_integer_variables(model, route_vars, postpone_vars);
+        int status = solve_model(model);
+        integer_solution = extract_integer_solution(model, route_vars);
         auto end_integer = chrono::steady_clock::now();
         integer_time = chrono::duration_cast<chrono::milliseconds>(end_integer - start_integer).count();
         cout << "Integer RMP objective value : " << integer_solution.objective_value << endl;
@@ -313,7 +336,6 @@ CGResult column_generation(
         cout << "Integer RMP maximum formulation objective value : " << setprecision(15) << integer_maximum_objective << endl;
         double gap = std::abs(solution.objective_value - integer_solution.objective_value) / integer_solution.objective_value;
         cout << "Gap between the relaxed and integer RMP : " << setprecision(5) << gap << endl;
-
         double gap_max = std::abs(relaxed_maximum_objective - integer_maximum_objective) / integer_maximum_objective;
         cout << "Gap between the relaxed and integer RMP (maximum formulation) : " << setprecision(5) << gap_max << endl;
     }
