@@ -70,4 +70,7 @@ IntegerSolution extract_integer_solution(
     const std::vector<GRBVar>& route_vars
 );
 
+// Convert a list of objective values in the maximisation formulation to the minimisation formulation or vice versa
+std::vector<double> convert_min_max_objective(const std::vector<double>& objectives, const Instance& instance);
+
 

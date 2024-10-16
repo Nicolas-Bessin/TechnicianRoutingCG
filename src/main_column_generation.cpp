@@ -2,7 +2,7 @@
 #include "instance/preprocessing.h"
 
 #include "master_problem/master.h"
-#include "master_problem/rmp_solver.h"
+#include "master_problem/master_solver.h"
 #include "master_problem/node.h"
 
 #include "pricing_problem/subproblem.h"
@@ -27,7 +27,7 @@
 
 inline constexpr int TIME_LIMIT = 60;
 inline constexpr bool VERBOSE = true;
-inline constexpr bool EXPORT_SOLUTION = false;
+inline constexpr bool EXPORT_SOLUTION = true;
 
 int main(int argc, char *argv[]){
 
@@ -43,7 +43,7 @@ int main(int argc, char *argv[]){
     ColumnGenerationParameters parameters = ColumnGenerationParameters({
         {"time_limit", TIME_LIMIT},
         {"reduced_cost_threshold", 1e-6},
-        {"verbose", true},
+        {"verbose", false},
         {"max_iterations", 1000},
         {"max_consecutive_non_improvement", 5},
         {"compute_integer_solution", true},
@@ -63,14 +63,12 @@ int main(int argc, char *argv[]){
         PRICING_PATHWYSE_BASIC
     };
 
-    for (const auto& name : {SMALL_INSTANCES[0]}){
+    for (const auto& name : SMALL_INSTANCES){
         // Parse the instance from a JSON file
         auto start = chrono::steady_clock::now();
         cout << "-----------------------------------" << endl;
         string filename = "../data/" + name + ".json";
-        Instance instance = parse_file(filename, name, 25, VERBOSE);
-        instance.M = compute_M_naive(instance);
-        cout << "Big M value : " << instance.M << endl;
+        Instance instance = parse_file(filename, name, SMALL_SIZE, VERBOSE);
 
         preprocess_interventions(instance);
 
@@ -96,6 +94,7 @@ int main(int argc, char *argv[]){
             cout << "Starting the column generation algorithm" << endl;
             parameters.max_resources_dominance = instance.capacities_labels.size() + 1;
             parameters.pricing_function = algo_name;
+            parameters.use_maximisation_formulation = false;
 
             CGResult result = full_cg_procedure(instance, routes, parameters);
 
@@ -145,10 +144,11 @@ int main(int argc, char *argv[]){
                 plot_name += " - α=" + std::to_string(parameters.alpha);
             }
             std::replace(plot_name.begin(), plot_name.end(), '_', ' ');
+            time_points_sec = vector<double>(result.objective_time_points.size());
             for (int i = 0; i < result.objective_time_points.size(); i++){
                 time_points_sec[i] = result.objective_time_points[i] / 1000.0;
             }
-            semilogy(time_points_sec, result.objective_values)
+            semilogy(time_points_sec, convert_min_max_objective(result.objective_values, instance))
                 ->display_name(plot_name);
         }
 

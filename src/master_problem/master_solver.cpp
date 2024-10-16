@@ -188,3 +188,20 @@ IntegerSolution extract_integer_solution(
 
     return IntegerSolution{coefficients, objective_value};
 }
+
+
+std::vector<double> convert_min_max_objective(const std::vector<double>& objectives, const Instance& instance){
+    // Compute the constant part of the objective
+    double constant_part = 0;
+    for (int i = 0; i < instance.number_interventions; i++){
+        constant_part += instance.nodes[i].duration * instance.M;
+    }
+
+    // Compute the new objective values
+    std::vector<double> new_objective;
+    for (double value : objectives){
+        new_objective.push_back(constant_part - value);
+    };  
+
+    return new_objective;  
+}

@@ -50,13 +50,16 @@ CGResult full_cg_procedure(const Instance & instance, std::vector<Route>& routes
     cout << "Number of routes generated : " << n_routes_generated;
     cout << " - Number of duplicate routes : " << count_routes_with_duplicates(routes);
     cout << " - Average time to generate a route : " << pricing_time / n_routes_generated << " ms" << endl;
-    // Repair the integer solution
-    cout << "-----------------------------------" << endl;
-    cout << "Repairing the integer solution" << endl;
-    repair_routes(routes, result.integer_solution, instance);
-    result.integer_solution.objective_value = compute_integer_objective(result.integer_solution, routes, instance);
-    cout << "Objective value of the repaired solution : " << setprecision(15) << result.integer_solution.objective_value << endl;
 
+    if (!parameters.use_maximisation_formulation){
+        // Repair the integer solution
+        cout << "-----------------------------------" << endl;
+        cout << "Repairing the integer solution" << endl;
+        repair_routes(routes, result.integer_solution, instance);
+        result.integer_solution.objective_value = compute_integer_objective(result.integer_solution, routes, instance);
+        cout << "Objective value of the repaired solution : " << setprecision(15) << result.integer_solution.objective_value << endl;
+    }
+    
     int elapsed_time = chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - procedure_start).count();
     // Print the time it took to solve the master problem
     cout << "-----------------------------------" << endl;

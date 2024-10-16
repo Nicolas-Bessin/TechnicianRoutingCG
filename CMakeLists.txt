@@ -55,8 +55,6 @@ set(
     src/master_problem/rmp_solver.cpp
     src/master_problem/node.h 
     src/master_problem/node.cpp
-    src/master_problem/integer_solution.h
-    src/master_problem/integer_solution.cpp
     src/master_problem/master_solver.h 
     src/master_problem/master_solver.cpp
 

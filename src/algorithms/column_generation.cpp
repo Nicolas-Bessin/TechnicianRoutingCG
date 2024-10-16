@@ -2,7 +2,6 @@
 
 #include "master_problem/master_solver.h"
 #include "master_problem/rmp_solver.h"
-#include "master_problem/integer_solution.h"
 #include "master_problem/node.h"
 
 #include "routes/route_optimizer.h"
@@ -313,7 +312,11 @@ CGResult column_generation(
             stop = true;
         }
         // Count the number of consecutive non improvement
-        if (solution.objective_value >= previous_solution_objective){
+        if (parameters.use_maximisation_formulation 
+            && solution.objective_value <= previous_solution_objective){
+            consecutive_non_improvement++;
+        } else if (!parameters.use_maximisation_formulation 
+            && solution.objective_value >= previous_solution_objective){
             consecutive_non_improvement++;
         } else {
             consecutive_non_improvement = 0;
