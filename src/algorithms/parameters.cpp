@@ -22,6 +22,9 @@ ColumnGenerationParameters::ColumnGenerationParameters(std::map<std::string, std
     if (args.contains("compute_integer_solution")) {
         compute_integer_solution = std::any_cast<bool>(args["compute_integer_solution"]);
     }
+    if (args.contains("use_maximisation_formulation")) {
+        use_maximisation_formulation = std::any_cast<bool>(args["use_maximisation_formulation"]);
+    }
 
     // Pathwyse related parameters
     if (args.contains("max_resources_dominance")) {

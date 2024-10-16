@@ -19,6 +19,6 @@ public:
     void bound();
 
     // Parallelized version of the solving part
-    int solve(double fixed_cost, double dual_value, std::vector<int> available_interventions);
+    int solve(double fixed_cost, double dual_value, std::vector<int> available_interventions, bool use_maximisation_formulation);
 
 };

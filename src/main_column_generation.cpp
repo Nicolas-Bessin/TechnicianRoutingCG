@@ -25,9 +25,9 @@
 #include <chrono>
 #include <format>
 
-inline constexpr int TIME_LIMIT = 10;
+inline constexpr int TIME_LIMIT = 60;
 inline constexpr bool VERBOSE = true;
-
+inline constexpr bool EXPORT_SOLUTION = false;
 
 int main(int argc, char *argv[]){
 
@@ -43,10 +43,11 @@ int main(int argc, char *argv[]){
     ColumnGenerationParameters parameters = ColumnGenerationParameters({
         {"time_limit", TIME_LIMIT},
         {"reduced_cost_threshold", 1e-6},
-        {"verbose", false},
+        {"verbose", true},
         {"max_iterations", 1000},
         {"max_consecutive_non_improvement", 5},
         {"compute_integer_solution", true},
+        {"use_maximisation_formulation", false},
         {"max_resources_dominance", MAX_RESOURCES_DOMINANCE},
         {"switch_to_cyclic_price", true},
         {"delta ", 50},
@@ -62,12 +63,14 @@ int main(int argc, char *argv[]){
         PRICING_PATHWYSE_BASIC
     };
 
-    for (const auto& name : SMALL_INSTANCES){
+    for (const auto& name : {SMALL_INSTANCES[0]}){
         // Parse the instance from a JSON file
         auto start = chrono::steady_clock::now();
         cout << "-----------------------------------" << endl;
         string filename = "../data/" + name + ".json";
-        Instance instance = parse_file(filename, name, SMALL_SIZE, VERBOSE);
+        Instance instance = parse_file(filename, name, 25, VERBOSE);
+        instance.M = compute_M_naive(instance);
+        cout << "Big M value : " << instance.M << endl;
 
         preprocess_interventions(instance);
 
@@ -85,19 +88,16 @@ int main(int argc, char *argv[]){
         hold(on);
 
         for (const auto& algo_name : PRICING_FUNCTIONS) {
+            // --------- MIN FORMULATION ---------
             vector<Route> routes;
             cout << "Initializing the routes with an empty route" << endl;
             routes = vector<Route>();
             routes.push_back(EmptyRoute(instance.nodes.size()));
-            
             cout << "Starting the column generation algorithm" << endl;
-
             parameters.max_resources_dominance = instance.capacities_labels.size() + 1;
             parameters.pricing_function = algo_name;
 
             CGResult result = full_cg_procedure(instance, routes, parameters);
-
-            //print_used_routes(integer_solution, routes, instance);
 
             // Plot the objective value over time
             string plot_name = instance.name + " - " + parameters.pricing_function;
@@ -112,22 +112,44 @@ int main(int argc, char *argv[]){
             semilogy(time_points_sec, result.objective_values)
                 ->display_name(plot_name);
 
-            // Dump the results to a file
-            // Append the time to the filename
-            const auto now = chrono::zoned_time(std::chrono::current_zone(), chrono::system_clock::now());
-            string date = std::format("{:%Y-%m-%d-%H-%M-%OS}", now);
-            string output_filename = "../results/" + name + "_" + date + ".json";
-            int elapsed_time = chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - start).count();
-            double seconds = elapsed_time / 1000.0;
-            export_solution(
-                output_filename, 
-                instance, 
-                result.integer_solution, 
-                routes, 
-                seconds, 
-                parameters, 
-                result.objective_values, 
-                result.objective_time_points);
+
+            if (EXPORT_SOLUTION){
+                // Dump the results to a file
+                // Append the time to the filename
+                const auto now = chrono::zoned_time(std::chrono::current_zone(), chrono::system_clock::now());
+                string date = std::format("{:%Y-%m-%d-%H-%M-%OS}", now);
+                string output_filename = "../results/" + name + "_" + date + ".json";
+                export_solution(
+                    output_filename, 
+                    instance, 
+                    result,
+                    routes, 
+                    parameters
+                );
+            }
+
+            // --------- MAX FORMULATION ---------
+            cout << "Initializing the routes with an empty route" << endl;
+            routes = vector<Route>();
+            routes.push_back(EmptyRoute(instance.nodes.size()));
+            cout << "Starting the column generation algorithm" << endl;
+            parameters.max_resources_dominance = instance.capacities_labels.size() + 1;
+            parameters.pricing_function = algo_name;
+            parameters.use_maximisation_formulation = true;
+
+            result = full_cg_procedure(instance, routes, parameters);
+
+            // Plot the objective value over time
+            plot_name = instance.name + " - " + parameters.pricing_function + " - Maximisation";
+            if (parameters.use_stabilisation){
+                plot_name += " - α=" + std::to_string(parameters.alpha);
+            }
+            std::replace(plot_name.begin(), plot_name.end(), '_', ' ');
+            for (int i = 0; i < result.objective_time_points.size(); i++){
+                time_points_sec[i] = result.objective_time_points[i] / 1000.0;
+            }
+            semilogy(time_points_sec, result.objective_values)
+                ->display_name(plot_name);
         }
 
         // Set the legend

@@ -378,11 +378,16 @@ void PulseAlgorithm::pulse(int vertex, int time, std::vector<int>quantities, dou
 }
 
 
-int PulseAlgorithm::solve(double fixed_cost, double dual_value) {
+int PulseAlgorithm::solve(double fixed_cost, double dual_value, bool use_maximisation_formulation) {
     // Launch the pulse algorithm
     reset();
     PartialPath path = EmptyPath(N);
-    double initial_cost = fixed_cost - dual_value;
+    double initial_cost;
+    if (use_maximisation_formulation) {
+        initial_cost = fixed_cost + dual_value;
+    } else {
+        initial_cost = fixed_cost - dual_value;
+    }
     pulse(origin, 0, std::vector<int>(K, 0), initial_cost, path);
 
     if(best_objective == std::numeric_limits<double>::infinity()) {
@@ -393,11 +398,11 @@ int PulseAlgorithm::solve(double fixed_cost, double dual_value) {
 }
 
 
-int PulseAlgorithm::bound_and_solve(double fixed_cost, double dual_value) {
+int PulseAlgorithm::bound_and_solve(double fixed_cost, double dual_value, bool use_maximisation_formulation) {
     // Launch the bounding phase
     reset();
     bound();
-    return solve(fixed_cost, dual_value);
+    return solve(fixed_cost, dual_value, use_maximisation_formulation);
 }
 
 

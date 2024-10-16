@@ -79,10 +79,10 @@ public :
     void bound();
 
     // Only the solving part of the pulse algorithm
-    int solve(double fixed_cost, double dual_value);
+    int solve(double fixed_cost, double dual_value, bool use_maximisation_formulation);
     
     // Full solving procedure, returns an error code (0 if everything went well)
-    int bound_and_solve(double fixed_cost, double dual_value);
+    int bound_and_solve(double fixed_cost, double dual_value, bool use_maximisation_formulation);
 
     // Getters
     PartialPath get_best_path() {return best_path;}

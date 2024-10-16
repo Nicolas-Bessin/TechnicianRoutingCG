@@ -17,6 +17,7 @@ std::vector<Route> full_pricing_problems_basic(
     const DualSolution & solution,
     const Instance & instance,
     const std::vector<int> & vehicle_order,
+    bool use_maximisation_formulation,
     bool using_cyclic_pricing,
     int n_ressources_dominance
 );
@@ -31,6 +32,7 @@ std::vector<Route> full_pricing_problems_diversification(
     const DualSolution & solution,
     const Instance & instance,
     const std::vector<int> & vehicle_order,
+    bool use_maximisation_formulation,
     bool using_cyclic_pricing,
     int n_ressources_dominance,
     int seed = RANDOM_SEED
@@ -41,6 +43,7 @@ std::vector<Route> full_pricing_problems_clustering(
     const DualSolution & solution,
     const Instance & instance,
     const std::vector<int> &vehicle_order,
+    bool use_maximisation_formulation,
     bool using_cyclic_pricing,
     int n_ressources_dominance,
     int seed = RANDOM_SEED
@@ -52,6 +55,7 @@ std::vector<Route> full_pricing_problems_tabu_search(
     const DualSolution & solution,
     const Instance & instance,
     const std::vector<int> &vehicle_order,
+    bool use_maximisation_formulation,
     bool using_cyclic_pricing,
     int n_ressources_dominance,
     int max_iterations,
@@ -65,6 +69,7 @@ std::vector<Route> full_pricing_problems_basic_pulse(
     const DualSolution & solution,
     const Instance & instance,
     const std::vector<int> & vehicle_order,
+    bool use_maximisation_formulation,
     int delta = 10,
     int pool_size = 10,
     bool verbose = false
@@ -76,6 +81,7 @@ std::vector<Route> full_pricing_problems_grouped_pulse(
     const DualSolution & solution,
     const Instance & instance,
     const std::map<int, std::vector<int>> & vehicle_groups,
+    bool use_maximisation_formulation,
     int delta = 10,
     int pool_size = 10,
     bool verbose = false
@@ -87,6 +93,7 @@ std::vector<Route> full_pricing_problems_multithreaded_pulse(
     const DualSolution & solution,
     const Instance & instance,
     const std::vector<int> & vehicle_order,
+    bool use_maximisation_formulation,
     int delta = 10,
     int pool_size = 10,
     bool verbose = false
@@ -99,6 +106,7 @@ std::vector<Route> full_pricing_problems_grouped_pulse_multithreaded(
     const DualSolution & solution,
     const Instance & instance,
     const std::map<int, std::vector<int>> & vehicle_groups,
+    bool use_maximisation_formulation,
     int delta = 10,
     int pool_size = 10,
     bool verbose = false
@@ -111,6 +119,7 @@ std::vector<Route> full_pricing_problems_grouped_pulse_par_par(
     const DualSolution & solution,
     const Instance & instance,
     const std::map<int, std::vector<int>> & vehicle_groups,
+    bool use_maximisation_formulation,
     int delta = 10,
     int pool_size = 10,
     bool verbose = false

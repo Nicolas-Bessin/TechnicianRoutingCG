@@ -427,18 +427,18 @@ void print_route(const Route & route, const Instance & instance, const MasterSol
     // Print the tvehicle cost, travelling cost and total cost
     double travel_distance = count_route_kilometres(route, instance);
     cout << setprecision(1) << fixed;
-    cout << "Vehicle cost: " << instance.vehicles[route.vehicle_id].cost << " ";
-    cout << "Travelling cost: " << travel_distance * instance.cost_per_km << " ";
-    cout << "Total cost: " << route.total_cost << endl;
-    // Print the kilometres along the route
-    cout << "Total distance: " << travel_distance << endl;
+    cout << "Vehicle cost: " << instance.vehicles[route.vehicle_id].cost;
+    cout << " - Travelling cost: " << travel_distance * instance.cost_per_km;
+    cout << " - Total distance: " << travel_distance;
+    cout << " - Total cost: " << route.total_cost << endl;
     // Print the total duration, travelling time and waiting time
-    cout << "Total duration: " << route.total_duration << " ";
-    cout << "Total travelling time: " << compute_total_travelling_time(route, instance) << " ";
-    cout << "Total waiting time: " << compute_total_waiting_time(route, instance) << endl;
+    cout << "Total duration: " << route.total_duration;
+    cout << " - Total travelling time: " << compute_total_travelling_time(route, instance);
+    cout << " - Total waiting time: " << compute_total_waiting_time(route, instance) << endl;
     // Print the objective coefficient of the route
     double coef = instance.M * route.total_duration - route.total_cost;
-    cout << "Objective coefficient: " << coef << endl;
+    cout << "Reduced cost: " << route.reduced_cost;
+    cout << " - Objective coefficient: " << coef << endl;
     // Set the column width in the tab
     int col_width = 4;
     if (solution.is_feasible) {

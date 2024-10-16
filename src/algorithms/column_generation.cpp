@@ -1,6 +1,6 @@
 #include "column_generation.h"
 
-#include "master_problem/solver_min.h"
+#include "master_problem/master_solver.h"
 #include "master_problem/rmp_solver.h"
 #include "master_problem/integer_solution.h"
 #include "master_problem/node.h"
@@ -35,8 +35,6 @@ CGResult column_generation(
     using std::unique_ptr;
     namespace chrono = std::chrono;
 
-    auto start_time = chrono::steady_clock::now();
-
     int master_time = 0;
     int pricing_time = 0;
     
@@ -45,8 +43,15 @@ CGResult column_generation(
     vector<GRBVar> postpone_vars;
     vector<GRBConstr> intervention_ctrs;
     vector<GRBConstr> vehicle_ctrs;
-
-    GRBModel model = create_model(instance, routes, route_vars, postpone_vars, intervention_ctrs, vehicle_ctrs);
+    GRBModel model = create_model(
+        instance, 
+        routes, 
+        route_vars, 
+        postpone_vars, 
+        intervention_ctrs,
+        vehicle_ctrs,
+        parameters.use_maximisation_formulation
+    );
 
     // Main loop of the column generation algorithm
     int iteration = 0;
@@ -81,6 +86,8 @@ CGResult column_generation(
         max_resources_dominance = instance.capacities_labels.size() + 1;
     }
 
+    auto start_time = chrono::steady_clock::now();
+
     while (
         !stop && 
         !(consecutive_non_improvement == parameters.max_consecutive_non_improvement) && 
@@ -105,6 +112,7 @@ CGResult column_generation(
                 convex_dual_solution,
                 instance,
                 vehicle_order,
+                parameters.use_maximisation_formulation,
                 using_cyclic_pricing,
                 n_ressources_dominance
             );
@@ -113,6 +121,7 @@ CGResult column_generation(
                 convex_dual_solution,
                 instance,
                 vehicle_order,
+                parameters.use_maximisation_formulation,
                 using_cyclic_pricing,
                 n_ressources_dominance,
                 iteration
@@ -122,6 +131,7 @@ CGResult column_generation(
                 convex_dual_solution,
                 instance,
                 vehicle_order,
+                parameters.use_maximisation_formulation,
                 using_cyclic_pricing,
                 n_ressources_dominance,
                 iteration
@@ -131,6 +141,7 @@ CGResult column_generation(
                 convex_dual_solution,
                 instance,
                 vehicle_order,
+                parameters.use_maximisation_formulation,
                 parameters.delta,
                 parameters.solution_pool_size,
                 parameters.pricing_verbose
@@ -141,6 +152,7 @@ CGResult column_generation(
                 convex_dual_solution,
                 instance,
                 vehicle_groups,
+                parameters.use_maximisation_formulation,
                 parameters.delta,
                 parameters.solution_pool_size,
                 parameters.pricing_verbose
@@ -150,6 +162,7 @@ CGResult column_generation(
                 convex_dual_solution,
                 instance,
                 vehicle_order,
+                parameters.use_maximisation_formulation,
                 parameters.delta,
                 parameters.solution_pool_size,
                 parameters.pricing_verbose
@@ -160,6 +173,7 @@ CGResult column_generation(
                 convex_dual_solution,
                 instance,
                 vehicle_groups,
+                parameters.use_maximisation_formulation,
                 parameters.delta,
                 parameters.solution_pool_size,
                 parameters.pricing_verbose
@@ -170,6 +184,7 @@ CGResult column_generation(
                 convex_dual_solution,
                 instance,
                 vehicle_groups,
+                parameters.use_maximisation_formulation,
                 parameters.delta,
                 parameters.solution_pool_size,
                 parameters.pricing_verbose
@@ -181,6 +196,7 @@ CGResult column_generation(
                     convex_dual_solution,
                     instance,
                     vehicle_order,
+                    parameters.use_maximisation_formulation,
                     using_cyclic_pricing,
                     n_ressources_dominance
                 );
@@ -190,6 +206,7 @@ CGResult column_generation(
                     convex_dual_solution,
                     instance,
                     vehicle_order,
+                    parameters.use_maximisation_formulation,
                     parameters.delta,
                     parameters.solution_pool_size,
                     parameters.pricing_verbose
@@ -199,24 +216,38 @@ CGResult column_generation(
 
         // We add the new routes to the global routes vector
         double min_reduced_cost = std::numeric_limits<double>::infinity();
-        for (Route& new_route : new_routes){
-            min_reduced_cost = std::min(min_reduced_cost, new_route.reduced_cost);
-            if (new_route.reduced_cost < - parameters.reduced_cost_threshold) {
-                routes.push_back(new_route);
-                node.active_routes.insert(routes.size() - 1);
-                n_added_routes++;
+        double max_reduced_cost = - std::numeric_limits<double>::infinity();
+        if (parameters.use_maximisation_formulation) {
+            for (Route& new_route : new_routes){
+                max_reduced_cost = std::max(max_reduced_cost, new_route.reduced_cost);
+                if (new_route.reduced_cost > parameters.reduced_cost_threshold){
+                    add_route(model, new_route, instance, route_vars, intervention_ctrs, vehicle_ctrs, true);
+                    n_added_routes++;
+                    routes.push_back(new_route);
 
-                // Add the route to the model
-                add_route(model, new_route, instance, route_vars, intervention_ctrs, vehicle_ctrs);
+                }
             }
-        }        
+        } else {
+            for (Route& new_route : new_routes){
+                min_reduced_cost = std::min(min_reduced_cost, new_route.reduced_cost);
+                if (new_route.reduced_cost < - parameters.reduced_cost_threshold){
+                    add_route(model, new_route, instance, route_vars, intervention_ctrs, vehicle_ctrs, false);
+                    n_added_routes++;
+                    routes.push_back(new_route);
+                }
+            }
+        }  
         auto end_pricing = chrono::steady_clock::now();
         int diff_pricing = chrono::duration_cast<chrono::milliseconds>(end_pricing - start_pricing).count();
         pricing_time += diff_pricing;
         
         if (parameters.verbose) {
             cout << "Pricing sub problems solved in " << diff_pricing << " ms - Added " << n_added_routes << " routes";
-            cout << " - Min reduced cost : " << setprecision(15) << min_reduced_cost << "\n";
+            if (parameters.use_maximisation_formulation) {
+                cout << " - Max RC : " << setprecision(8) << max_reduced_cost << "\n";
+            } else {
+                cout << " - Min RC : " << setprecision(8) << min_reduced_cost << "\n";
+            }
         }
 
         // ----------------- Master problem -----------------
@@ -303,15 +334,24 @@ CGResult column_generation(
         cout << "Time limit reached" << endl;
     }
     cout << "End of the column generation after " << iteration << " iterations" << endl;
-    cout << "Relaxed RMP objective value : " << setprecision(15) << solution.objective_value << endl;
-
     // Convert the value from the minimum formulation to the maximum formulation
     double total_outsource_cost = 0;
     for (int i = 0; i < instance.number_interventions; i++){
         total_outsource_cost += instance.nodes[i].duration * instance.M;
     }
-    double relaxed_maximum_objective = total_outsource_cost - solution.objective_value;
-    cout << "Relaxed RMP maximum formulation objective value : " << setprecision(15) << relaxed_maximum_objective << endl;
+    double relaxed_maximum_objective;
+    double relaxed_minimum_objective;
+    if (parameters.use_maximisation_formulation){
+        relaxed_maximum_objective = solution.objective_value;
+        relaxed_minimum_objective = total_outsource_cost - solution.objective_value;
+    } else {
+        relaxed_maximum_objective = total_outsource_cost - solution.objective_value;
+        relaxed_minimum_objective = solution.objective_value;
+    }
+    cout << "Relaxed RMP minimization objective value : " << setprecision(8) << relaxed_minimum_objective << endl;
+    cout << "Relaxed RMP maximization objective value : " << setprecision(8) << relaxed_maximum_objective << endl;
+
+
 
     // Update the node's upper bound
     node.upper_bound = solution.objective_value;
@@ -330,17 +370,25 @@ CGResult column_generation(
         integer_solution = extract_integer_solution(model, route_vars);
         auto end_integer = chrono::steady_clock::now();
         integer_time = chrono::duration_cast<chrono::milliseconds>(end_integer - start_integer).count();
-        cout << "Integer RMP objective value : " << integer_solution.objective_value << endl;
-        // Compute the maximum formulation objective value
-        double integer_maximum_objective = total_outsource_cost - integer_solution.objective_value;
-        cout << "Integer RMP maximum formulation objective value : " << setprecision(15) << integer_maximum_objective << endl;
-        double gap = std::abs(solution.objective_value - integer_solution.objective_value) / integer_solution.objective_value;
-        cout << "Gap between the relaxed and integer RMP : " << setprecision(5) << gap << endl;
-        double gap_max = std::abs(relaxed_maximum_objective - integer_maximum_objective) / integer_maximum_objective;
-        cout << "Gap between the relaxed and integer RMP (maximum formulation) : " << setprecision(5) << gap_max << endl;
+        
+        // Objective values tracking
+        double integer_max_objective;
+        double integer_min_objective;
+        if (parameters.use_maximisation_formulation){
+            integer_max_objective = integer_solution.objective_value;
+            integer_min_objective = total_outsource_cost - integer_max_objective;
+        } else {
+            integer_max_objective = total_outsource_cost - integer_solution.objective_value;
+            integer_min_objective = integer_solution.objective_value;
+        }
+        // Gaps
+        double minimisation_gap = (integer_min_objective - relaxed_minimum_objective) / integer_min_objective;
+        double maximisation_gap = (relaxed_maximum_objective - integer_max_objective) / integer_max_objective;
+        cout << "Integer RMP minimization objective value : " << setprecision(8) << integer_min_objective;
+        cout << " - Minimisation integrality Gap : " << setprecision(3) << minimisation_gap * 100 << "%" << endl;
+        cout << "Integer RMP maximization objective value : " << setprecision(8) << integer_max_objective;
+        cout << " - Maximisation integrality Gap : " << setprecision(3) << maximisation_gap * 100 << "%" << endl;
     }
-
-
 
     // Build the result object
     CGResult result = CGResult{

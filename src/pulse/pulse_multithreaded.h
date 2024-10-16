@@ -22,7 +22,7 @@ public:
     void bound_parallel();
 
     // Parallelized version of the solving part
-    int solve_parallel(double fixed_cost, double dual_value);
+    int solve_parallel(double fixed_cost, double dual_value, bool use_maximisation_formulation);
 
 protected:
     // Solution pool mutex

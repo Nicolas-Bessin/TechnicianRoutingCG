@@ -37,7 +37,8 @@ nlohmann::json export_parameters(const ColumnGenerationParameters& parameters) {
         {"reduced_cost_threshold", parameters.reduced_cost_threshold},
         {"max_iterations", parameters.max_iterations},
         {"max_consecutive_non_improvement", parameters.max_consecutive_non_improvement},
-        {"compute_integer_solution", parameters.compute_integer_solution}
+        {"compute_integer_solution", parameters.compute_integer_solution},
+        {"use_maximisation_formulation", parameters.use_maximisation_formulation}
     };
 
     // Pathwyse related parameters
@@ -66,12 +67,9 @@ nlohmann::json export_parameters(const ColumnGenerationParameters& parameters) {
 void export_solution(
     const std::string& filename, 
     const Instance& instance, 
-    const IntegerSolution& solution, 
+    const CGResult& result,
     const std::vector<Route>& routes, 
-    int elapsed_time,
-    const ColumnGenerationParameters& parameters,
-    const std::vector<double>& objective_values,
-    const std::vector<int>& objective_time_points
+    const ColumnGenerationParameters& parameters
     ){
 
     using namespace nlohmann;
@@ -87,22 +85,23 @@ void export_solution(
         {"cost_per_km", instance.cost_per_km}
     };
 
+    int elapsed_time = (result.master_time + result.pricing_time) / 1000;
     j["solution"] = {
-        {"objective_value", compute_integer_objective(solution, routes, instance)},
-        {"number_covered_interventions", count_covered_interventions(solution, routes, instance)},
-        {"number_used_vehicles", count_used_vehicles(solution, routes, instance)},
-        {"total_fixed_cost", fixed_cost(solution, routes, instance)},
-        {"total_working_time", time_spent_working(solution, routes, instance)},
-        {"total_travel_time", time_spent_travelling(solution, routes, instance)},
-        {"total_waiting_time", time_spent_waiting(solution, routes, instance)},
-        {"total_kilometres_travelled", count_kilometres_travelled(solution, routes, instance)},
+        {"objective_value", compute_integer_objective(result.integer_solution, routes, instance)},
+        {"number_covered_interventions", count_covered_interventions(result.integer_solution, routes, instance)},
+        {"number_used_vehicles", count_used_vehicles(result.integer_solution, routes, instance)},
+        {"total_fixed_cost", fixed_cost(result.integer_solution, routes, instance)},
+        {"total_working_time", time_spent_working(result.integer_solution, routes, instance)},
+        {"total_travel_time", time_spent_travelling(result.integer_solution, routes, instance)},
+        {"total_waiting_time", time_spent_waiting(result.integer_solution, routes, instance)},
+        {"total_kilometres_travelled", count_kilometres_travelled(result.integer_solution, routes, instance)},
         {"time_to_compute", elapsed_time}
     };
 
     // Add the routes
     j["routes"] = json::array();
     for (int i = 0; i < routes.size(); i++){
-        if (solution.coefficients[i] > 0){
+        if (result.integer_solution.coefficients[i] > 0){
             j["routes"].push_back(export_route(routes[i], instance));
         }
     }
@@ -113,8 +112,8 @@ void export_solution(
 
     // Add the evolution of the relaxed RMP objective
     j["evolution"] = {
-        {"objective_values", objective_values},
-        {"time_points", objective_time_points}
+        {"objective_values", result.objective_values},
+        {"time_points", result.objective_time_points}
     };
 
     // Write the json to a file

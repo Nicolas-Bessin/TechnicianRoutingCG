@@ -12,8 +12,6 @@
 #include "data_analysis/analysis.h"
 #include "data_analysis/plot.h"
 
-#include "algorithms/heuristics.h"
-
 #include <memory>   
 #include <iostream>
 #include <iomanip>
@@ -22,7 +20,7 @@
 
 
 inline constexpr std::string INSTANCE_FILE = "instance_1";
-inline constexpr int N_INTERVENTIONS = 75;
+inline constexpr int N_INTERVENTIONS = 25;
 
 inline constexpr int TIME_LIMIT = 1200;
 inline constexpr bool VERBOSE = true;
@@ -42,6 +40,7 @@ int main(int argc, char *argv[]){
     string fileprefix = INSTANCE_FILE;
     string filename = "../data/" + fileprefix + ".json";
     Instance instance = parse_file(filename, fileprefix, N_INTERVENTIONS, VERBOSE);
+    instance.M = compute_M_naive(instance);
 
     preprocess_interventions(instance);
 
@@ -50,7 +49,10 @@ int main(int argc, char *argv[]){
     BPNode node = RootNode(routes);
     MasterSolution master_solution = relaxed_RMP(instance, routes, node);
     DualSolution dual_solution = master_solution.dual_solution;
-    master_solution.dual_solution = dual_solution;
+    dual_solution = {
+        vector<double>(instance.number_interventions, 100.),
+        vector<double>(instance.vehicles.size(), 100.)
+    };
 
     cout << "-----------------------------------" << endl;
 
@@ -58,7 +60,7 @@ int main(int argc, char *argv[]){
     cout << "Delta = " << DELTA << endl;
 
     vector<int> vehicle_order = {};
-    for (int v = 0; v < instance.number_vehicles; v++){
+    for (int v = 0; v < 1; v++){
         if (instance.vehicles[v].interventions.size() > 0){
             vehicle_order.push_back(v);
         }
@@ -71,10 +73,32 @@ int main(int argc, char *argv[]){
     vector<Route> new_routes;
 
     cout << "-----------------------------------" << endl;
-    cout << "Solving each vehicle with one thread, sequentially" << endl;
+    cout << "Solving each vehicle with one thread using Pathwyse, sequentially" << endl;
     begin = chrono::steady_clock::now();
     for (int v : vehicle_order){
-        vector<Route> new_routes_v = solve_pricing_problem_pulse(instance, instance.vehicles.at(v), dual_solution, DELTA, 1, true);
+        Route new_routes_v = solve_pricing_problem(instance, instance.vehicles.at(v), dual_solution, true, true, 6);
+        new_routes.push_back(new_routes_v);
+    }
+    end = chrono::steady_clock::now();
+    diff = chrono::duration_cast<chrono::milliseconds>(end - begin).count();
+  
+    // Print the routes
+    for (const auto& route : new_routes){
+        if (!is_route_feasible(route, instance)) {
+            cout << "Route for vehicle " << route.vehicle_id << " is not feasible" << endl;
+        }
+        print_route(route, instance, master_solution);
+        cout << "--------" << endl;
+    }
+
+    cout << "Time spent : " << diff << " ms" << endl;
+
+    cout << "-----------------------------------" << endl;
+    cout << "Solving each vehicle with one thread using PA, sequentially" << endl;
+    new_routes = {};
+    begin = chrono::steady_clock::now();
+    for (int v : vehicle_order){
+        vector<Route> new_routes_v = solve_pricing_problem_pulse(instance, instance.vehicles.at(v), dual_solution, true, DELTA, 1);
         new_routes.insert(new_routes.end(), new_routes_v.begin(), new_routes_v.end());
     }
     end = chrono::steady_clock::now();
@@ -85,7 +109,8 @@ int main(int argc, char *argv[]){
         if (!is_route_feasible(route, instance)) {
             cout << "Route for vehicle " << route.vehicle_id << " is not feasible" << endl;
         }
-        print_route_reduced(route, instance);
+        print_route(route, instance, master_solution);
+        cout << "--------" << endl;
     }
 
     cout << "Time spent : " << diff << " ms" << endl;

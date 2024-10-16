@@ -71,12 +71,17 @@ void PulseAlgorithmWithSubsets::reset() {
 }
 
 
-int PulseAlgorithmWithSubsets::solve(double fixed_cost, double dual_value, std::vector<int> available) {
+int PulseAlgorithmWithSubsets::solve(double fixed_cost, double dual_value, std::vector<int> available, bool use_maximisation_formulation) {
     reset();
     set_available_interventions(available);
     // Launch the pulse algorithm
     PartialPath path = EmptyPath(N);
-    double initial_cost = fixed_cost - dual_value;
+    double initial_cost;
+    if (use_maximisation_formulation) {
+        initial_cost = fixed_cost + dual_value;
+    } else {
+        initial_cost = fixed_cost - dual_value;
+    }
     pulse(origin, 0, std::vector<int>(K, 0), initial_cost, path);
 
     if(best_path.sequence.size() == 0) {

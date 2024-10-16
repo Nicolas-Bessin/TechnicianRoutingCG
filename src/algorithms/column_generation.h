@@ -53,3 +53,11 @@ CGResult column_generation(
     std::vector<Route> & routes,
     const ColumnGenerationParameters & parameters
     );
+
+// Column generation procedure, using the underlying maximisation formulation of the RMP
+CGResult column_generation_max(
+    const Instance & instance,
+    BPNode & node,
+    std::vector<Route> & routes,
+    const ColumnGenerationParameters & parameters
+    );

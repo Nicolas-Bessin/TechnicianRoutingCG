@@ -78,6 +78,8 @@ int CustomTimeWindow::join(int current_value_forward, int current_value_backward
 bool CustomTimeWindow::isFeasible(int current_value, int current_node, double bounding, bool direction) {
     if(current_value > upper_bound*bounding) return false;
 
+    if (node_lower_bound[current_node] > node_upper_bound[current_node]) return false;
+
     if(current_node >= 0) {
         int feasible_value = 0;
         if(direction) {

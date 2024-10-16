@@ -111,14 +111,14 @@ Instance parse_file(string filename, string instance_name, int nb_interventions,
 
     // Print the main constants
     if (verbose){
-        cout << "Number of ressources: " << number_ressources << endl;
-        cout << "Ressources: ";
+        cout << "Number of ressources: " << number_ressources;
+        cout << " - Ressources: ";
         for (const auto &ressource : ressources){
             cout << ressource << " ";
         }
         cout << endl;
-        cout << "Cost per km: " << cost_per_km << endl;
-        cout << "Technician cost: " << tech_cost << endl;
+        cout << "Cost per km: " << cost_per_km ;
+        cout << "- Technician cost: " << tech_cost << endl;
     }
 
 
@@ -143,9 +143,8 @@ Instance parse_file(string filename, string instance_name, int nb_interventions,
         node_id_to_index[intervention.id] = i;
     }
 
-    if (verbose){
-        cout << "Number of interventions: " << nb_interventions << endl;
-    }
+
+
 
     // Get the warehouses and add them to the nodes
     vector<json> warehouses_data = data.at("step_manager").at("warehouses");
@@ -161,8 +160,9 @@ Instance parse_file(string filename, string instance_name, int nb_interventions,
     // Print the number of warehouses and number of nodes
     int nb_warehouses = warehouses_data.size();
     if (verbose){
-        cout << "Number of warehouses: " << nb_warehouses << endl;
-        cout << "Number of nodes: " << nodes.size() << endl;
+        cout << "Number of interventions: " << nb_interventions;
+        cout << "- Number of warehouses: " << nb_warehouses;
+        cout << "- Number of nodes: " << nodes.size() << endl;
     }
 
     // Build the time and distance matrix for the nodes :
@@ -188,11 +188,6 @@ Instance parse_file(string filename, string instance_name, int nb_interventions,
         technicians[tech.id] = tech;
     }
 
-    // Print the number of technicians
-    if (verbose){
-        cout << "Number of technicians: " << technicians.size() << endl;
-    }
-
     // Teams are groups of technicians
     // Initially, we have fixed teams
     vector<vector<string>> tech_id_per_team = data.at("tech_manager").at("teams").at("fixed_teams");
@@ -206,11 +201,6 @@ Instance parse_file(string filename, string instance_name, int nb_interventions,
         if (tech_with_team.contains(tech_id) == false){
             tech_id_per_team.push_back(vector<string>{tech_id});
         }
-    }
-    
-    // Print the number of teams
-    if (verbose){
-        cout << "Number of teams: " << tech_id_per_team.size() << endl;
     }
 
     // We now construct one vehicle per team
@@ -272,16 +262,17 @@ Instance parse_file(string filename, string instance_name, int nb_interventions,
         vehicles.push_back(Vehicle(v, team_ids, skills, vector<int>(), map<int, int>(), depot, capacities, vehicle_cost));
     }
 
-    // Print the number of vehicles
-    int nb_vehicles = vehicles.size();
+    // Print the number of technicians, teams and vehicles
     if (verbose){
-        cout << "Number of vehicles: " << nb_vehicles << endl;
+        cout << "Number of technicians: " << technicians.size();
+        cout << " - Number of teams: " << tech_id_per_team.size();
+        cout << " - Number of vehicles: " << vehicles.size() << endl;
     }
 
     // We now build a cross reference matrix between interventions and vehicles : has_skill[i][j] is true if vehicle j has the skills to do intervention i
-    vector<vector<bool>> has_skill = vector<vector<bool>>(nb_interventions, vector<bool>(nb_vehicles, false));
+    vector<vector<bool>> has_skill = vector<vector<bool>>(nb_interventions, vector<bool>(vehicles.size(), false));
     for (int i = 0; i < nb_interventions; i++){
-        for (int v = 0; v < nb_vehicles; v++){
+        for (int v = 0; v < vehicles.size(); v++){
             // We must ensure that the vehicle has enough technicians with each skill to do the intervention
             bool can_do = can_do_intervention(nodes[i], vehicles[v]);
             has_skill[i][v] = can_do;
@@ -289,7 +280,7 @@ Instance parse_file(string filename, string instance_name, int nb_interventions,
     }
 
     // And we can add references to the interventions that each vehicle can do
-    for (int v = 0; v < nb_vehicles; v++){
+    for (int v = 0; v < vehicles.size(); v++){
         for (int i = 0; i < nb_interventions; i++){
             if (has_skill[i][v]){
                 vehicles[v].interventions.push_back(i);
@@ -308,7 +299,7 @@ Instance parse_file(string filename, string instance_name, int nb_interventions,
         instance_name,
         nb_interventions,
         nb_warehouses,
-        nb_vehicles,
+        vehicles.size(),
         cost_per_km,
         tech_cost,
         0,

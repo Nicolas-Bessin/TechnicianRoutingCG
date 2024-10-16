@@ -57,8 +57,8 @@ set(
     src/master_problem/node.cpp
     src/master_problem/integer_solution.h
     src/master_problem/integer_solution.cpp
-    src/master_problem/solver_min.h 
-    src/master_problem/solver_min.cpp
+    src/master_problem/master_solver.h 
+    src/master_problem/master_solver.cpp
 
     src/pulse/pulse.h
     src/pulse/pulse.cpp
@@ -91,10 +91,6 @@ set(
     src/algorithms/branch_and_price.cpp
     src/algorithms/column_generation.h
     src/algorithms/column_generation.cpp
-    src/algorithms/genetic_solver.h
-    src/algorithms/genetic_solver.cpp
-    src/algorithms/heuristics.h
-    src/algorithms/heuristics.cpp
     src/algorithms/parameters.h
     src/algorithms/parameters.cpp
     src/algorithms/full_procedure.h
