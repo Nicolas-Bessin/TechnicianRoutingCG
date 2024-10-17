@@ -26,10 +26,11 @@ inline constexpr int S_TO_MS = 1000;
 
 std::map<std::string, std::any> pathwyse_parameters_dict(
     const ColumnGenerationParameters& parameters,
+    int remaining_time,
     bool using_cyclic_pricing = false
 ){
     return std::map<std::string, std::any>({
-        {"time_limit", parameters.pathwyse_TL},
+        {"time_limit", remaining_time},
         {"verbosity", -1},
         {"use_visited", parameters.use_visited},
         {"ng", parameters.ng},
@@ -122,9 +123,11 @@ CGResult column_generation(
         }
 
         // Use the pricing algorithm defined in the parameters
+        // Get the remaining time to be set as the time limit for the Pathwyse heuristic
+        int remaining_time = (S_TO_MS * parameters.time_limit - (master_time + pricing_time)) / S_TO_MS;
         vector<Route> new_routes;
         if (parameters.pricing_function == PRICING_PATHWYSE_BASIC){
-            Parameters::setParametersFromDict(pathwyse_parameters_dict(parameters, using_cyclic_pricing));
+            Parameters::setParametersFromDict(pathwyse_parameters_dict(parameters, remaining_time, using_cyclic_pricing));
             new_routes = full_pricing_problems_basic(
                 convex_dual_solution,
                 instance,
@@ -134,7 +137,7 @@ CGResult column_generation(
                 n_ressources_dominance
             );
         } else if (parameters.pricing_function == PRICING_DIVERSIFICATION){
-            Parameters::setParametersFromDict(pathwyse_parameters_dict(parameters, using_cyclic_pricing));
+            Parameters::setParametersFromDict(pathwyse_parameters_dict(parameters, remaining_time, using_cyclic_pricing));
             new_routes = full_pricing_problems_diversification(
                 convex_dual_solution,
                 instance,
@@ -145,7 +148,7 @@ CGResult column_generation(
                 iteration
             );
         } else if (parameters.pricing_function == PRICING_CLUSTERING){
-            Parameters::setParametersFromDict(pathwyse_parameters_dict(parameters, using_cyclic_pricing));
+            Parameters::setParametersFromDict(pathwyse_parameters_dict(parameters, remaining_time, using_cyclic_pricing));
             new_routes = full_pricing_problems_clustering(
                 convex_dual_solution,
                 instance,

@@ -585,7 +585,7 @@ void print_vehicles_non_covered(const IntegerSolution& solution, const std::vect
 }
 
 
-void full_analysis(const IntegerSolution& integer_solution, const vector<Route>& routes, const Instance& instance) {
+void full_analysis(const IntegerSolution& integer_solution, const vector<Route>& routes, const Instance& instance, bool details) {
     using std::cout, std::endl;
     // Solution analysis
 
@@ -639,19 +639,23 @@ void full_analysis(const IntegerSolution& integer_solution, const vector<Route>&
     int waiting_time = time_spent_waiting(integer_solution, routes, instance);
     int total_time = working_time + travelling_time + waiting_time;
     cout << "Number of routes with duplicates : " << count_routes_with_duplicates(routes) << " / " << routes.size() << endl;
-    cout << "Number of used routes with duplicates : " << count_used_routes_with_duplicates(integer_solution, routes) << endl;
-    cout << "Number of route kilometres : " << count_kilometres_travelled(integer_solution, routes, instance) << " km" << endl;
-    cout << "Total fixed costs : " << fixed_costs << endl;
-    cout << "Time spent travelling : " << travelling_time << " minutes";
-    cout << "- Time spent working : " << working_time << " minutes";
-    cout << " - Time spent waiting : " << waiting_time << " minutes" << endl;
-    int shortest_time = shortest_time_route(integer_solution, routes, instance);
-    int longest_time = longest_time_route(integer_solution, routes, instance);
-    cout << "Total time : " << total_time << " minutes - Average per route : " << total_time / count_used_vehicles(integer_solution, routes, instance) << " minutes" << endl;
-    cout << "Shortest route time : " << shortest_time << " minutes - Longest route time : " << longest_time << " minutes" << endl;
-    print_used_route_durations(integer_solution, routes, instance);
-    print_used_route_obj_coeffs(integer_solution, routes, instance);
-    print_non_covered_interventions(integer_solution, routes, instance, false);
-    print_vehicles_non_covered(integer_solution, routes, instance);
+    if (details) {
+        cout << "Number of used routes with duplicates : " << count_used_routes_with_duplicates(integer_solution, routes) << " / " << routes.size() << endl;
+    }
+    cout << "Number of route kilometres : " << count_kilometres_travelled(integer_solution, routes, instance) << " km";
+    cout << " - Total fixed costs : " << fixed_costs << endl;
+    if (details) {
+        cout << "Time spent travelling : " << travelling_time << " minutes";
+        cout << "- Time spent working : " << working_time << " minutes";
+        cout << " - Time spent waiting : " << waiting_time << " minutes" << endl;
+        int shortest_time = shortest_time_route(integer_solution, routes, instance);
+        int longest_time = longest_time_route(integer_solution, routes, instance);
+        cout << "Total time : " << total_time << " minutes - Average per route : " << total_time / count_used_vehicles(integer_solution, routes, instance) << " minutes" << endl;
+        cout << "Shortest route time : " << shortest_time << " minutes - Longest route time : " << longest_time << " minutes" << endl;
+        print_used_route_durations(integer_solution, routes, instance);
+        print_used_route_obj_coeffs(integer_solution, routes, instance);
+        print_non_covered_interventions(integer_solution, routes, instance, false);
+        print_vehicles_non_covered(integer_solution, routes, instance);
+    }
 
 }

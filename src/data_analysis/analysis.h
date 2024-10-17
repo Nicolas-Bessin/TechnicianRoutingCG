@@ -69,5 +69,5 @@ void print_non_covered_interventions(const IntegerSolution& solution, const std:
 void print_vehicles_non_covered(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
 
 // Full analysis of the solution
-void full_analysis(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
+void full_analysis(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance, bool details = false);
 
