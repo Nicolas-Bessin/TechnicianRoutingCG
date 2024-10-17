@@ -62,7 +62,9 @@ unique_ptr<Problem> create_pricing_instance(
     // If there is a required edge, we only add this edge
     bool required_first_edge = false;
     for (int i = 0; i < n_interventions_v ; i++) {
-        problem->setNetworkArc(origin, i);
+        if (is_edge_feasible(vehicle.depot, vehicle.interventions[i], instance)) {
+            problem->setNetworkArc(origin, i);
+        }
         // First, we add the arcs that go to other interventions
         for (int j = 0; j < n_interventions_v; j++) {
             if (i == j) continue;

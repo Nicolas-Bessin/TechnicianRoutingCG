@@ -16,6 +16,7 @@
 
 #include "data_analysis/analysis.h"
 #include "data_analysis/export.h"
+#include "data_analysis/plot.h"
 
 #include <matplot/matplot.h>
 
@@ -76,14 +77,21 @@ int main(int argc, char *argv[]){
         using namespace matplot;
         figure(true);
         // Set the height and width of the figure
-        gcf()->width(1200);
+        gcf()->width(2000);
         gcf()->height(800);
-        title("Objective value over time for small instances");
-        xlabel("Time (s)");
-        ylabel("Objective value");
+        auto ax1 = subplot(1, 2, 0);
+        auto ax2 = subplot(1, 2, 1);
+        title(ax1, "Objective value over time for small instances");
+        xlabel(ax1, "Time (s)");
+        ylabel(ax1, "Objective value (log scale)");
+        title(ax2, "Objective value over time for small instances - first 20 values excluded");
+        xlabel(ax2, "Time (s)");
+        ylabel(ax2, "Objective value");
         // Set the axis size to the maximum time
-        xlim({0, TIME_LIMIT * 1.2});
-        hold(on);
+        xlim(ax1, {0, TIME_LIMIT * 1.2});
+        xlim(ax2, {0, TIME_LIMIT * 1.2});
+        hold(ax1, on);
+        hold(ax2, on);
 
         for (const auto& algo_name : PRICING_FUNCTIONS) {
             // --------- MIN FORMULATION ---------
@@ -104,12 +112,8 @@ int main(int argc, char *argv[]){
                 plot_name += " - α=" + std::to_string(parameters.alpha);
             }
             std::replace(plot_name.begin(), plot_name.end(), '_', ' ');
-            vector<double> time_points_sec(result.objective_time_points.size());
-            for (int i = 0; i < result.objective_time_points.size(); i++){
-                time_points_sec[i] = result.objective_time_points[i] / 1000.0;
-            }
-            semilogy(time_points_sec, result.objective_values)
-                ->display_name(plot_name);
+            plot_objective_values(ax1, result.objective_time_points, result.objective_values, plot_name, true);
+            plot_objective_values(ax2, result.objective_time_points, result.objective_values, plot_name, false, 15);
 
 
             if (EXPORT_SOLUTION){
@@ -144,16 +148,13 @@ int main(int argc, char *argv[]){
                 plot_name += " - α=" + std::to_string(parameters.alpha);
             }
             std::replace(plot_name.begin(), plot_name.end(), '_', ' ');
-            time_points_sec = vector<double>(result.objective_time_points.size());
-            for (int i = 0; i < result.objective_time_points.size(); i++){
-                time_points_sec[i] = result.objective_time_points[i] / 1000.0;
-            }
-            semilogy(time_points_sec, convert_min_max_objective(result.objective_values, instance))
-                ->display_name(plot_name);
+            plot_objective_values(ax1, result.objective_time_points, convert_min_max_objective(result.objective_values, instance), plot_name, true);
+            plot_objective_values(ax2, result.objective_time_points, convert_min_max_objective(result.objective_values, instance), plot_name, false, 15);
         }
 
         // Set the legend
-        legend();
+        legend(ax1);
+        legend(ax2);
 
         // Save the plot
         string plot_filename = "../results/plots/" + name + "_objective_value.png";

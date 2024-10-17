@@ -74,3 +74,32 @@ void plot_instance(
     show();
 
 }
+
+
+void plot_objective_values(
+    matplot::axes_handle& ax,
+    const std::vector<int>& time_points,
+    const std::vector<double>& objective_values,
+    const std::string& name,
+    bool use_semilogy,
+    int N
+) {
+    using namespace matplot;
+    // Plot the objective values
+    std::vector<double> time_points_sec = {};
+    for (int i = N; i < time_points.size(); i++){
+        time_points_sec.push_back(time_points[i] / 1000.0);
+    }
+    std::vector<double> objective_values_sliced = {};
+    for (int i = N; i < objective_values.size(); i++){
+        objective_values_sliced.push_back(objective_values[i]);
+    }
+    if (use_semilogy){
+        semilogy(ax, time_points_sec, objective_values_sliced)
+            ->display_name(name);
+    } else {
+        plot(ax, time_points_sec, objective_values_sliced)
+            ->display_name(name);
+    }
+    return;
+}

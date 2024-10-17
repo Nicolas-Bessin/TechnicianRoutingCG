@@ -69,12 +69,12 @@ bool is_edge_feasible(int i, int j, const Instance& instance){
     const Node& intervention_j = instance.nodes[j];
 
     // Check the time window : can j be done if we depart from i at the last possible moment ?
-    int arrival_time = intervention_i.start_window + intervention_i.duration + instance.time_matrix[i][j];
+    int arrival_time = std::max(intervention_i.start_window + intervention_i.duration + instance.time_matrix[i][j], intervention_j.start_window);
 
     bool is_feasible = arrival_time + intervention_j.duration <= intervention_j.end_window;
 
     // The edge is also not feasible if the time window of intervention j is malformed (sw_j + d_j > ew_j)
-    return is_feasible && intervention_j.start_window + intervention_j.duration <= intervention_j.end_window;
+    return is_feasible;
 }
 
 void check_triangular_inequality(const Instance& instance) {
