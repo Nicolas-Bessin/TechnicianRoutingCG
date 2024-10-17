@@ -6,6 +6,8 @@
 
 #include "routes/route_optimizer.h"
 
+#include "../../pathwyse/core/utils/param.h"
+
 #include "pricing_problem/full_pricing.h"
 
 #include "clustering/clustering.h"
@@ -20,6 +22,21 @@
 #include <random>
 
 inline constexpr int S_TO_MS = 1000;
+
+
+std::map<std::string, std::any> pathwyse_parameters_dict(
+    const ColumnGenerationParameters& parameters,
+    bool using_cyclic_pricing = false
+){
+    return std::map<std::string, std::any>({
+        {"time_limit", parameters.pathwyse_TL},
+        {"verbosity", -1},
+        {"use_visited", parameters.use_visited},
+        {"ng", parameters.ng},
+        {"dssr", parameters.dssr},
+        {"compare_unreachables", using_cyclic_pricing}
+    });
+}
 
 
 CGResult column_generation(
@@ -107,6 +124,7 @@ CGResult column_generation(
         // Use the pricing algorithm defined in the parameters
         vector<Route> new_routes;
         if (parameters.pricing_function == PRICING_PATHWYSE_BASIC){
+            Parameters::setParametersFromDict(pathwyse_parameters_dict(parameters, using_cyclic_pricing));
             new_routes = full_pricing_problems_basic(
                 convex_dual_solution,
                 instance,
@@ -116,6 +134,7 @@ CGResult column_generation(
                 n_ressources_dominance
             );
         } else if (parameters.pricing_function == PRICING_DIVERSIFICATION){
+            Parameters::setParametersFromDict(pathwyse_parameters_dict(parameters, using_cyclic_pricing));
             new_routes = full_pricing_problems_diversification(
                 convex_dual_solution,
                 instance,
@@ -126,6 +145,7 @@ CGResult column_generation(
                 iteration
             );
         } else if (parameters.pricing_function == PRICING_CLUSTERING){
+            Parameters::setParametersFromDict(pathwyse_parameters_dict(parameters, using_cyclic_pricing));
             new_routes = full_pricing_problems_clustering(
                 convex_dual_solution,
                 instance,

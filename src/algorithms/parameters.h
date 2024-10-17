@@ -5,6 +5,7 @@
 #include <string>
 
 #include "pricing_problem/full_pricing.h"
+#include "../../pathwyse/core/utils/param.h"
 
 inline constexpr int ALL_RESOURCES_DOMINANCE = -1;
 
@@ -21,11 +22,14 @@ struct ColumnGenerationParameters {
     // Pathwyse related parameters
     int max_resources_dominance = ALL_RESOURCES_DOMINANCE;
     bool switch_to_cyclic_pricing = true;
+    bool use_visited = true;
+    int ng = NG_STANDARD;
+    int dssr = DSSR_STANDARD;
+    float pathwyse_TL = 0.0;
 
     // Pulse related parameters
     int delta = 10;
     int solution_pool_size = 1000;
-
     // Stabilisation parameters
     double alpha = 0.5;
     bool use_stabilisation = false;
@@ -51,11 +55,4 @@ struct BranchAndPriceParameters : ColumnGenerationParameters {
     BranchAndPriceParameters() : ColumnGenerationParameters() {};
     // Constructor : all values in the map are set, other set to default (see parameters.h)
     BranchAndPriceParameters(std::map<std::string, std::any>);
-};
-
-struct FullParameter : ColumnGenerationParameters {
-    std::string instance_file = "instance_1";
-    int n_interventions = 25;
-    int time_limit = 300;
-    bool verbose = true;
 };

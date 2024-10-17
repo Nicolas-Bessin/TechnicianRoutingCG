@@ -14,8 +14,6 @@ public:
     Solver();
     // Custom constructor to load specified parameters from a file
     Solver(std::string file_path);
-    // Custom constructor to load specified parameters from a given mode of operation
-    Solver(int mode);
     ~Solver();
 
     //General solver methods
@@ -25,7 +23,6 @@ public:
 
     //Setup
     void readConfiguration(std::string file_path = "");
-    void setConfigurationFromMode(int mode);
     void setupOutput();
 
     //Additional interfaces

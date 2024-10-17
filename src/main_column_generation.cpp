@@ -50,6 +50,10 @@ int main(int argc, char *argv[]){
         {"compute_integer_solution", true},
         {"use_maximisation_formulation", false},
         {"max_resources_dominance", MAX_RESOURCES_DOMINANCE},
+        {"ng", NG_STANDARD},
+        {"dssr", DSSR_STANDARD},
+        {"use_visited", true},
+        {"pathwyse_time_limit", 0.0},
         {"switch_to_cyclic_price", true},
         {"delta ", 50},
         {"solution_pool_size", 10},
@@ -112,7 +116,7 @@ int main(int argc, char *argv[]){
                 plot_name += " - α=" + std::to_string(parameters.alpha);
             }
             std::replace(plot_name.begin(), plot_name.end(), '_', ' ');
-            plot_objective_values(ax1, result.objective_time_points, result.objective_values, plot_name, true);
+            plot_objective_values(ax1, result.objective_time_points, result.objective_values, plot_name, true, 0);
             plot_objective_values(ax2, result.objective_time_points, result.objective_values, plot_name, false, 15);
 
 
@@ -148,7 +152,7 @@ int main(int argc, char *argv[]){
                 plot_name += " - α=" + std::to_string(parameters.alpha);
             }
             std::replace(plot_name.begin(), plot_name.end(), '_', ' ');
-            plot_objective_values(ax1, result.objective_time_points, convert_min_max_objective(result.objective_values, instance), plot_name, true);
+            plot_objective_values(ax1, result.objective_time_points, convert_min_max_objective(result.objective_values, instance), plot_name, true, 0);
             plot_objective_values(ax2, result.objective_time_points, convert_min_max_objective(result.objective_values, instance), plot_name, false, 15);
         }
 
@@ -157,7 +161,7 @@ int main(int argc, char *argv[]){
         legend(ax2);
 
         // Save the plot
-        string plot_filename = "../results/plots/" + name + "_objective_value.png";
+        string plot_filename = "../results/plots/" + name + "_small.png";
         save(plot_filename);
     }
 

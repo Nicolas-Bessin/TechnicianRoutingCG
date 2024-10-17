@@ -33,6 +33,14 @@ ColumnGenerationParameters::ColumnGenerationParameters(std::map<std::string, std
     if (args.contains("switch_to_cyclic_pricing")) {
         switch_to_cyclic_pricing = std::any_cast<bool>(args["switch_to_cyclic_pricing"]);
     }
+    if (args.contains("use_visited"))
+        use_visited = std::any_cast<bool>(args["use_visited"]);
+    if (args.contains("ng"))
+        ng = std::any_cast<int>(args["ng"]);
+    if (args.contains("dssr"))
+        dssr = std::any_cast<int>(args["dssr"]);
+    if (args.contains("pathwyse_time_limit"))
+        pathwyse_TL = std::any_cast<double>(args["pathwyse_time_limit"]);
 
     // Pulse related parameters
     if (args.contains("delta")) {

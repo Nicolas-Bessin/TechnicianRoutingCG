@@ -4,6 +4,8 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <map>
+#include <any>
 #include <fstream>
 #include "constants.h"
 
@@ -15,7 +17,7 @@ struct Parameters {
 
     static void readParameters(std::string param_path);
 
-    static void setParametersFromMode(int mode);
+    static void setParametersFromDict(const std::map<std::string, std::any>& dict);
 
     /**Solver Parameters**/
     static std::string getInstancePath(){return instance_path;}

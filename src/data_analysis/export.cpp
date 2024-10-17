@@ -44,7 +44,12 @@ nlohmann::json export_parameters(const ColumnGenerationParameters& parameters) {
     // Pathwyse related parameters
     j["pathwyse"] = {
         {"max_resources_dominance", parameters.max_resources_dominance},
-        {"switch_to_cyclic_pricing", parameters.switch_to_cyclic_pricing}
+        {"switch_to_cyclic_pricing", parameters.switch_to_cyclic_pricing},
+        // Also export the relevant pathwyse parameters
+        {"ng", parameters.ng},
+        {"dssr", parameters.dssr},
+        {"use_visited", parameters.use_visited},
+        {"pathwyse_time_limit", parameters.pathwyse_TL}
     };
 
     // Pulse related parameters

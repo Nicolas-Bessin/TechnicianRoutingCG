@@ -90,7 +90,7 @@ void plot_objective_values(
     for (int i = N; i < time_points.size(); i++){
         time_points_sec.push_back(time_points[i] / 1000.0);
     }
-    std::vector<double> objective_values_sliced = {};
+    std::vector<double> objective_values_sliced = std::vector<double>();
     for (int i = N; i < objective_values.size(); i++){
         objective_values_sliced.push_back(objective_values[i]);
     }

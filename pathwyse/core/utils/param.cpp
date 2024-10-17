@@ -9,7 +9,7 @@ std::string Parameters::param_path = "pathwyse.set";
 
 /**Solver Parameters**/
 std::string Parameters::instance_path = "input.txt";
-int Parameters::verbosity = 2;
+int Parameters::verbosity = -1;
 
 //Algorithm selection parameters
 std::string Parameters::main_algorithm_name = "PWDefault";
@@ -183,7 +183,7 @@ void Parameters::readParameters(std::string param_path) {
         output_write = false;
 }
 
-void Parameters::setParametersFromMode(int mode){
+void Parameters::setParametersFromDict(const std::map<std::string, std::any> &params) {
     // Default parameters, shared by all modes
     verbosity = -1;
     memory_threshold = 10000;
@@ -204,23 +204,25 @@ void Parameters::setParametersFromMode(int mode){
     default_bidirectional = false;
     default_split = 0.5;
     default_reserve = 10000000;
-    default_use_visited = true;
-    default_compare_unreachables = false;
-    default_dssr = DSSR_STANDARD;
-    default_ng = NG_STANDARD;
     default_ng_size = 8;
     default_candidate_type = CANDIDATE_NODE;
     default_join_type = JOIN_ORDERED;
-    // Mode specific configurations
-    if (mode == DEFAULT_ACYCLIC_PARAM_MODE) {
-        default_compare_unreachables = false;
-    } else if (mode == DEFAULT_CYCLE_PARAM_MODE) {
-        default_timelimit = 0;
-        default_compare_unreachables = true;
-    } else {
-        std::cout << "Warning: Mode not recognized, using default parameters." << std::endl;
-    }
+    // We only expect the dict to relate to the following parameters
+    if(params.contains("verbosity"))
+        verbosity = std::any_cast<int>(params.at("verbosity"));
+    if (params.contains("use_visited"))
+        default_use_visited = std::any_cast<bool>(params.at("use_visited"));
+    if (params.contains("compare_unreachables"))
+        default_compare_unreachables = std::any_cast<bool>(params.at("compare_unreachables"));
+    if (params.contains("ng"))
+        default_ng = std::any_cast<int>(params.at("ng"));
+    if (params.contains("dssr"))
+        default_dssr = std::any_cast<int>(params.at("dssr"));
+    if (params.contains("time_limit"))
+        default_timelimit = std::any_cast<float>(params.at("time_limit"));
+    
 }
+
 
 //Output path setup
 void Parameters::setupCollectionPath(){

@@ -207,9 +207,7 @@ Route solve_pricing_problem(
     unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, vehicle, use_cyclic_pricing);
     set_pricing_instance_costs(pricing_problem, dual_solution, instance, vehicle, use_maximisation_formulation);
     // Solve the pricing problem
-    // We give the solver a different set of parameters depending on the problem
-    int param_mode = use_cyclic_pricing ? DEFAULT_CYCLE_PARAM_MODE : DEFAULT_ACYCLIC_PARAM_MODE;
-    Solver solver = Solver(param_mode);
+    Solver solver = Solver();
     solver.setCustomProblem(*pricing_problem, true);
     solver.setupAlgorithms();
     // Set the dominance test
