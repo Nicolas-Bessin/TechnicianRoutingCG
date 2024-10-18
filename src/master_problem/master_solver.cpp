@@ -120,7 +120,10 @@ void add_route(
     }
 }
 
-int solve_model(GRBModel& model) {
+int solve_model(GRBModel& model, double time_limit) {
+    if (time_limit > 0){
+        model.set(GRB_DoubleParam_TimeLimit, time_limit);
+    }
     // Solve the current version of the model
     model.optimize();
     return model.get(GRB_IntAttr_Status);

@@ -85,7 +85,7 @@ Technician parse_technician(json data){
 
 
 // Parse a JSON file to return a Instance object
-Instance parse_file(string filename, string instance_name, int nb_interventions, bool verbose){
+Instance parse_file(string filename, string instance_name, int nb_interventions, int n_vehicles, bool verbose){
     if (verbose){
         cout << "Parsing file " << filename << endl;
     }
@@ -204,8 +204,13 @@ Instance parse_file(string filename, string instance_name, int nb_interventions,
     }
 
     // We now construct one vehicle per team
+    if (n_vehicles == -1){
+        n_vehicles = tech_id_per_team.size();
+    } else {
+        n_vehicles = std::min(n_vehicles, (int) tech_id_per_team.size());
+    }
     vector<Vehicle> vehicles = vector<Vehicle>{};
-    for (int v = 0; v < tech_id_per_team.size(); v++){
+    for (int v = 0; v < n_vehicles; v++){
         // Collect the technicians in the team
         vector<string> team_ids = tech_id_per_team[v];
         // Build the map of available skills for the vehicle

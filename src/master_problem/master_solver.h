@@ -46,7 +46,7 @@ void add_route(
 
 // Solve the current version of the model
 // Returns a status code
-int solve_model(GRBModel& model);
+int solve_model(GRBModel& model, double time_limit = -1.);
 
 // Extract the current solution as MasterSolution object
 MasterSolution extract_solution(

@@ -76,7 +76,7 @@ int main(int argc, char *argv[]){
         cout << "-----------------------------------" << endl;
         string filename = "../data/" + name + ".json";
         cout << "Parsing the instance " << name << " from " << filename << endl;
-        Instance instance = parse_file(filename, name, SMALL_SIZE, false);
+        Instance instance = parse_file(filename, name, SMALL_INTERVENTIONS, SMALL_VEHICLES, false);
 
         preprocess_interventions(instance);
 
@@ -94,7 +94,9 @@ int main(int argc, char *argv[]){
         title(ax2, "Objective value over time for small instances - first 15 values excluded");
         xlabel(ax2, "Time (s)");
         ylabel(ax2, "Objective value");
-        sgtitle("Objective value over time - " + name);
+        string title = "Objective value over time - " + name;
+        std::replace(title.begin(), title.end(), '_', ' ');
+        sgtitle(title);
         gcf()->title_font_size_multiplier(1.5);
         // Set the axis size to the maximum time
         xlim(ax1, {0, TIME_LIMIT * 1.2});

@@ -21,7 +21,8 @@ inline const std::array<std::string, 5> SMALL_INSTANCES = {
     "agency1_03-02-2023_anonymized",
     "agency1_23-11-2022_anonymized"
 };
-inline constexpr int SMALL_SIZE = 75;
+inline constexpr int SMALL_INTERVENTIONS = 75;
+inline constexpr int SMALL_VEHICLES = 20;
 
 inline const std::array<std::string, 5> MEDIUM_INSTANCES = {
     "agency1_09-12-2022_anonymized",
@@ -30,7 +31,8 @@ inline const std::array<std::string, 5> MEDIUM_INSTANCES = {
     "agency1_22-11-2022_anonymized",
     "agency1_17-01-2023_anonymized"
 };
-inline constexpr int MEDIUM_SIZE = 150;
+inline constexpr int MEDIUM_INTERVENTIONS = 150;
+inline constexpr int MEDIUM_VEHICLES = 30;
 
 inline const std::array<std::string, 5> LARGE_INSTANCES = {
     "agency1_23-11-2022_anonymized",
@@ -39,5 +41,6 @@ inline const std::array<std::string, 5> LARGE_INSTANCES = {
     "agency1_18-01-2023_anonymized",
     "agency1_08-02-2023_anonymized"
 };
-inline constexpr int LARGE_SIZE = 200;
+inline constexpr int LARGE_INTERVENTIONS = 200;
+inline constexpr int LARGE_VEHICLES = 40;
 

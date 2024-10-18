@@ -219,7 +219,7 @@ void Parameters::setParametersFromDict(const std::map<std::string, std::any> &pa
     if (params.contains("dssr"))
         default_dssr = std::any_cast<int>(params.at("dssr"));
     if (params.contains("time_limit"))
-        default_timelimit = std::any_cast<float>(params.at("time_limit"));
+        default_timelimit = std::any_cast<double>(params.at("time_limit"));
     
 }
 

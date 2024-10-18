@@ -20,13 +20,14 @@
 #include <chrono>
 #include <execution>
 #include <random>
+#include <thread>
 
 inline constexpr int S_TO_MS = 1000;
 
 
 std::map<std::string, std::any> pathwyse_parameters_dict(
     const ColumnGenerationParameters& parameters,
-    int remaining_time,
+    double remaining_time,
     bool using_cyclic_pricing = false
 ){
     return std::map<std::string, std::any>({
@@ -124,7 +125,8 @@ CGResult column_generation(
 
         // Use the pricing algorithm defined in the parameters
         // Get the remaining time to be set as the time limit for the Pathwyse heuristic
-        int remaining_time = (S_TO_MS * parameters.time_limit - (master_time + pricing_time)) / S_TO_MS;
+        int remaining_time_ms = S_TO_MS * parameters.time_limit - (master_time + pricing_time);
+        double remaining_time = ((remaining_time_ms / 1000.0) / instance.number_vehicles) * std::thread::hardware_concurrency();
         vector<Route> new_routes;
         if (parameters.pricing_function == PRICING_PATHWYSE_BASIC){
             Parameters::setParametersFromDict(pathwyse_parameters_dict(parameters, remaining_time, using_cyclic_pricing));
@@ -392,7 +394,7 @@ CGResult column_generation(
     if (compute_integer_solution) {
         auto start_integer = chrono::steady_clock::now();
         set_integer_variables(model, route_vars, postpone_vars);
-        int status = solve_model(model);
+        int status = solve_model(model, parameters.time_limit);
         integer_solution = extract_integer_solution(model, route_vars);
         auto end_integer = chrono::steady_clock::now();
         integer_time = chrono::duration_cast<chrono::milliseconds>(end_integer - start_integer).count();
