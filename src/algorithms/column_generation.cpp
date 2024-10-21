@@ -237,34 +237,36 @@ CGResult column_generation(
                 );
             }
         }
-
-        // We add the new routes to the global routes vector
-        double min_reduced_cost = std::numeric_limits<double>::infinity();
-        double max_reduced_cost = - std::numeric_limits<double>::infinity();
-        if (parameters.use_maximisation_formulation) {
-            for (Route& new_route : new_routes){
-                max_reduced_cost = std::max(max_reduced_cost, new_route.reduced_cost);
-                if (new_route.reduced_cost > parameters.reduced_cost_threshold){
-                    add_route(model, new_route, instance, route_vars, intervention_ctrs, vehicle_ctrs, true);
-                    n_added_routes++;
-                    routes.push_back(new_route);
-
-                }
-            }
-        } else {
-            for (Route& new_route : new_routes){
-                min_reduced_cost = std::min(min_reduced_cost, new_route.reduced_cost);
-                if (new_route.reduced_cost < - parameters.reduced_cost_threshold){
-                    add_route(model, new_route, instance, route_vars, intervention_ctrs, vehicle_ctrs, false);
-                    n_added_routes++;
-                    routes.push_back(new_route);
-                }
-            }
-        }  
         auto end_pricing = chrono::steady_clock::now();
         int diff_pricing = chrono::duration_cast<chrono::milliseconds>(end_pricing - start_pricing).count();
         pricing_time += diff_pricing;
-        
+
+        // We add the new routes to the global routes vector, only if the time limit is not reached
+        double min_reduced_cost = std::numeric_limits<double>::infinity();
+        double max_reduced_cost = - std::numeric_limits<double>::infinity();
+        if (pricing_time + master_time < S_TO_MS * parameters.time_limit) {
+            if (parameters.use_maximisation_formulation ){
+                for (Route& new_route : new_routes){
+                    max_reduced_cost = std::max(max_reduced_cost, new_route.reduced_cost);
+                    if (new_route.reduced_cost > parameters.reduced_cost_threshold){
+                        add_route(model, new_route, instance, route_vars, intervention_ctrs, vehicle_ctrs, true);
+                        n_added_routes++;
+                        routes.push_back(new_route);
+
+                    }
+                }
+            } else {
+                for (Route& new_route : new_routes){
+                    min_reduced_cost = std::min(min_reduced_cost, new_route.reduced_cost);
+                    if (new_route.reduced_cost < - parameters.reduced_cost_threshold){
+                        add_route(model, new_route, instance, route_vars, intervention_ctrs, vehicle_ctrs, false);
+                        n_added_routes++;
+                        routes.push_back(new_route);
+                    }
+                }
+            }  
+        }
+
         if (parameters.verbose) {
             cout << "Pricing sub problems solved in " << diff_pricing << " ms - Added " << n_added_routes << " routes";
             if (parameters.use_maximisation_formulation) {

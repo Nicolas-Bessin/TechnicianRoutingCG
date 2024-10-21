@@ -70,15 +70,16 @@ int main(int argc, char *argv[]){
         {NG_STANDARD, "standard"}
     };
 
-    for (const auto& name : SMALL_INSTANCES){
+    for (const auto& name : LARGE_INSTANCES){
         // Parse the instance from a JSON file
         auto start = chrono::steady_clock::now();
         cout << "-----------------------------------" << endl;
         string filename = "../data/" + name + ".json";
         cout << "Parsing the instance " << name << " from " << filename << endl;
-        Instance instance = parse_file(filename, name, SMALL_INTERVENTIONS, SMALL_VEHICLES, false);
+        Instance instance = parse_file(filename, name, LARGE_INTERVENTIONS, LARGE_VEHICLES, false);
 
         preprocess_interventions(instance);
+        int exclude_from_linear_plot = 5;
 
         // Initialize the figure
         using namespace matplot;
@@ -91,7 +92,8 @@ int main(int argc, char *argv[]){
         title(ax1, "Objective value over time for small instances");
         xlabel(ax1, "Time (s)");
         ylabel(ax1, "Objective value (log scale)");
-        title(ax2, "Objective value over time for small instances - first 15 values excluded");
+        string ax2_title = "Objective value over time for small instances - first " + to_string(exclude_from_linear_plot) + " values excluded";
+        title(ax2, ax2_title);
         xlabel(ax2, "Time (s)");
         ylabel(ax2, "Objective value");
         string title = "Objective value over time - " + name;
@@ -136,10 +138,10 @@ int main(int argc, char *argv[]){
                     std::replace(plot_name.begin(), plot_name.end(), '_', ' ');
                     if (use_max_formulation){
                         plot_objective_values(ax1, result.objective_time_points, convert_min_max_objective(result.objective_values, instance), plot_name, true, 0);
-                        plot_objective_values(ax2, result.objective_time_points, convert_min_max_objective(result.objective_values, instance), plot_name, false, 15);
+                        plot_objective_values(ax2, result.objective_time_points, convert_min_max_objective(result.objective_values, instance), plot_name, false, exclude_from_linear_plot);
                     } else {
                         plot_objective_values(ax1, result.objective_time_points, result.objective_values, plot_name, true, 0);
-                        plot_objective_values(ax2, result.objective_time_points, result.objective_values, plot_name, false, 15);
+                        plot_objective_values(ax2, result.objective_time_points, result.objective_values, plot_name, false, exclude_from_linear_plot);
                     }
 
                     if (EXPORT_SOLUTION){
@@ -147,7 +149,7 @@ int main(int argc, char *argv[]){
                         // Append the time to the filename
                         const auto now = chrono::zoned_time(std::chrono::current_zone(), chrono::system_clock::now());
                         string date = std::format("{:%Y-%m-%d-%H-%M-%OS}", now);
-                        string output_filename = "../results/" + name + "_" + date + ".json";
+                        string output_filename = "../results/large/" + name + "_" + date + ".json";
                         export_solution(
                             output_filename, 
                             instance, 
@@ -165,7 +167,7 @@ int main(int argc, char *argv[]){
         legend(ax2);
 
         // Save the plot
-        string plot_filename = "../results/plots/" + name + "_pathwyse_basic_small.png";
+        string plot_filename = "../results/plots/" + name + "_pathwyse_basic_large.png";
         save(plot_filename);
     }
 
