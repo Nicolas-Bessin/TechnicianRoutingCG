@@ -70,16 +70,39 @@ int main(int argc, char *argv[]){
         {NG_STANDARD, "standard"}
     };
 
-    for (const auto& name : LARGE_INSTANCES){
+    const string size = "small";
+
+    int intervention_size = -1;
+    int vehicle_size = -1;
+    std::array<string, 5> instances;
+
+    if (size == "small"){
+        intervention_size = SMALL_INTERVENTIONS;
+        vehicle_size = SMALL_VEHICLES;
+        instances = SMALL_INSTANCES;
+    } else if (size == "medium"){
+        intervention_size = MEDIUM_INTERVENTIONS;
+        vehicle_size = MEDIUM_VEHICLES;
+        instances = MEDIUM_INSTANCES;
+    } else if (size == "large"){
+        intervention_size = LARGE_INTERVENTIONS;
+        vehicle_size = LARGE_VEHICLES;
+        instances = LARGE_INSTANCES;
+    } else {
+        cout << "Invalid size" << endl;
+        return 1;
+    }
+
+    for (const auto& name : instances){
         // Parse the instance from a JSON file
         auto start = chrono::steady_clock::now();
         cout << "-----------------------------------" << endl;
         string filename = "../data/" + name + ".json";
         cout << "Parsing the instance " << name << " from " << filename << endl;
-        Instance instance = parse_file(filename, name, LARGE_INTERVENTIONS, LARGE_VEHICLES, false);
+        Instance instance = parse_file(filename, name, intervention_size, vehicle_size, false);
 
         preprocess_interventions(instance);
-        int exclude_from_linear_plot = 5;
+        int exclude_from_linear_plot = 15;
 
         // Initialize the figure
         using namespace matplot;
@@ -89,14 +112,15 @@ int main(int argc, char *argv[]){
         gcf()->height(800);
         auto ax1 = subplot(1, 2, 0);
         auto ax2 = subplot(1, 2, 1);
-        title(ax1, "Objective value over time for small instances");
+        std::string ax1_title = "Objective value over time for different configurations - log scale";
+        title(ax1, ax1_title);
         xlabel(ax1, "Time (s)");
         ylabel(ax1, "Objective value (log scale)");
-        string ax2_title = "Objective value over time for small instances - first " + to_string(exclude_from_linear_plot) + " values excluded";
+        string ax2_title = "Objective value over time for different configurations - first " + to_string(exclude_from_linear_plot) + " values excluded";
         title(ax2, ax2_title);
         xlabel(ax2, "Time (s)");
         ylabel(ax2, "Objective value");
-        string title = "Objective value over time - " + name;
+        string title = "Objective value over time - " + name + " - " + size;
         std::replace(title.begin(), title.end(), '_', ' ');
         sgtitle(title);
         gcf()->title_font_size_multiplier(1.5);
@@ -149,7 +173,7 @@ int main(int argc, char *argv[]){
                         // Append the time to the filename
                         const auto now = chrono::zoned_time(std::chrono::current_zone(), chrono::system_clock::now());
                         string date = std::format("{:%Y-%m-%d-%H-%M-%OS}", now);
-                        string output_filename = "../results/large/" + name + "_" + date + ".json";
+                        string output_filename = "../results/" + size +"/" + name + "_" + date + ".json";
                         export_solution(
                             output_filename, 
                             instance, 
@@ -167,7 +191,7 @@ int main(int argc, char *argv[]){
         legend(ax2);
 
         // Save the plot
-        string plot_filename = "../results/plots/" + name + "_pathwyse_basic_large.png";
+        string plot_filename = "../results/plots/" + size + "_" + name + "_pathwyse_basic.png";
         save(plot_filename);
     }
 
