@@ -23,8 +23,6 @@ public:
     Problem();
     // Custom constructor
     Problem(std::string name, int n_nodes, int origin, int destination, int n_res, bool cycles, bool complete, bool directed);
-    // We also need a copy constructor to be able to push problems into a vector
-    Problem(const Problem &problem);
     ~Problem();
 
     //Problem setup

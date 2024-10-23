@@ -26,7 +26,7 @@
 #include <chrono>
 #include <format>
 
-inline constexpr int TIME_LIMIT = 60;
+inline constexpr int TIME_LIMIT = 300;
 inline constexpr bool VERBOSE = true;
 inline constexpr bool EXPORT_SOLUTION = true;
 
@@ -130,59 +130,48 @@ int main(int argc, char *argv[]){
         hold(ax1, on);
         hold(ax2, on);
 
-        for (const auto& use_max_formulation : {false, true}) {
-            for (const auto& dssr_mode : {DSSR_RESTRICTED, DSSR_STANDARD}) {
-                for (const auto& ng_mode : {NG_OFF, NG_RESTRICTED, NG_STANDARD}) {
-                    vector<Route> routes;
-                    cout << "-----------------------------------" << endl;
-                    cout << "Current parameters : ";
-                    cout << " Maximisation formulation : " << use_max_formulation;
-                    cout << " - DSSR mode : " << NG_DSSR_MODES[dssr_mode];
-                    cout << " - NG mode : " << NG_DSSR_MODES[ng_mode] << endl;
-                    routes = vector<Route>();
-                    routes.push_back(EmptyRoute(instance.nodes.size()));
-                    cout << "Starting the column generation algorithm" << endl;
-                    parameters.max_resources_dominance = instance.capacities_labels.size() + 1;
-                    parameters.use_maximisation_formulation = use_max_formulation;
-                    parameters.ng = ng_mode;
-                    parameters.dssr = dssr_mode;
+        for (const auto& use_stabilisation : {false, true}) {
+            for (const auto& pricing_function : {PRICING_PATHWYSE_BASIC, PRICING_DIVERSIFICATION}) {
+                vector<Route> routes;
+                cout << "-----------------------------------" << endl;
+                cout << "Current parameters : ";
+                cout << " Stabilisation formulation : " << use_stabilisation;
+                cout << " - Pricing function : " << pricing_function << endl;
+                routes = vector<Route>();
+                routes.push_back(EmptyRoute(instance.nodes.size()));
+                cout << "Starting the column generation algorithm" << endl;
+                parameters.max_resources_dominance = instance.capacities_labels.size() + 1;
+                parameters.pricing_function = pricing_function;
+                parameters.use_stabilisation = use_stabilisation;
 
-                    CGResult result = full_cg_procedure(instance, routes, parameters);
+                CGResult result = full_cg_procedure(instance, routes, parameters);
 
-                    // Plot the objective value over time
-                    string plot_name = use_max_formulation ? "Max" : "Min";
-                    plot_name += " - DSSR=" + NG_DSSR_MODES[dssr_mode];
-                    plot_name += " - NG=" + NG_DSSR_MODES[ng_mode];
-                    // Add the final objective value to the plot name -only first 8 digits
-                    if (use_max_formulation){
-                        plot_name += " - Obj= " + to_string(convert_min_max_objective(result.objective_values, instance).back()).substr(0, 8);
-                    } else {
-                        plot_name += " - Obj= " + to_string(result.objective_values.back()).substr(0, 8);
-                    }
-                    std::replace(plot_name.begin(), plot_name.end(), '_', ' ');
-                    if (use_max_formulation){
-                        plot_objective_values(ax1, result.objective_time_points, convert_min_max_objective(result.objective_values, instance), plot_name, true, 0);
-                        plot_objective_values(ax2, result.objective_time_points, convert_min_max_objective(result.objective_values, instance), plot_name, false, exclude_from_linear_plot);
-                    } else {
-                        plot_objective_values(ax1, result.objective_time_points, result.objective_values, plot_name, true, 0);
-                        plot_objective_values(ax2, result.objective_time_points, result.objective_values, plot_name, false, exclude_from_linear_plot);
-                    }
-
-                    if (EXPORT_SOLUTION){
-                        // Dump the results to a file
-                        // Append the time to the filename
-                        const auto now = chrono::zoned_time(std::chrono::current_zone(), chrono::system_clock::now());
-                        string date = std::format("{:%Y-%m-%d-%H-%M-%OS}", now);
-                        string output_filename = "../results/" + size +"/" + name + "_" + date + ".json";
-                        export_solution(
-                            output_filename, 
-                            instance, 
-                            result,
-                            routes, 
-                            parameters
-                        );
-                    }
+                // Plot the objective value over time
+                string plot_name = pricing_function;
+                if (use_stabilisation){
+                    plot_name += " - ɑ = 0.5";
                 }
+                // Add the final objective value to the plot name -only first 8 digits      
+                plot_name += " - Obj= " + to_string(result.objective_values.back()).substr(0, 8);
+                std::replace(plot_name.begin(), plot_name.end(), '_', ' ');
+                plot_objective_values(ax1, result.objective_time_points, result.objective_values, plot_name, true, 0);
+                plot_objective_values(ax2, result.objective_time_points, result.objective_values, plot_name, false, exclude_from_linear_plot);
+                
+
+                if (EXPORT_SOLUTION){
+                    // Dump the results to a file & append the time to the filename
+                    const auto now = chrono::zoned_time(std::chrono::current_zone(), chrono::system_clock::now());
+                    string date = std::format("{:%Y-%m-%d-%H-%M-%OS}", now);
+                    string output_filename = "../results/divers&stab/" + size + "_" + name + "_" + date + ".json";
+                    export_solution(
+                        output_filename, 
+                        instance, 
+                        result,
+                        routes, 
+                        parameters
+                    );
+                }
+                
             }
         }
 
@@ -191,7 +180,7 @@ int main(int argc, char *argv[]){
         legend(ax2);
 
         // Save the plot
-        string plot_filename = "../results/plots/" + size + "_" + name + "_pathwyse_basic.png";
+        string plot_filename = "../results/plots/divers&stab_" + size + "_" + name + ".png";
         save(plot_filename);
     }
 

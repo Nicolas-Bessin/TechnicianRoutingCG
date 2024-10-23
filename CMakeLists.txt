@@ -155,12 +155,6 @@ add_executable(TRP_test_solutions src/main_route_testing.cpp)
 target_link_libraries(TRP_test_solutions PUBLIC technician_routing_lib)
 
 
-# Create an executable to test the genetic algorithm
-add_executable(TRP_genetic src/main_genetic_algorithm.cpp)
-# Link against the core library
-target_link_libraries(TRP_genetic PUBLIC technician_routing_lib)
-
-
 # Create an executable to plot solution quality from results files
 add_executable(TRP_plot src/quality_plot.cpp)
 # Add matplot
