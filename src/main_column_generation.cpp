@@ -26,7 +26,7 @@
 #include <chrono>
 #include <format>
 
-inline constexpr int TIME_LIMIT = 300;
+inline constexpr int TIME_LIMIT = 60;
 inline constexpr bool VERBOSE = true;
 inline constexpr bool EXPORT_SOLUTION = true;
 
@@ -54,6 +54,7 @@ int main(int argc, char *argv[]){
         {"ng", NG_STANDARD},
         {"dssr", DSSR_STANDARD},
         {"use_visited", true},
+        {"bidirectional_DP", false},
         {"pathwyse_time_limit", 0.0},
         {"switch_to_cyclic_price", true},
         {"delta ", 50},
@@ -107,62 +108,68 @@ int main(int argc, char *argv[]){
         // Initialize the figure
         using namespace matplot;
         figure(true);
+        string fig_title = "Current best solution cost over time - " + name + " - " + size;
+        std::replace(fig_title.begin(), fig_title.end(), '_', ' ');
+        sgtitle(fig_title);
+        gcf()->title_font_size_multiplier(1.5);
         // Set the height and width of the figure
         gcf()->width(2000);
         gcf()->height(800);
+
         auto ax1 = subplot(1, 2, 0);
         auto ax2 = subplot(1, 2, 1);
-        std::string ax1_title = "Objective value over time for different configurations - log scale";
+        std::string ax1_title = "Solution cost over time";
         title(ax1, ax1_title);
         xlabel(ax1, "Time (s)");
-        ylabel(ax1, "Objective value (log scale)");
-        string ax2_title = "Objective value over time for different configurations - first " + to_string(exclude_from_linear_plot) + " values excluded";
+        ylabel(ax1, "Solution cost ");
+        string ax2_title = "Number of covered interventions over time";
         title(ax2, ax2_title);
         xlabel(ax2, "Time (s)");
-        ylabel(ax2, "Objective value");
-        string title = "Objective value over time - " + name + " - " + size;
-        std::replace(title.begin(), title.end(), '_', ' ');
-        sgtitle(title);
-        gcf()->title_font_size_multiplier(1.5);
+        ylabel(ax2, "# Covered interventions");
+
         // Set the axis size to the maximum time
         xlim(ax1, {0, TIME_LIMIT * 1.2});
         xlim(ax2, {0, TIME_LIMIT * 1.2});
         hold(ax1, on);
         hold(ax2, on);
 
-        for (const auto& use_stabilisation : {false, true}) {
-            for (const auto& pricing_function : {PRICING_PATHWYSE_BASIC, PRICING_DIVERSIFICATION}) {
+        for (const auto& use_naive_M : {false, true}) {
                 vector<Route> routes;
                 cout << "-----------------------------------" << endl;
                 cout << "Current parameters : ";
-                cout << " Stabilisation formulation : " << use_stabilisation;
-                cout << " - Pricing function : " << pricing_function << endl;
+                cout << " Using naive M : " << use_naive_M << endl;
                 routes = vector<Route>();
                 routes.push_back(EmptyRoute(instance.nodes.size()));
                 cout << "Starting the column generation algorithm" << endl;
                 parameters.max_resources_dominance = instance.capacities_labels.size() + 1;
-                parameters.pricing_function = pricing_function;
-                parameters.use_stabilisation = use_stabilisation;
+
+                if (use_naive_M){
+                    instance.M = compute_M_naive(instance);
+                } else {
+                    instance.M = compute_M_perV(instance);
+                }
 
                 CGResult result = full_cg_procedure(instance, routes, parameters);
 
                 // Plot the objective value over time
-                string plot_name = pricing_function;
-                if (use_stabilisation){
-                    plot_name += " - ɑ = 0.5";
+                string plot_name;
+                if (use_naive_M){
+                    plot_name = "Naive M = " + to_string(instance.M);
+                } else {
+                    plot_name = "Standard M = " + to_string(instance.M);
                 }
-                // Add the final objective value to the plot name -only first 8 digits      
-                plot_name += " - Obj= " + to_string(result.objective_values.back()).substr(0, 8);
+                // Add the final objective value to the plot name - only first 8 digits      
+                plot_name += " - Cost = " + to_string(result.objective_values.back()).substr(0, 8);
                 std::replace(plot_name.begin(), plot_name.end(), '_', ' ');
-                plot_objective_values(ax1, result.objective_time_points, result.objective_values, plot_name, true, 0);
-                plot_objective_values(ax2, result.objective_time_points, result.objective_values, plot_name, false, exclude_from_linear_plot);
+                plot_objective_values(ax1, result.time_points, result.solution_costs, plot_name, false, 0);
+                plot_objective_values(ax2, result.time_points, result.covered_interventions, plot_name, false, 0);
                 
 
                 if (EXPORT_SOLUTION){
                     // Dump the results to a file & append the time to the filename
                     const auto now = chrono::zoned_time(std::chrono::current_zone(), chrono::system_clock::now());
                     string date = std::format("{:%Y-%m-%d-%H-%M-%OS}", now);
-                    string output_filename = "../results/divers&stab/" + size + "_" + name + "_" + date + ".json";
+                    string output_filename = "../results/solution_cost/" + size + "_" + name + "_" + date + ".json";
                     export_solution(
                         output_filename, 
                         instance, 
@@ -171,16 +178,14 @@ int main(int argc, char *argv[]){
                         parameters
                     );
                 }
-                
             }
-        }
 
         // Set the legend
         legend(ax1);
         legend(ax2);
 
         // Save the plot
-        string plot_filename = "../results/plots/divers&stab_" + size + "_" + name + ".png";
+        string plot_filename = "../results/plots/solution_cost_" + size + "_" + name + ".png";
         save(plot_filename);
     }
 

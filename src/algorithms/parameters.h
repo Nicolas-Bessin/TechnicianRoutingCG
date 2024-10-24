@@ -26,6 +26,7 @@ struct ColumnGenerationParameters {
     int ng = NG_STANDARD;
     int dssr = DSSR_STANDARD;
     float pathwyse_TL = 0.0;
+    bool bidirectional_DP = false;
 
     // Pulse related parameters
     int delta = 10;

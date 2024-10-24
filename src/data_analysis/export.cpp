@@ -118,7 +118,9 @@ void export_solution(
     // Add the evolution of the relaxed RMP objective
     j["evolution"] = {
         {"objective_values", result.objective_values},
-        {"time_points", result.objective_time_points}
+        {"time_points", result.time_points},
+        {"solution_costs", result.solution_costs},
+        {"covered_interventions", result.covered_interventions}
     };
 
     // Write the json to a file

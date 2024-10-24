@@ -36,7 +36,8 @@ std::map<std::string, std::any> pathwyse_parameters_dict(
         {"use_visited", parameters.use_visited},
         {"ng", parameters.ng},
         {"dssr", parameters.dssr},
-        {"compare_unreachables", using_cyclic_pricing}
+        {"compare_unreachables", using_cyclic_pricing},
+        {"bidirectional", parameters.bidirectional_DP}
     });
 }
 
@@ -86,7 +87,9 @@ CGResult column_generation(
 
     // Objective values tracking
     vector<double> objective_values = {solution.objective_value};
-    vector<int> objective_time_points = {0};
+    vector<double> solution_costs = {relaxed_solution_cost(solution, routes)};
+    vector<double> covered_interventions = {count_covered_interventions(solution, routes, instance)};
+    vector<int> time_points = {0};
 
     // Order of exploration of the vehicles for the pricing problem (does not matter, we simply remove the vehicles that can not be used)
     vector<int> vehicle_order = {};
@@ -293,7 +296,9 @@ CGResult column_generation(
 
         // Update the objective tracking
         objective_values.push_back(solution.objective_value);
-        objective_time_points.push_back(chrono::duration_cast<chrono::milliseconds>(end - start_time).count());
+        solution_costs.push_back(relaxed_solution_cost(solution, routes));
+        covered_interventions.push_back(count_covered_interventions(solution, routes, instance));
+        time_points.push_back(chrono::duration_cast<chrono::milliseconds>(end - start_time).count());
 
         if (parameters.verbose) {
             cout << "Iteration " << iteration << " - Objective value : " << solution.objective_value;
@@ -429,7 +434,9 @@ CGResult column_generation(
         pricing_time,
         integer_time,
         objective_values,
-        objective_time_points
+        solution_costs,
+        covered_interventions,
+        time_points
     };
 
     return result;

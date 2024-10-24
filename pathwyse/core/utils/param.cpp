@@ -200,7 +200,7 @@ void Parameters::setParametersFromDict(const std::map<std::string, std::any> &pa
     main_algorithm_name = "PWDefault";
     default_autoconfig = false;
     default_timelimit = 0;
-    default_parallel = false;
+    default_parallel = true;
     default_bidirectional = false;
     default_split = 0.5;
     default_reserve = 10000000;
@@ -220,6 +220,8 @@ void Parameters::setParametersFromDict(const std::map<std::string, std::any> &pa
         default_dssr = std::any_cast<int>(params.at("dssr"));
     if (params.contains("time_limit"))
         default_timelimit = std::any_cast<double>(params.at("time_limit"));
+    if (params.contains("bidirectional"))
+        default_bidirectional = std::any_cast<bool>(params.at("bidirectional"));
     
 }
 

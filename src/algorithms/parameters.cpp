@@ -41,6 +41,8 @@ ColumnGenerationParameters::ColumnGenerationParameters(std::map<std::string, std
         dssr = std::any_cast<int>(args["dssr"]);
     if (args.contains("pathwyse_time_limit"))
         pathwyse_TL = std::any_cast<double>(args["pathwyse_time_limit"]);
+    if (args.contains("bidirectional_DP"))
+        bidirectional_DP = std::any_cast<bool>(args["bidirectional_DP"]);
 
     // Pulse related parameters
     if (args.contains("delta")) {
