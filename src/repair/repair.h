@@ -26,3 +26,7 @@ void delete_intervention(Route& route, int intervention, const Instance& instanc
 // Modifies only the routes used in the initial solution
 // Eventually, if after repair a route becomes empty, its coefficient in the solution is set to 0
 void repair_routes(std::vector<Route>& routes, IntegerSolution& solution, const Instance& instance);
+
+
+// Comutes a repaired solution from the initial solution and routes, without modifying the initial solution nor the routes
+std::pair<IntegerSolution, std::vector<Route>> compute_repaired_solution(const std::vector<Route>& routes, const IntegerSolution& solution, const Instance& instance);

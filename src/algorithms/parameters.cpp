@@ -4,27 +4,29 @@
 ColumnGenerationParameters::ColumnGenerationParameters(std::map<std::string, std::any> args) {
 
     // General parameters
-    if (args.contains("time_limit")) {
+    if (args.contains("time_limit"))
         time_limit = std::any_cast<int>(args["time_limit"]);
-    }
-    if (args.contains("reduced_cost_threshold")) {
+
+    if (args.contains("reduced_cost_threshold"))
         reduced_cost_threshold = std::any_cast<double>(args["reduced_cost_threshold"]);
-    }
-    if (args.contains("verbose")) {
+
+    if (args.contains("verbose"))
         verbose = std::any_cast<bool>(args["verbose"]);
-    }
-    if (args.contains("max_iterations")) {
+
+    if (args.contains("max_iterations"))
         max_iterations = std::any_cast<int>(args["max_iterations"]);
-    }
-    if (args.contains("max_consecutive_non_improvement")) {
+
+    if (args.contains("max_consecutive_non_improvement"))
         max_consecutive_non_improvement = std::any_cast<int>(args["max_consecutive_non_improvement"]);
-    }
-    if (args.contains("compute_integer_solution")) {
+
+    if (args.contains("compute_integer_solution"))
         compute_integer_solution = std::any_cast<bool>(args["compute_integer_solution"]);
-    }
-    if (args.contains("use_maximisation_formulation")) {
+
+    if (args.contains("use_maximisation_formulation"))
         use_maximisation_formulation = std::any_cast<bool>(args["use_maximisation_formulation"]);
-    }
+
+    if (args.contains("compute_intermediate_integer_solutions"))
+        compute_intermediate_integer_solutions = std::any_cast<bool>(args["compute_intermediate_integer_solutions"]);
 
     // Pathwyse related parameters
     if (args.contains("max_resources_dominance")) {

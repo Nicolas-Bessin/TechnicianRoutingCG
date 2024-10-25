@@ -79,26 +79,54 @@ void plot_instance(
 void plot_objective_values(
     matplot::axes_handle& ax,
     const std::vector<int>& time_points,
-    const std::vector<double>& objective_values,
+    const std::vector<double>& values,
     const std::string& name,
     bool use_semilogy,
     int N
 ) {
     using namespace matplot;
     // Plot the objective values
-    std::vector<double> time_points_sec = {};
+    std::vector<double> time_points_sliced = {};
     for (int i = N; i < time_points.size(); i++){
-        time_points_sec.push_back(time_points[i] / 1000.0);
+        time_points_sliced.push_back(time_points[i])   ;
     }
-    std::vector<double> objective_values_sliced = std::vector<double>();
-    for (int i = N; i < objective_values.size(); i++){
-        objective_values_sliced.push_back(objective_values[i]);
+    std::vector<double> values_sliced = std::vector<double>();
+    for (int i = N; i < values.size(); i++){
+        values_sliced.push_back(values[i]);
     }
     if (use_semilogy){
-        semilogy(ax, time_points_sec, objective_values_sliced)
+        semilogy(ax, time_points_sliced, values_sliced)
             ->display_name(name);
     } else {
-        plot(ax, time_points_sec, objective_values_sliced)
+        plot(ax, time_points_sliced, values_sliced)
+            ->display_name(name);
+    }
+    return;
+}
+
+void plot_objective_values(
+    matplot::axes_handle& ax,
+    const std::vector<int>& time_points,
+    const std::vector<int>& values,
+    const std::string& name,
+    bool use_semilogy,
+    int N
+) {
+      using namespace matplot;
+    // Plot the objective values
+    std::vector<double> time_points_sliced = {};
+    for (int i = N; i < time_points.size(); i++){
+        time_points_sliced.push_back(time_points[i])   ;
+    }
+    std::vector<double> values_sliced = std::vector<double>();
+    for (int i = N; i < values.size(); i++){
+        values_sliced.push_back(values[i]);
+    }
+    if (use_semilogy){
+        semilogy(ax, time_points_sliced, values_sliced)
+            ->display_name(name);
+    } else {
+        plot(ax, time_points_sliced, values_sliced)
             ->display_name(name);
     }
     return;

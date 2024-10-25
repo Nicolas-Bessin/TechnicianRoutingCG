@@ -25,6 +25,7 @@
 #include <iomanip>
 #include <chrono>
 #include <format>
+#include <filesystem>
 
 inline constexpr int TIME_LIMIT = 60;
 inline constexpr bool VERBOSE = true;
@@ -49,6 +50,7 @@ int main(int argc, char *argv[]){
         {"max_iterations", 1000},
         {"max_consecutive_non_improvement", 5},
         {"compute_integer_solution", true},
+        {"compute_intermediate_integer_solutions", true},
         {"use_maximisation_formulation", false},
         {"max_resources_dominance", MAX_RESOURCES_DOMINANCE},
         {"ng", NG_STANDARD},
@@ -93,6 +95,15 @@ int main(int argc, char *argv[]){
         cout << "Invalid size" << endl;
         return 1;
     }
+    // Subfoleder for the results
+    string subfolder = "partial_integer/";
+    // If the subfolder does not exist, create it
+    if (!std::filesystem::exists("../results/plots/" + subfolder)){
+        std::filesystem::create_directory("../results/plots/" + subfolder);
+    }
+    if (!std::filesystem::exists("../results/" + subfolder)){
+        std::filesystem::create_directory("../results/" + subfolder);
+    }
 
     for (const auto& name : instances){
         // Parse the instance from a JSON file
@@ -118,14 +129,14 @@ int main(int argc, char *argv[]){
 
         auto ax1 = subplot(1, 2, 0);
         auto ax2 = subplot(1, 2, 1);
-        std::string ax1_title = "Solution cost over time";
+        std::string ax1_title = "Number of covered interventions";
         title(ax1, ax1_title);
         xlabel(ax1, "Time (s)");
         ylabel(ax1, "Solution cost ");
-        string ax2_title = "Number of covered interventions over time";
+        string ax2_title = "Objective value and intermediary integer solutions every 5 iterations";
         title(ax2, ax2_title);
         xlabel(ax2, "Time (s)");
-        ylabel(ax2, "# Covered interventions");
+        ylabel(ax2, "Objective value");
 
         // Set the axis size to the maximum time
         xlim(ax1, {0, TIME_LIMIT * 1.2});
@@ -133,43 +144,43 @@ int main(int argc, char *argv[]){
         hold(ax1, on);
         hold(ax2, on);
 
-        for (const auto& use_naive_M : {false, true}) {
+        for (const auto& use_maximisation : {false, true}) {
                 vector<Route> routes;
                 cout << "-----------------------------------" << endl;
                 cout << "Current parameters : ";
-                cout << " Using naive M : " << use_naive_M << endl;
+                cout << " Using coverage formulation : " << use_maximisation << endl;
                 routes = vector<Route>();
                 routes.push_back(EmptyRoute(instance.nodes.size()));
                 cout << "Starting the column generation algorithm" << endl;
                 parameters.max_resources_dominance = instance.capacities_labels.size() + 1;
-
-                if (use_naive_M){
-                    instance.M = compute_M_naive(instance);
-                } else {
-                    instance.M = compute_M_perV(instance);
-                }
+                parameters.use_maximisation_formulation = use_maximisation;
 
                 CGResult result = full_cg_procedure(instance, routes, parameters);
 
                 // Plot the objective value over time
                 string plot_name;
-                if (use_naive_M){
-                    plot_name = "Naive M = " + to_string(instance.M);
+                if (use_maximisation){
+                    plot_name = name + " - Coverage formulation";
                 } else {
-                    plot_name = "Standard M = " + to_string(instance.M);
-                }
-                // Add the final objective value to the plot name - only first 8 digits      
-                plot_name += " - Cost = " + to_string(result.objective_values.back()).substr(0, 8);
+                    plot_name = name + " - Outsourcing formulation";
+                }  
                 std::replace(plot_name.begin(), plot_name.end(), '_', ' ');
-                plot_objective_values(ax1, result.time_points, result.solution_costs, plot_name, false, 0);
-                plot_objective_values(ax2, result.time_points, result.covered_interventions, plot_name, false, 0);
+                plot_objective_values(ax1, result.time_points, result.covered_interventions, plot_name);
+                plot_objective_values(ax1, result.time_points, result.integer_covered_interventions, plot_name + " - Integer");
+                if (use_maximisation){
+                    plot_objective_values(ax2, result.time_points, convert_min_max_objective(result.integer_objective_values, instance), plot_name + " - Integer", true, 10);
+                    plot_objective_values(ax2, result.time_points, convert_min_max_objective(result.objective_values, instance), plot_name, true, 10);
+                } else {
+                    plot_objective_values(ax2, result.time_points, result.integer_objective_values, plot_name + " - Integer", true, 10);
+                    plot_objective_values(ax2, result.time_points, result.objective_values, plot_name, false, 10);
+                }
                 
 
                 if (EXPORT_SOLUTION){
                     // Dump the results to a file & append the time to the filename
                     const auto now = chrono::zoned_time(std::chrono::current_zone(), chrono::system_clock::now());
                     string date = std::format("{:%Y-%m-%d-%H-%M-%OS}", now);
-                    string output_filename = "../results/solution_cost/" + size + "_" + name + "_" + date + ".json";
+                    string output_filename = "../results/" + subfolder + size + "_" + name + "_" + date + ".json";
                     export_solution(
                         output_filename, 
                         instance, 
@@ -185,7 +196,7 @@ int main(int argc, char *argv[]){
         legend(ax2);
 
         // Save the plot
-        string plot_filename = "../results/plots/solution_cost_" + size + "_" + name + ".png";
+        string plot_filename = "../results/plots/" + subfolder + size + "_" + name + ".png";
         save(plot_filename);
     }
 

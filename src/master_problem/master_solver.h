@@ -64,13 +64,37 @@ void set_integer_variables(
     std::vector<GRBVar>& postpone_vars
 );
 
+
+// Set the variables to continuous values
+void set_continuous_variables(
+    GRBModel& model,
+    std::vector<GRBVar>& route_vars,
+    std::vector<GRBVar>& postpone_vars
+);
+
 // Extracts an integer solution from the model
 IntegerSolution extract_integer_solution(
     const GRBModel& model,
     const std::vector<GRBVar>& route_vars
 );
 
+
+// Solve the model at an intermediate step, return the integer solution, and reset the variables to continuous
+IntegerSolution solve_intermediary_integer_model(
+    GRBModel& model,
+    std::vector<GRBVar>& route_vars,
+    std::vector<GRBVar>& postpone_vars,
+    double time_limit = -1.
+);
+
 // Convert a list of objective values in the maximisation formulation to the minimisation formulation or vice versa
 std::vector<double> convert_min_max_objective(const std::vector<double>& objectives, const Instance& instance);
+
+
+// Compute the objective value of an integer solution
+double compute_integer_objective(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance, bool use_min = true);
+
+
+
 
 

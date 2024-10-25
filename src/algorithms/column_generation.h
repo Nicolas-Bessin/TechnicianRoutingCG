@@ -19,8 +19,10 @@ struct CGResult {
     int pricing_time;
     int integer_time;
     std::vector<double> objective_values;
+    std::vector<double> integer_objective_values;
     std::vector<double> solution_costs;
     std::vector<double> covered_interventions;
+    std::vector<int> integer_covered_interventions;
     std::vector<int> time_points;
 };
 

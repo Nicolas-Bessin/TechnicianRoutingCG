@@ -357,28 +357,6 @@ double count_kilometres_travelled(const IntegerSolution& solution, const vector<
 }
 
 
-double compute_integer_objective(const IntegerSolution& solution, const vector<Route>& routes, const Instance& instance) {
-    double value = 0;
-    assert (solution.coefficients.size() == routes.size());
-    // First, count the total cost of the routes
-    for (int r = 0; r < routes.size(); r++) {
-        if (solution.coefficients[r] > 0) {
-            double coef = 0;
-            coef -= instance.cost_per_km * count_route_kilometres(routes[r], instance);
-            coef -= instance.vehicles[routes[r].vehicle_id].cost;
-            value += coef;
-        }
-    }
-    // Then, count the value of the covered interventions
-    auto covered = covered_interventions(solution, routes, instance);
-    for (int i = 0; i < covered.size(); i++) {
-        if (covered[i] > 0) {
-            value += instance.nodes[i].duration * instance.M;
-        }
-    }
-    return value;
-}
-
 /*
     Returns the accumulated reduced cost until this node in the sequence of nodes for a route
 */

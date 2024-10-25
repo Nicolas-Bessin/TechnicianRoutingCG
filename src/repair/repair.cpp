@@ -4,6 +4,8 @@
 #include <numeric>
 #include <algorithm>
 
+#include "master_problem/master_solver.h"
+
 
 
 double compute_delta(const Route& route, int intervention, const Instance& instance){
@@ -83,4 +85,66 @@ void repair_routes(std::vector<Route>& routes, IntegerSolution& solution, const 
             solution.coefficients[r] = 0;
         }
     }
+
+    // Update the cost of the solution
+    solution.objective_value = compute_integer_objective(solution, routes, instance, true);
+}
+
+std::pair<IntegerSolution, std::vector<Route>> compute_repaired_solution(const std::vector<Route>& routes, const IntegerSolution& solution, const Instance& instance){
+    using std::vector;
+
+    // Create a vector containing only the routes used in the initial solution
+    vector<Route> used_routes;
+    IntegerSolution repaired_solution = AllOnesSolution(used_routes.size());
+    for (int r = 0; r < routes.size(); r++){
+        if (solution.coefficients[r] > 0){
+            used_routes.push_back(routes[r]);
+        }
+    }
+
+    // For every intervention, build a vector of the routes that cover it
+    int n_interventions = instance.number_interventions;
+    vector<vector<int>> routes_covering_intervention = vector<vector<int>>(n_interventions);
+    for (int r = 0; r < used_routes.size(); r++){
+        for (int i = 0; i < n_interventions; i++){
+            if (solution.coefficients[r] > 0 && used_routes[r].is_in_route[i] > 0){
+                routes_covering_intervention[i].push_back(r);
+            }
+        }
+    }
+
+    // Finally, process the routes that cover it and remove the intervention where adventageous
+    for (int i = 0; i < n_interventions; i++){
+        if (routes_covering_intervention[i].size() <= 1){
+            continue;
+        }
+        // If there are multiple routes covering the intervention, compute the "delta" of removing the intervention from each route
+        vector<double> delta = vector<double>(routes_covering_intervention[i].size());
+        for (int r = 0; r < routes_covering_intervention[i].size(); r++){
+            Route& route = used_routes[routes_covering_intervention[i][r]];
+            delta[r] = compute_delta(route, i , instance);
+        }
+        // Sort the routes by the delta
+        vector<int> indexes(routes_covering_intervention[i].size());
+        std::iota(indexes.begin(), indexes.end(), 0);
+        std::sort(indexes.begin(), indexes.end(), [&delta](int i1, int i2) {return delta[i1] > delta[i2];});
+
+        // Remove the intervention from all the routes except the one with the highest delta
+        for (int j = 0; j < indexes.size() - 1; j++){
+            int r = routes_covering_intervention[i][indexes[j]];
+            delete_intervention(used_routes[r], i, instance);
+        }
+    }
+
+    // Remove the routes that are empty
+    for (int r = 0; r < used_routes.size(); r++){
+        if (routes[r].id_sequence.size() == 2){
+            repaired_solution.coefficients[r] = 0;
+        }
+    }
+
+    // Update the cost of the solution
+    repaired_solution.objective_value = compute_integer_objective(solution, routes, instance, true);
+
+    return std::make_pair(repaired_solution, used_routes);
 }

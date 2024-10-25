@@ -14,6 +14,8 @@
 
 #include "data_analysis/analysis.h"
 
+#include "repair/repair.h"
+
 #include <iostream>
 #include <iomanip>
 #include <memory>
@@ -85,10 +87,20 @@ CGResult column_generation(
     DualSolution& dual_solution = solution.dual_solution;
     DualSolution previous_dual_solution{};
 
+    // Intermediary integer solutions
+    IntegerSolution intermediary_integer_solution {};
+    vector<Route> intermediary_integer_routes {};
+    if (parameters.compute_intermediate_integer_solutions){
+        cout << "Solving intermediary integer model at iteration " << iteration << endl;
+        intermediary_integer_solution = solve_intermediary_integer_model(model, route_vars, postpone_vars, parameters.time_limit);
+    }
+
     // Objective values tracking
     vector<double> objective_values = {solution.objective_value};
     vector<double> solution_costs = {relaxed_solution_cost(solution, routes)};
     vector<double> covered_interventions = {count_covered_interventions(solution, routes, instance)};
+    vector<double> integer_objective_values = {intermediary_integer_solution.objective_value};
+    vector<int> integer_covered_interventions = {count_covered_interventions(intermediary_integer_solution, routes, instance)};
     vector<int> time_points = {0};
 
     // Order of exploration of the vehicles for the pricing problem (does not matter, we simply remove the vehicles that can not be used)
@@ -294,11 +306,33 @@ CGResult column_generation(
         // Extract the dual solution from the master solution
         DualSolution& dual_solution = solution.dual_solution;
 
+        // Every five iterations, we compute an integer solution
+        if (parameters.compute_intermediate_integer_solutions && iteration % 5 == 0 && iteration > 0){
+            cout << "Solving intermediary integer model at iteration " << iteration << endl;
+            intermediary_integer_solution = solve_intermediary_integer_model(model, route_vars, postpone_vars, parameters.time_limit);
+
+            intermediary_integer_routes = routes;
+            if (!parameters.use_maximisation_formulation){
+                // Repair the integer solution
+                repair_routes(intermediary_integer_routes, intermediary_integer_solution, instance);
+            }
+        }
+    
+
+        // ----------------- Objective tracking -----------------
+
         // Update the objective tracking
-        objective_values.push_back(solution.objective_value);
+        objective_values.push_back(solution.objective_value); 
         solution_costs.push_back(relaxed_solution_cost(solution, routes));
         covered_interventions.push_back(count_covered_interventions(solution, routes, instance));
-        time_points.push_back(chrono::duration_cast<chrono::milliseconds>(end - start_time).count());
+        time_points.push_back((master_time + pricing_time) / 1000.0);
+
+        if (parameters.compute_intermediate_integer_solutions){
+            // We add them at every time point even when no integer solution is computed
+            // This way we can just plot against the time points
+            integer_objective_values.push_back(intermediary_integer_solution.objective_value);
+            integer_covered_interventions.push_back(count_covered_interventions(intermediary_integer_solution, intermediary_integer_routes, instance));
+        }
 
         if (parameters.verbose) {
             cout << "Iteration " << iteration << " - Objective value : " << solution.objective_value;
@@ -396,13 +430,11 @@ CGResult column_generation(
         compute_integer_solution = false;
     }
 
-    IntegerSolution integer_solution = IntegerSolution{};
     int integer_time = 0;
+    auto integer_solution = IntegerSolution{};
     if (compute_integer_solution) {
         auto start_integer = chrono::steady_clock::now();
-        set_integer_variables(model, route_vars, postpone_vars);
-        int status = solve_model(model, parameters.time_limit);
-        integer_solution = extract_integer_solution(model, route_vars);
+        integer_solution = solve_intermediary_integer_model(model, route_vars, postpone_vars, parameters.time_limit);
         auto end_integer = chrono::steady_clock::now();
         integer_time = chrono::duration_cast<chrono::milliseconds>(end_integer - start_integer).count();
         
@@ -434,8 +466,10 @@ CGResult column_generation(
         pricing_time,
         integer_time,
         objective_values,
+        integer_objective_values,
         solution_costs,
         covered_interventions,
+        integer_covered_interventions,
         time_points
     };
 

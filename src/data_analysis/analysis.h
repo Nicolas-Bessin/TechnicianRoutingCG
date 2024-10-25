@@ -56,7 +56,7 @@ int count_used_routes_with_duplicates(const IntegerSolution& solution, const std
 
 double count_kilometres_travelled(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
 
-double compute_integer_objective(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
+
 
 // Prints a route to the console
 void print_route(const Route& route, const Instance& instance, const MasterSolution& solution = MasterSolution());

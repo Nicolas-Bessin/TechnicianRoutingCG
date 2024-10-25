@@ -1,6 +1,7 @@
 #include "export.h"
 
 #include "analysis.h"
+#include "master_problem/master_solver.h"
 
 #include <fstream>
 #include "../../nlohmann/json.hpp"
@@ -120,7 +121,9 @@ void export_solution(
         {"objective_values", result.objective_values},
         {"time_points", result.time_points},
         {"solution_costs", result.solution_costs},
-        {"covered_interventions", result.covered_interventions}
+        {"covered_interventions", result.covered_interventions},
+        {"integer_objective_values", result.integer_objective_values},
+        {"integer_covered_interventions", result.integer_covered_interventions}
     };
 
     // Write the json to a file

@@ -19,7 +19,7 @@ void plot_instance(
 
 
 /*
-    Plot a list of objective values at given time points given in ms
+    Plot a list of values at given time points given in ms
     Convert the time points to seconds
     Optionnaly, remove the first N point and plot
     Use either normal or semilogy plot
@@ -27,11 +27,27 @@ void plot_instance(
 void plot_objective_values(
     matplot::axes_handle& ax,
     const std::vector<int>& time_points,
-    const std::vector<double>& objective_values,
+    const std::vector<double>& values,
     const std::string& name,
     bool use_semilogy = false,
     int N = 0
 );
+
+/*
+    Plot a list of values at given time points given in ms
+    Convert the time points to seconds
+    Optionnaly, remove the first N point and plot
+    Use either normal or semilogy plot
+*/
+void plot_objective_values(
+    matplot::axes_handle& ax,
+    const std::vector<int>& time_points,
+    const std::vector<int>& values,
+    const std::string& name,
+    bool use_semilogy = false,
+    int N = 0
+);
+
 
 
 

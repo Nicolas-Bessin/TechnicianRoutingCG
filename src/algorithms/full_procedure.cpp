@@ -2,6 +2,7 @@
 
 #include "master_problem/master.h"
 #include "master_problem/rmp_solver.h"
+#include "master_problem/master_solver.h"
 #include "master_problem/node.h"
 
 #include "pricing_problem/subproblem.h"

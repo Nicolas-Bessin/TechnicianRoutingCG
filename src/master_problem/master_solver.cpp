@@ -1,5 +1,9 @@
 #include "master_solver.h"
 
+#include "data_analysis/analysis.h"
+
+#include <assert.h>
+
 
 GRBModel create_model(
     const Instance& instance,
@@ -175,6 +179,20 @@ void set_integer_variables(
 }
 
 
+void set_continuous_variables(
+    GRBModel& model,
+    std::vector<GRBVar>& route_vars,
+    std::vector<GRBVar>& postpone_vars
+) {
+    for (GRBVar& var : route_vars){
+        var.set(GRB_CharAttr_VType, GRB_CONTINUOUS);
+    }
+    for (GRBVar& var : postpone_vars){
+        var.set(GRB_CharAttr_VType, GRB_CONTINUOUS);
+    }
+}
+
+
 IntegerSolution extract_integer_solution(
     const GRBModel& model,
     const std::vector<GRBVar>& route_vars
@@ -193,6 +211,21 @@ IntegerSolution extract_integer_solution(
 }
 
 
+IntegerSolution solve_intermediary_integer_model(
+    GRBModel& model,
+    std::vector<GRBVar>& route_vars,
+    std::vector<GRBVar>& postpone_vars,
+    double time_limit
+) {
+    set_integer_variables(model, route_vars, postpone_vars);
+    int status = solve_model(model, time_limit);
+    auto solution = extract_integer_solution(model, route_vars);
+    // Return the variables to continuous values
+    set_continuous_variables(model, route_vars, postpone_vars);
+    return solution;
+}
+
+
 std::vector<double> convert_min_max_objective(const std::vector<double>& objectives, const Instance& instance){
     // Compute the constant part of the objective
     double constant_part = 0;
@@ -208,3 +241,46 @@ std::vector<double> convert_min_max_objective(const std::vector<double>& objecti
 
     return new_objective;  
 }
+
+
+double compute_integer_objective(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance, bool use_min) {
+    double value = 0;
+    assert (solution.coefficients.size() == routes.size());
+    if (use_min){
+        // First, count the total cost of the routes
+        for (int r = 0; r < routes.size(); r++) {
+            if (solution.coefficients[r] > 0) {
+                double coef = 0;
+                coef += instance.cost_per_km * count_route_kilometres(routes[r], instance);
+                coef += instance.vehicles[routes[r].vehicle_id].cost;
+                value += coef;
+            }
+        }
+        // Then, count the value of the covered interventions
+        auto covered = covered_interventions(solution, routes, instance);
+        for (int i = 0; i < covered.size(); i++) {
+            if (covered[i] == 0) {
+                value += instance.nodes[i].duration * instance.M;
+            }
+        }
+    } else {
+        // First, count the total cost of the routes
+        for (int r = 0; r < routes.size(); r++) {
+            if (solution.coefficients[r] > 0) {
+                double coef = 0;
+                coef -= instance.cost_per_km * count_route_kilometres(routes[r], instance);
+                coef -= instance.vehicles[routes[r].vehicle_id].cost;
+                value += coef;
+            }
+        }
+        // Then, count the value of the covered interventions
+        auto covered = covered_interventions(solution, routes, instance);
+        for (int i = 0; i < covered.size(); i++) {
+            if (covered[i] > 0) {
+                value += instance.nodes[i].duration * instance.M;
+            }
+        }
+    }
+    return value;
+}
+
