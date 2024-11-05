@@ -95,8 +95,8 @@ int main(int argc, char *argv[]){
         cout << "Invalid size" << endl;
         return 1;
     }
-    // Subfoleder for the results
-    string subfolder = "partial_integer/";
+    // Subfolder for the results
+    string subfolder = "bigMcomparisons/";
     // If the subfolder does not exist, create it
     if (!std::filesystem::exists("../results/plots/" + subfolder)){
         std::filesystem::create_directory("../results/plots/" + subfolder);
@@ -129,14 +129,14 @@ int main(int argc, char *argv[]){
 
         auto ax1 = subplot(1, 2, 0);
         auto ax2 = subplot(1, 2, 1);
-        std::string ax1_title = "Number of covered interventions";
+        std::string ax1_title = "Number of covered interventions value and intermediary integer solutions every 5 iterations";
         title(ax1, ax1_title);
         xlabel(ax1, "Time (s)");
-        ylabel(ax1, "Solution cost ");
-        string ax2_title = "Objective value and intermediary integer solutions every 5 iterations";
+        ylabel(ax1, "Number of covered interventions ");
+        string ax2_title = "Solution cost value and intermediary integer solutions every 5 iterations";
         title(ax2, ax2_title);
         xlabel(ax2, "Time (s)");
-        ylabel(ax2, "Objective value");
+        ylabel(ax2, "Solution cost");
 
         // Set the axis size to the maximum time
         xlim(ax1, {0, TIME_LIMIT * 1.2});
@@ -144,36 +144,27 @@ int main(int argc, char *argv[]){
         hold(ax1, on);
         hold(ax2, on);
 
-        for (const auto& use_maximisation : {false, true}) {
+        for (const auto& current_M : {5.0, 10.0, compute_M_naive(instance), compute_M_perV(instance)}){
                 vector<Route> routes;
                 cout << "-----------------------------------" << endl;
                 cout << "Current parameters : ";
-                cout << " Using coverage formulation : " << use_maximisation << endl;
+                cout << " Using big M of " << current_M << " - ";
                 routes = vector<Route>();
                 routes.push_back(EmptyRoute(instance.nodes.size()));
                 cout << "Starting the column generation algorithm" << endl;
                 parameters.max_resources_dominance = instance.capacities_labels.size() + 1;
-                parameters.use_maximisation_formulation = use_maximisation;
+                instance.M = current_M;
 
                 CGResult result = full_cg_procedure(instance, routes, parameters);
 
                 // Plot the objective value over time
-                string plot_name;
-                if (use_maximisation){
-                    plot_name = name + " - Coverage formulation";
-                } else {
-                    plot_name = name + " - Outsourcing formulation";
-                }  
+                string plot_name = name + " - M = " + std::to_string(current_M);
                 std::replace(plot_name.begin(), plot_name.end(), '_', ' ');
                 plot_objective_values(ax1, result.time_points, result.covered_interventions, plot_name);
                 plot_objective_values(ax1, result.time_points, result.integer_covered_interventions, plot_name + " - Integer");
-                if (use_maximisation){
-                    plot_objective_values(ax2, result.time_points, convert_min_max_objective(result.integer_objective_values, instance), plot_name + " - Integer", true, 10);
-                    plot_objective_values(ax2, result.time_points, convert_min_max_objective(result.objective_values, instance), plot_name, true, 10);
-                } else {
-                    plot_objective_values(ax2, result.time_points, result.integer_objective_values, plot_name + " - Integer", true, 10);
-                    plot_objective_values(ax2, result.time_points, result.objective_values, plot_name, false, 10);
-                }
+                plot_objective_values(ax2, result.time_points, result.solution_costs, plot_name, false, 10);
+                plot_objective_values(ax2, result.time_points, result.integer_solution_costs, plot_name + " - Integer", false, 10);
+                
                 
 
                 if (EXPORT_SOLUTION){
@@ -192,7 +183,7 @@ int main(int argc, char *argv[]){
             }
 
         // Set the legend
-        legend(ax1);
+        //legend(ax1);
         legend(ax2);
 
         // Save the plot

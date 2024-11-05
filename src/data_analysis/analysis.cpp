@@ -106,6 +106,14 @@ double relaxed_solution_cost(const MasterSolution& solution, const vector<Route>
     return total_cost;
 }
 
+double integer_solution_cost(const IntegerSolution& solution, const vector<Route>& routes) {
+    double total_cost = 0;
+    for (int i = 0; i < routes.size(); i++) {
+        total_cost += solution.coefficients[i] * (routes[i].total_cost);
+    }
+    return total_cost;
+}
+
 double fixed_cost(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance) {
     double total_cost = 0;
     for (int i = 0; i < routes.size(); i++) {

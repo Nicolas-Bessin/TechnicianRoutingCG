@@ -101,6 +101,7 @@ CGResult column_generation(
     vector<double> covered_interventions = {count_covered_interventions(solution, routes, instance)};
     vector<double> integer_objective_values = {intermediary_integer_solution.objective_value};
     vector<int> integer_covered_interventions = {count_covered_interventions(intermediary_integer_solution, routes, instance)};
+    vector<double> integer_solution_costs = {integer_solution_cost(intermediary_integer_solution, routes)};
     vector<int> time_points = {0};
 
     // Order of exploration of the vehicles for the pricing problem (does not matter, we simply remove the vehicles that can not be used)
@@ -332,6 +333,7 @@ CGResult column_generation(
             // This way we can just plot against the time points
             integer_objective_values.push_back(intermediary_integer_solution.objective_value);
             integer_covered_interventions.push_back(count_covered_interventions(intermediary_integer_solution, intermediary_integer_routes, instance));
+            integer_solution_costs.push_back(integer_solution_cost(intermediary_integer_solution, intermediary_integer_routes));
         }
 
         if (parameters.verbose) {
@@ -468,6 +470,7 @@ CGResult column_generation(
         objective_values,
         integer_objective_values,
         solution_costs,
+        integer_solution_costs,
         covered_interventions,
         integer_covered_interventions,
         time_points

@@ -22,6 +22,8 @@ std::vector<int> used_vehicles(const IntegerSolution& solution, const std::vecto
 
 double relaxed_solution_cost(const MasterSolution& solution, const std::vector<Route>& routes);
 
+double integer_solution_cost(const IntegerSolution& solution, const std::vector<Route>& routes);
+
 // Returns the fixed cost in a given solution
 double fixed_cost(const IntegerSolution& solution, const std::vector<Route>& routes, const Instance& instance);
 
