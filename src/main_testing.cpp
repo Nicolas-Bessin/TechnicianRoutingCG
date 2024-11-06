@@ -67,12 +67,15 @@ int main(int argc, char *argv[]){
         {"pricing_function", PRICING_PATHWYSE_BASIC},
         {"pricing_verbose", false}
     });
-
+    // -------------- Instance parsing --------------
     const std::string name = "agency1_19-01-2023_anonymized";
     string filename = "../data/" + name + ".json";
     Instance instance = parse_file(filename, name, 75, 20, false);
-    //instance.M = 10;
+    // -------------- Preprocessing --------------
+    preprocess_interventions(instance);
+    auto max_duration = max_a_priori_feasible_time(instance, true);
 
+    // -------------- Column generation --------------
     vector<Route> routes = {};
     routes.push_back(EmptyRoute(instance.nodes.size()));
     cout << "Starting the column generation algorithm" << endl;

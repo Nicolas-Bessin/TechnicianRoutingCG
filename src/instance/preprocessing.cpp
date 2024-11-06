@@ -62,3 +62,62 @@ void preprocess_interventions(Instance &instance, bool verbose){
 
     return;
 }
+
+
+bool is_trivially_non_feasible(const Node &intervention, const Instance &instance, const std::vector<int> &available_vehicle){
+    // First, we check if the time window is a-priori feasible
+    if (intervention.start_window + intervention.duration > intervention.end_window){
+        return true;
+    }
+
+    // We then want to make sure that none of the consumption exceed the vehicle capacities
+    // First, we create a vector of the capacities - the maximum of the capacities of the available vehicles
+    std::map<std::string, int> max_capacities;
+    for (int v : available_vehicle){
+        for (const auto& key : instance.capacities_labels){
+            max_capacities[key] = std::max(max_capacities[key], instance.vehicles[v].capacities.at(key));
+        }
+    }
+
+    // Then, we check if the intervention can be done with the maximum capacities
+    for (const auto& key : instance.capacities_labels){
+        if (intervention.quantities.at(key) > max_capacities[key]){
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+int max_a_priori_feasible_time(const Instance &instance, bool verbose){
+    // First step is building the list of available vehicles for each intervention
+    std::vector<std::vector<int>> available_vehicles(instance.number_interventions);
+
+    // Go through the vehicles
+    for (int v = 0; v < instance.number_vehicles; v++){
+        // Go through the interventions
+        for (int i : instance.vehicles[v].interventions){
+            available_vehicles[i].push_back(v);
+        }
+    }
+
+    int total_time = 0;
+    int total_count = 0;
+    // Go through the interventions
+    for (int i = 0; i < instance.number_interventions; i++){
+        // If the intervention is trivially non feasible, we skip it
+        if (is_trivially_non_feasible(instance.nodes[i], instance, available_vehicles[i])){
+            continue;
+        }
+        total_time += instance.nodes[i].duration;
+        total_count++;
+    }
+    if (verbose){
+        cout << "Total time of the a-priori feasible interventions: " << total_time << endl;
+        cout << "Number of a-priori feasible interventions: " << total_count << endl;
+        cout << "----------------------------------------" << endl;
+    }
+
+    return total_time;
+}

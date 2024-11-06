@@ -592,8 +592,11 @@ void full_analysis(const IntegerSolution& integer_solution, const vector<Route>&
     // print_vehicles_non_covered(integer_solution, routes, instance);
     // cout << "-----------------------------------" << endl;
 
+    int working_time = time_spent_working(integer_solution, routes, instance);
+
     cout << "Number of covered interventions : " << count_covered_interventions(integer_solution, routes, instance);
-    cout << " / " << instance.number_interventions << endl;
+    cout << " / " << instance.number_interventions;
+    cout << " - total duration covered : " << working_time << " minutes" << endl;
 
     cout << "Number of used vehicles : " << count_used_vehicles(integer_solution, routes, instance);
     cout << " / " << instance.vehicles.size() << endl;
@@ -629,7 +632,6 @@ void full_analysis(const IntegerSolution& integer_solution, const vector<Route>&
     if (all_feasible){
         cout << "All routes are feasible" << endl;
     }
-    int working_time = time_spent_working(integer_solution, routes, instance);
     int travelling_time = time_spent_travelling(integer_solution, routes, instance);
     int waiting_time = time_spent_waiting(integer_solution, routes, instance);
     int total_time = working_time + travelling_time + waiting_time;
