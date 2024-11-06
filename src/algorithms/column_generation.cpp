@@ -71,7 +71,8 @@ CGResult column_generation(
         postpone_vars, 
         intervention_ctrs,
         vehicle_ctrs,
-        parameters.use_maximisation_formulation
+        parameters.use_maximisation_formulation,
+        parameters.use_duration_only
     );
 
     // Main loop of the column generation algorithm
@@ -99,10 +100,17 @@ CGResult column_generation(
     vector<double> objective_values = {solution.objective_value};
     vector<double> solution_costs = {relaxed_solution_cost(solution, routes)};
     vector<double> covered_interventions = {count_covered_interventions(solution, routes, instance)};
-    vector<double> integer_objective_values = {intermediary_integer_solution.objective_value};
-    vector<int> integer_covered_interventions = {count_covered_interventions(intermediary_integer_solution, routes, instance)};
-    vector<double> integer_solution_costs = {integer_solution_cost(intermediary_integer_solution, routes)};
     vector<int> time_points = {0};
+
+    // Intermediate integer solution tracking
+    vector<double> integer_objective_values = {};
+    vector<int> integer_covered_interventions = {};
+    vector<double> integer_solution_costs = {};
+    if (parameters.compute_intermediate_integer_solutions){
+        integer_objective_values.push_back(intermediary_integer_solution.objective_value);
+        integer_covered_interventions.push_back(count_covered_interventions(intermediary_integer_solution, routes, instance));
+        integer_solution_costs.push_back(integer_solution_cost(intermediary_integer_solution, routes));
+    }
 
     // Order of exploration of the vehicles for the pricing problem (does not matter, we simply remove the vehicles that can not be used)
     vector<int> vehicle_order = {};
@@ -151,23 +159,13 @@ CGResult column_generation(
                 instance,
                 vehicle_order,
                 parameters.use_maximisation_formulation,
+                parameters.use_duration_only,
                 using_cyclic_pricing,
                 n_ressources_dominance
             );
         } else if (parameters.pricing_function == PRICING_DIVERSIFICATION){
             Parameters::setParametersFromDict(pathwyse_parameters_dict(parameters, remaining_time, using_cyclic_pricing));
             new_routes = full_pricing_problems_diversification(
-                convex_dual_solution,
-                instance,
-                vehicle_order,
-                parameters.use_maximisation_formulation,
-                using_cyclic_pricing,
-                n_ressources_dominance,
-                iteration
-            );
-        } else if (parameters.pricing_function == PRICING_CLUSTERING){
-            Parameters::setParametersFromDict(pathwyse_parameters_dict(parameters, remaining_time, using_cyclic_pricing));
-            new_routes = full_pricing_problems_clustering(
                 convex_dual_solution,
                 instance,
                 vehicle_order,
@@ -229,29 +227,6 @@ CGResult column_generation(
                 parameters.solution_pool_size,
                 parameters.pricing_verbose
             );
-        } else if (parameters.pricing_function == PRICING_PW_PA) {
-            // Begin by solving the Pathwyse heuristic
-            if (!using_cyclic_pricing){
-                new_routes = full_pricing_problems_basic(
-                    convex_dual_solution,
-                    instance,
-                    vehicle_order,
-                    parameters.use_maximisation_formulation,
-                    using_cyclic_pricing,
-                    n_ressources_dominance
-                );
-            } else {
-                // Then, solve the PA
-                new_routes = full_pricing_problems_basic_pulse(
-                    convex_dual_solution,
-                    instance,
-                    vehicle_order,
-                    parameters.use_maximisation_formulation,
-                    parameters.delta,
-                    parameters.solution_pool_size,
-                    parameters.pricing_verbose
-                );
-            }
         }
         auto end_pricing = chrono::steady_clock::now();
         int diff_pricing = chrono::duration_cast<chrono::milliseconds>(end_pricing - start_pricing).count();
@@ -265,7 +240,7 @@ CGResult column_generation(
                 for (Route& new_route : new_routes){
                     max_reduced_cost = std::max(max_reduced_cost, new_route.reduced_cost);
                     if (new_route.reduced_cost > parameters.reduced_cost_threshold){
-                        add_route(model, new_route, instance, route_vars, intervention_ctrs, vehicle_ctrs, true);
+                        add_route(model, new_route, instance, route_vars, intervention_ctrs, vehicle_ctrs, true, parameters.use_duration_only);
                         n_added_routes++;
                         routes.push_back(new_route);
 
@@ -275,7 +250,7 @@ CGResult column_generation(
                 for (Route& new_route : new_routes){
                     min_reduced_cost = std::min(min_reduced_cost, new_route.reduced_cost);
                     if (new_route.reduced_cost < - parameters.reduced_cost_threshold){
-                        add_route(model, new_route, instance, route_vars, intervention_ctrs, vehicle_ctrs, false);
+                        add_route(model, new_route, instance, route_vars, intervention_ctrs, vehicle_ctrs, false, parameters.use_duration_only);
                         n_added_routes++;
                         routes.push_back(new_route);
                     }
@@ -293,6 +268,7 @@ CGResult column_generation(
         }
 
         // ----------------- Master problem -----------------
+
         // Solve the master problem
         auto start = chrono::steady_clock::now();
         int status = solve_model(model);
@@ -306,6 +282,8 @@ CGResult column_generation(
         }
         // Extract the dual solution from the master solution
         DualSolution& dual_solution = solution.dual_solution;
+
+        // ----------------- Intermediate integer solutions -----------------
 
         // Every five iterations, we compute an integer solution
         if (parameters.compute_intermediate_integer_solutions && iteration % 5 == 0 && iteration > 0){
@@ -346,6 +324,7 @@ CGResult column_generation(
         master_time += diff;
 
         // ----------------- Stop conditions -----------------
+
         // If we added no routes but are not using the cyclic pricing yet, we switch to it
         // Only for non PA algorithms
         if (std::find(PA_VARIATIONS.begin(), PA_VARIATIONS.end(), parameters.pricing_function) == PA_VARIATIONS.end()){

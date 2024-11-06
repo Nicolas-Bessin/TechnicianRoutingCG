@@ -20,6 +20,7 @@ std::vector<Route> full_pricing_problems_basic(
     const Instance & instance,
     const std::vector<int> &vehicle_order,
     bool use_maximisation_formulation,
+    bool use_duration_only,
     bool using_cyclic_pricing,
     int n_ressources_dominance
     ){
@@ -29,7 +30,7 @@ std::vector<Route> full_pricing_problems_basic(
     
     auto single_pricer = [&](int v){
             return solve_pricing_problem(instance, instance.vehicles.at(v), solution,
-                use_maximisation_formulation, using_cyclic_pricing, n_ressources_dominance);
+                use_maximisation_formulation, use_duration_only, using_cyclic_pricing, n_ressources_dominance);
         };
 
     vector<packaged_task<Route(int)>> tasks;

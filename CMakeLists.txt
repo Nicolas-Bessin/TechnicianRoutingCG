@@ -150,9 +150,9 @@ target_link_libraries(TRP_BP PUBLIC technician_routing_lib)
 
 
 # Create an executable to test out predifined solutions
-add_executable(TRP_test_solutions src/main_route_testing.cpp)
+add_executable(TRP_test src/main_testing.cpp)
 # Link against the core library
-target_link_libraries(TRP_test_solutions PUBLIC technician_routing_lib)
+target_link_libraries(TRP_test PUBLIC technician_routing_lib)
 
 
 # Create an executable to plot solution quality from results files

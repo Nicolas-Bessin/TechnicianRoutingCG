@@ -148,7 +148,8 @@ void set_pricing_instance_costs(
     const DualSolution& dual_solution, 
     const Instance& instance, 
     const Vehicle& vehicle,
-    bool use_maximisation_formulation
+    bool use_maximisation_formulation,
+    bool use_duration_only
     ) {
     int n_interventions_v = vehicle.interventions.size();
     auto objective = dynamic_cast<DefaultCost*>(pricing_problem->getObj());
@@ -159,36 +160,49 @@ void set_pricing_instance_costs(
         int true_i = vehicle.interventions[i];
         const Node& intervention_i = (instance.nodes[vehicle.interventions[i]]);
         if (use_maximisation_formulation) {
-            objective->setNodeCost(i, dual_solution.alphas[true_i] - intervention_i.duration * instance.M);
+            if (use_duration_only) {
+                objective->setNodeCost(i, dual_solution.alphas[true_i] - intervention_i.duration);
+            } else {
+                objective->setNodeCost(i, dual_solution.alphas[true_i] - intervention_i.duration * instance.M);
+            }
         } else {
             objective->setNodeCost(i, - dual_solution.alphas[true_i]);
         }
-        for (int j = 0; j < n_interventions_v; j++) {
-            if (i == j) continue;
-            int true_j = vehicle.interventions[j];
-            // Get the intervention referenced by the index j
-            const Node& intervention_j = instance.nodes[vehicle.interventions[j]];
-            // Get the distance between the two interventions
-            int distance = instance.distance_matrix[true_i][true_j];
-            double arc_cost = instance.cost_per_km * distance;
-            // Arc costs are counted positively in both formulations
-            objective->setArcCost(i, j, arc_cost);
+        if (!use_duration_only) {
+            // Only set the arc costs if we are not using the duration only formulation
+            for (int j = 0; j < n_interventions_v; j++) {
+                if (i == j) continue;
+                int true_j = vehicle.interventions[j];
+                // Get the intervention referenced by the index j
+                const Node& intervention_j = instance.nodes[vehicle.interventions[j]];
+                // Get the distance between the two interventions
+                int distance = instance.distance_matrix[true_i][true_j];
+                double arc_cost = instance.cost_per_km * distance;
+                // Arc costs are counted positively in both formulations
+                objective->setArcCost(i, j, arc_cost);
+            }
+            // Arcs to / from the warehouse
+            int distance_out = instance.distance_matrix[vehicle.depot][true_i];
+            objective->setArcCost(origin, i, instance.cost_per_km * distance_out);
+            int distance_in = instance.distance_matrix[true_i][vehicle.depot];
+            objective->setArcCost(i, destination, instance.cost_per_km * distance_in);
         }
-        // Arcs to / from the warehouse
-        int distance_out = instance.distance_matrix[vehicle.depot][true_i];
-        objective->setArcCost(origin, i, instance.cost_per_km * distance_out);
-        int distance_in = instance.distance_matrix[true_i][vehicle.depot];
-        objective->setArcCost(i, destination, instance.cost_per_km * distance_in);
     }
     // Put in the fixed costs of the vehicle
     if (vehicle.id == -1) {
         return;
     }
     if (use_maximisation_formulation) {
-        double fixed_cost = dual_solution.betas[vehicle.id] + vehicle.cost;
+        double fixed_cost = dual_solution.betas[vehicle.id];
+        if (!use_duration_only) {
+            fixed_cost += vehicle.cost;
+        }
         objective->setNodeCost(origin, fixed_cost);
     } else {
-        double fixed_cost = - dual_solution.betas[vehicle.id] + vehicle.cost;
+        double fixed_cost = - dual_solution.betas[vehicle.id];
+        if (!use_duration_only) {
+            fixed_cost += vehicle.cost;
+        }
         objective->setNodeCost(origin, fixed_cost);
     }
     return;
@@ -200,12 +214,13 @@ Route solve_pricing_problem(
     const Vehicle &vehicle,
     const DualSolution &dual_solution,
     bool use_maximisation_formulation,
+    bool use_duration_only,
     bool use_cyclic_pricing,
     int n_res_dom
     ) {
     // Create the pricing problem
     unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, vehicle, use_cyclic_pricing);
-    set_pricing_instance_costs(pricing_problem, dual_solution, instance, vehicle, use_maximisation_formulation);
+    set_pricing_instance_costs(pricing_problem, dual_solution, instance, vehicle, use_maximisation_formulation, use_duration_only);
     // Solve the pricing problem
     Solver solver = Solver();
     solver.setCustomProblem(*pricing_problem, true);
@@ -257,7 +272,7 @@ std::vector<Route> solve_pricing_problem_pulse(
     using namespace std::chrono;
     // Create the pricing problem
     unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, vehicle, true);
-    set_pricing_instance_costs(pricing_problem, dual_solution, instance, vehicle, use_maximisation_formulation);
+    set_pricing_instance_costs(pricing_problem, dual_solution, instance, vehicle, use_maximisation_formulation, false);
     // Create the pulse algorithm
     PulseAlgorithm pulse_algorithm = PulseAlgorithm(pricing_problem.get(), delta, pool_size);
     // Bounding phase
@@ -368,7 +383,7 @@ std::vector<Route> solve_pricing_problem_pulse_grouped(
 
     // Create the pricing problem
     unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, virtual_vehicle, true);
-    set_pricing_instance_costs(pricing_problem, dual_solution, instance, virtual_vehicle, use_maximisation_formulation);
+    set_pricing_instance_costs(pricing_problem, dual_solution, instance, virtual_vehicle, use_maximisation_formulation, false);
 
     // Create the pulse algorithm
     PulseAlgorithmWithSubsets pulse_algorithm = PulseAlgorithmWithSubsets(pricing_problem.get(), delta, pool_size);
@@ -436,7 +451,7 @@ std::vector<Route> solve_pricing_problem_pulse_parallel(
     using namespace std::chrono;
     // Create the pricing problem
     unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, vehicle, true);
-    set_pricing_instance_costs(pricing_problem, dual_solution, instance, vehicle, use_maximisation_formulation);
+    set_pricing_instance_costs(pricing_problem, dual_solution, instance, vehicle, use_maximisation_formulation, false);
     // Create the pulse algorithm
     PulseAlgorithmMultithreaded pulse_algorithm = PulseAlgorithmMultithreaded(pricing_problem.get(), delta, pool_size);
     // Bounding phase
@@ -493,7 +508,7 @@ std::vector<Route> solve_pricing_problem_pulse_grouped_par(
     int n_interventions_v = virtual_vehicle.interventions.size();
     // Create the pricing problem
     unique_ptr<Problem> pricing_problem = create_pricing_instance(instance, virtual_vehicle, true);
-    set_pricing_instance_costs(pricing_problem, dual_solution, instance, virtual_vehicle, use_maximisation_formulation);
+    set_pricing_instance_costs(pricing_problem, dual_solution, instance, virtual_vehicle, use_maximisation_formulation, false);
 
     // Create the pulse algorithm
     PulseAlgorithmMultithreadedGrouped pulse_algorithm = PulseAlgorithmMultithreadedGrouped(pricing_problem.get(), delta, pool_size);

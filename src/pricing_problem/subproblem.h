@@ -18,6 +18,7 @@ Route solve_pricing_problem(
     const Vehicle &vehicle,
     const DualSolution &dual_solution,
     bool use_maximisation_formulation,
+    bool use_duration_only = false,
     bool use_cyclic_pricing = false,
     int n_res_dom = -1
     );

@@ -12,7 +12,8 @@ GRBModel create_model(
     std::vector<GRBVar>& postpone_vars,
     std::vector<GRBConstr>& intervention_ctrs,
     std::vector<GRBConstr>& vehicle_ctrs,
-    bool use_maximisation_formulation
+    bool use_maximisation_formulation,
+    bool use_duration_only
 ) { 
     // Formulate and solve model
     // Next step is creating the master problem
@@ -49,8 +50,14 @@ GRBModel create_model(
         }
         // Finally, we set the objective function
         GRBLinExpr obj = 0;
-        for (int r = 0; r < routes.size(); r++){
-            obj += (instance.M * routes[r].total_duration  - routes[r].total_cost) * route_vars[r];
+        if (use_duration_only){
+            for (int r = 0; r < routes.size(); r++){
+                obj += routes[r].total_duration * route_vars[r];
+            } 
+        } else {
+            for (int r = 0; r < routes.size(); r++){
+                obj += (instance.M * routes[r].total_duration - routes[r].total_cost) * route_vars[r];
+            }
         }
         master.setObjective(obj, GRB_MAXIMIZE);
 
@@ -84,11 +91,17 @@ GRBModel create_model(
 
         // Finally, we set the objective function
         GRBLinExpr obj = 0;
-        for (int i = 0; i < instance.number_interventions; i++){
-            obj += instance.nodes[i].duration * instance.M * postpone_vars[i];
-        }
-        for (int r = 0; r < routes.size(); r++){
-            obj += routes[r].total_cost * route_vars[r];
+        if (use_duration_only){
+            for (int i = 0; i < instance.number_interventions; i++){
+                obj += instance.nodes[i].duration * postpone_vars[i];
+            }
+        } else {
+            for (int i = 0; i < instance.number_interventions; i++){
+                obj += instance.M * instance.nodes[i].duration * postpone_vars[i];
+            }
+            for (int r = 0; r < routes.size(); r++){
+                obj += routes[r].total_cost * route_vars[r];
+            }
         }
         master.setObjective(obj, GRB_MINIMIZE);
     }
@@ -104,7 +117,8 @@ void add_route(
     std::vector<GRBVar>& route_vars,
     std::vector<GRBConstr>& intervention_ctrs,
     std::vector<GRBConstr>& vehicle_ctrs,
-    bool use_maximisation_formulation
+    bool use_maximisation_formulation,
+    bool use_duration_only
 ) {
     // Create the new variable and add it to the model & route_vars
     route_vars.push_back(model.addVar(0.0, 1.0, 0.0, GRB_CONTINUOUS));
@@ -116,11 +130,17 @@ void add_route(
     model.chgCoeff(vehicle_ctrs[route.vehicle_id], route_vars.back(), 1);
 
     if (use_maximisation_formulation){
-        // Update the objective function
-        route_vars.back().set(GRB_DoubleAttr_Obj, instance.M * route.total_duration - route.total_cost);
+        double coeff = 0;
+        if (use_duration_only){
+            coeff = route.total_duration;
+        } else {
+            coeff = instance.M * route.total_duration - route.total_cost;
+        }
+        route_vars.back().set(GRB_DoubleAttr_Obj, coeff);
     } else {
-        // Update the objective function
-        route_vars.back().set(GRB_DoubleAttr_Obj, route.total_cost);
+        if (!use_duration_only){
+            route_vars.back().set(GRB_DoubleAttr_Obj, route.total_cost);
+        }
     }
 }
 

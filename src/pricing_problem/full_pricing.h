@@ -18,6 +18,7 @@ std::vector<Route> full_pricing_problems_basic(
     const Instance & instance,
     const std::vector<int> & vehicle_order,
     bool use_maximisation_formulation,
+    bool use_duration_only,
     bool using_cyclic_pricing,
     int n_ressources_dominance
 );

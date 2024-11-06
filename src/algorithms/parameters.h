@@ -19,6 +19,7 @@ struct ColumnGenerationParameters {
     int max_consecutive_non_improvement = 5;
     bool compute_integer_solution = false;
     bool use_maximisation_formulation = false;
+    bool use_duration_only = false;
     bool compute_intermediate_integer_solutions = false;
 
 
