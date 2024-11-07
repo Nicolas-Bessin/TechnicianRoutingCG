@@ -44,6 +44,15 @@ void add_route(
 );
 
 
+// Adds a constraint of maximum duration outsourced, used during phase 2 of the sequential column generation algorithm
+void add_max_outsourced_duration_constraint(
+    GRBModel& model,
+    const Instance& instance,
+    const std::vector<GRBVar>& postpone_vars,
+    int max_outsourced_duration
+);
+
+
 // Solve the current version of the model
 // Returns a status code
 int solve_model(GRBModel& model, double time_limit = -1.);

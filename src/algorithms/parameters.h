@@ -22,6 +22,9 @@ struct ColumnGenerationParameters {
     SolverMode solver_objective_mode = SolverMode::BIG_M_FORMULATION_OUTSOURCE;
     bool compute_intermediate_integer_solutions = false;
 
+    // Sequential column generation parameters
+    int max_outsourced_duration = -1;
+
 
     // Pathwyse related parameters
     int max_resources_dominance = ALL_RESOURCES_DOMINANCE;

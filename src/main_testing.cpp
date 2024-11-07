@@ -12,6 +12,7 @@
 #include "repair/repair.h"
 
 #include "algorithms/column_generation.h"
+#include "algorithms/sequential_column_generation.h"
 
 #include "data_analysis/analysis.h"
 #include "data_analysis/export.h"
@@ -63,7 +64,7 @@ int main(int argc, char *argv[]){
     routes.push_back(EmptyRoute(instance.nodes.size()));
     cout << "Starting the column generation algorithm" << endl;
 
-    CGResult result = column_generation(instance, routes, parameters);
+    CGResult result = sequential_column_generation(instance, routes, parameters);
 
     return 0;
 }

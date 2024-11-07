@@ -124,6 +124,20 @@ void add_route(
 
 }
 
+
+void add_max_outsourced_duration_constraint(
+    GRBModel& model,
+    const Instance& instance,
+    const std::vector<GRBVar>& postpone_vars,
+    int max_outsourced_duration
+) {
+    GRBLinExpr expr = 0;
+    for (int i = 0; i < instance.number_interventions; i++){
+        expr += instance.nodes[i].duration * postpone_vars[i];
+    }
+    model.addConstr(expr <= max_outsourced_duration);
+}
+
 int solve_model(GRBModel& model, double time_limit) {
     if (time_limit > 0){
         model.set(GRB_DoubleParam_TimeLimit, time_limit);

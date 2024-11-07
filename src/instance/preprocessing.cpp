@@ -124,3 +124,13 @@ int max_a_priori_feasible_time(const Instance &instance, bool verbose){
 
     return total_time;
 }
+
+// Returns the minimum amount of intervention time that is a non feasible by excluding the trivially non feasible interventions
+int min_a_priori_outsourced_time(const Instance &instance, bool verbose){
+    // Sum of durations of the interventions
+    int total_time = 0;
+    for (int i = 0; i < instance.number_interventions; i++){
+        total_time += instance.nodes[i].duration;
+    }
+    return total_time - max_a_priori_feasible_time(instance, verbose);
+}

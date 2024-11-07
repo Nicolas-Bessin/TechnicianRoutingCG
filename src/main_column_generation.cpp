@@ -49,8 +49,6 @@ int main(int argc, char *argv[]){
         {"max_iterations", 1000},
         {"max_consecutive_non_improvement", 5},
         {"compute_integer_solution", true},
-        {"compute_intermediate_integer_solutions", true},
-        {"rmp_solver_mode", SolverMode::BIG_M_FORMULATION_OUTSOURCE},
         {"max_resources_dominance", MAX_RESOURCES_DOMINANCE},
         {"ng", NG_STANDARD},
         {"dssr", DSSR_STANDARD},

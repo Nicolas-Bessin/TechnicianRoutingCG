@@ -23,3 +23,6 @@ bool is_trivially_non_feasible(const Node &intervention, const Instance &instanc
 
 // Returns the maximum amount of intervention time that is a priori feasible, excluding the trivially non feasible interventions
 int max_a_priori_feasible_time(const Instance &instance, bool verbose = false);
+
+// Returns the minimum amount of intervention time that is outsourced and non feasible by excluding the trivially non feasible interventions
+int min_a_priori_outsourced_time(const Instance &instance, bool verbose = false);

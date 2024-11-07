@@ -9,7 +9,7 @@
 #include "gurobi_c++.h"
 
 
-CGResult sequential_column_generation(const Instance & instance, std::vector<Route> & routes, const ColumnGenerationParameters & parameters){
+CGResult sequential_column_generation(const Instance & instance, std::vector<Route> & routes, const ColumnGenerationParameters & initial_parameters){
 
     using std::vector, std::string;
     using std::cout, std::endl, std::setprecision;
@@ -17,37 +17,24 @@ CGResult sequential_column_generation(const Instance & instance, std::vector<Rou
 
     auto procedure_start = chrono::steady_clock::now();
 
-    // Create a root node for the algorithm
-    BPNode root = RootNode(routes);
+    ColumnGenerationParameters parameters = initial_parameters;
 
-    // Create the underlying RMP model - at first with duration only
-    vector<GRBVar> route_vars;
-    vector<GRBVar> postpone_vars;
-    vector<GRBConstr> intervention_ctrs;
-    vector<GRBConstr> vehicle_ctrs;
-    GRBModel model = create_model(
-        instance, 
-        routes, 
-        route_vars, 
-        postpone_vars, 
-        intervention_ctrs,
-        vehicle_ctrs,
-        parameters.solver_objective_mode
-    );
+    // Column Generation in the duration only mode
+    cout << "-----------------------------------" << endl;
+    cout << "Starting phase 1 : minimising outsourced duration" << endl;
+    parameters.solver_objective_mode = SolverMode::DURATION_ONLY;
+    parameters.compute_integer_solution = false;
+    CGResult result_phase_1 = column_generation(instance, routes, parameters);
+    // The value we want is the last relaxed objective value
+    double max_outsourced_duration = result_phase_1.objective_values.back();
 
-    // Main loop of the column generation algorithm
-    int iteration = 0;
-    // Stopping conditions
-    bool stop = false;
-    int consecutive_non_improvement = 0;
-    double previous_solution_objective = std::numeric_limits<double>::infinity();
+    // Column Generation in the solution minimisation mode
+    cout << "-----------------------------------" << endl;
+    cout << "Starting phase 2 : minimising solution cost" << endl;
+    parameters.solver_objective_mode = SolverMode::SOLUTION_MINIMISATION;
+    parameters.compute_integer_solution = true;
+    parameters.max_outsourced_duration = max_outsourced_duration;
+    CGResult result_phase_2 = column_generation(instance, routes, parameters);
 
-    // Master Solutions - Do a first solve before the loop
-    int status = solve_model(model);
-    MasterSolution solution = extract_solution(model, route_vars, intervention_ctrs, vehicle_ctrs);
-    DualSolution& dual_solution = solution.dual_solution;
-    DualSolution previous_dual_solution{};
-
-
-    return CGResult{};
+    return result_phase_2;
 }

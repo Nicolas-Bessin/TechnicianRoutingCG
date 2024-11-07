@@ -1,5 +1,7 @@
 #include "column_generation.h"
 
+#include "instance/preprocessing.h"
+
 #include "master_problem/master_solver.h"
 #include "master_problem/rmp_solver.h"
 #include "master_problem/node.h"
@@ -75,6 +77,17 @@ CGResult column_generation(
         parameters.solver_objective_mode
     );
 
+    // During the first phase of the sequential CG, we stop as soon as we reach the minimum outsourced duration given by a preprocessing of trivially non feasible interventions
+    int duration_lower_bound = 0;
+    if (parameters.solver_objective_mode == SolverMode::DURATION_ONLY){
+        duration_lower_bound = min_a_priori_outsourced_time(instance, parameters.verbose);
+    }
+
+    // If in the second phase of the sequential CG, add the constraint of maximum duration outsourced
+    if (parameters.max_outsourced_duration >= 0 && parameters.solver_objective_mode == SolverMode::SOLUTION_MINIMISATION){
+        add_max_outsourced_duration_constraint(model, instance, postpone_vars, parameters.max_outsourced_duration);
+    }
+
     // Main loop of the column generation algorithm
     int iteration = 0;
     // Stopping conditions
@@ -102,7 +115,7 @@ CGResult column_generation(
     vector<double> objective_values = {solution.objective_value};
     vector<double> solution_costs = {relaxed_solution_cost(solution, routes)};
     vector<double> covered_interventions = {count_covered_interventions(solution, routes, instance)};
-    vector<int> time_points = {0};
+    vector<double> time_points = {0.0};
 
     // Intermediate integer solution tracking
     vector<double> integer_objective_values = {};
@@ -132,10 +145,7 @@ CGResult column_generation(
 
     auto start_time = chrono::steady_clock::now();
 
-    while (
-        !stop && 
-        !(consecutive_non_improvement == parameters.max_consecutive_non_improvement) && 
-        master_time + pricing_time < S_TO_MS * parameters.time_limit){
+    while (!stop) {
 
         // ----------------- Pricing sub problem -----------------
         // Solve each pricing sub problem
@@ -284,6 +294,13 @@ CGResult column_generation(
 
         // ----------------- Stop conditions -----------------
 
+        if (master_time + pricing_time >= S_TO_MS * parameters.time_limit){
+            cout << "-----------------------------------" << endl;
+            cout << "Time limit reached" << endl;
+            stop = true;
+            continue;
+        }
+
         // If we added no routes but are not using the cyclic pricing yet, we switch to it
         // Only for non PA algorithms
         if (std::find(PA_VARIATIONS.begin(), PA_VARIATIONS.end(), parameters.pricing_function) == PA_VARIATIONS.end()){
@@ -315,6 +332,7 @@ CGResult column_generation(
         }
         // If no route was added, we stop the algorithm
         if (n_added_routes == 0){
+            cout << "Found no new route to add" << endl;
             stop = true;
         }
         // Count the number of consecutive non improvement
@@ -327,23 +345,23 @@ CGResult column_generation(
         } else {
             consecutive_non_improvement = 0;
         }
+        if (consecutive_non_improvement >= parameters.max_consecutive_non_improvement){
+            cout << "-----------------------------------" << endl;
+            cout << "Stopped after " << parameters.max_consecutive_non_improvement << " iterations without improvement" << endl;
+            stop = true;
+        }
+        if (parameters.solver_objective_mode == SolverMode::DURATION_ONLY 
+            && solution.objective_value <= duration_lower_bound){
+            cout << "-----------------------------------" << endl;
+            cout << "Reached the pre-processed minimum outsourced duration" << endl;
+            stop = true;
+        }
         previous_solution_objective = solution.objective_value;
         previous_dual_solution = dual_solution;
         iteration++;
     }
 
     // ----------------- End of the column generation -----------------
-
-    cout << "-----------------------------------" << endl;
-    if (stop) {
-        cout << "Found no new route to add" << endl;
-    }
-    if (consecutive_non_improvement == parameters.max_consecutive_non_improvement){
-        cout << "Stopped after " << parameters.max_consecutive_non_improvement << " iterations without improvement" << endl;
-    }
-    if (master_time + pricing_time >= S_TO_MS * parameters.time_limit){
-        cout << "Time limit reached" << endl;
-    }
     cout << "End of the column generation after " << iteration << " iterations" << endl;
     // Convert the value from the minimum formulation to the maximum formulation
     double total_outsource_cost = 0;
@@ -397,14 +415,6 @@ CGResult column_generation(
     }
 
     // ----------------- Data analysis -----------------
-
-    // If the integer solution is not feasible, we can't do much
-    if (!integer_solution.is_feasible){
-        cout << "-----------------------------------" << endl;
-        cout << "The integer solution is not feasible" << endl;
-        return CGResult{};
-    }
-
     int n_routes_generated = routes.size();
     cout << "Number of routes generated : " << n_routes_generated;
     cout << " - Number of duplicate routes : " << count_routes_with_duplicates(routes);
@@ -418,7 +428,11 @@ CGResult column_generation(
     cout << "Total time spent solving the integer problem : " << integer_time << " ms" << endl;
     cout << "Total elapsed time : " << elapsed_time << " ms" << endl;
 
-    full_analysis(integer_solution, routes, instance, true);
+    if (integer_solution.is_feasible){
+        cout << "-----------------------------------" << endl;
+        cout << "Full analysis of the integer solution" << endl;
+        full_analysis(integer_solution, routes, instance);
+    }
 
     cout << "-----------------------------------" << endl;
 
