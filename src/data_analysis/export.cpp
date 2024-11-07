@@ -39,7 +39,7 @@ nlohmann::json export_parameters(const ColumnGenerationParameters& parameters) {
         {"max_iterations", parameters.max_iterations},
         {"max_consecutive_non_improvement", parameters.max_consecutive_non_improvement},
         {"compute_integer_solution", parameters.compute_integer_solution},
-        {"use_maximisation_formulation", parameters.use_maximisation_formulation}
+        {"solver_objective_mode", parameters.solver_objective_mode}        
     };
 
     // Pathwyse related parameters

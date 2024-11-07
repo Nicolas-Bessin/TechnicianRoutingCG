@@ -153,16 +153,11 @@ void PulseAlgorithmMultithreaded::pulse_parallel(int vertex, int time, std::vect
 }
 
 
-int PulseAlgorithmMultithreaded::solve_parallel(double fixed_cost, double dual_value, bool use_maximisation_formulation) {
+int PulseAlgorithmMultithreaded::solve_parallel() {
     // Launch the pulse algorithm
     reset();
     PartialPath path = EmptyPath(N);
-    double initial_cost;
-    if (use_maximisation_formulation) {
-        initial_cost = fixed_cost + dual_value;
-    } else {
-        initial_cost = fixed_cost - dual_value;
-    }
+    double initial_cost = problem->getObj()->getNodeCost(origin);
     PulseAlgorithmMultithreaded::pulse_parallel(origin, 0, std::vector<int>(K, 0), initial_cost, path);
 
     if(best_path.sequence.size() == 0) {

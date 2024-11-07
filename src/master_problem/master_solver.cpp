@@ -12,25 +12,36 @@ GRBModel create_model(
     std::vector<GRBVar>& postpone_vars,
     std::vector<GRBConstr>& intervention_ctrs,
     std::vector<GRBConstr>& vehicle_ctrs,
-    bool use_maximisation_formulation,
-    bool use_duration_only
+    SolverMode solver_objective_mode
 ) { 
-    // Formulate and solve model
-    // Next step is creating the master problem
     GRBEnv env = GRBEnv(true);
     env.set(GRB_IntParam_OutputFlag, 0);
-    //env.set(GRB_DoubleParam_TimeLimit, time_limit);
-    // Start the environment
     env.start();
-    // Create the master problem model
     GRBModel master = GRBModel(env);
 
-    if (use_maximisation_formulation){
-         // Create the variables - all inactive at first, upper bound is 0
-        for(int r = 0; r < routes.size(); r++){
-            route_vars.push_back(master.addVar(0.0, 1.0, 0.0, GRB_CONTINUOUS));
+    // ----------------- Variables -----------------
+    for(int r = 0; r < routes.size(); r++){
+        route_vars.push_back(master.addVar(0.0, 1.0, 0.0, GRB_CONTINUOUS));
+    }
+    if (solver_objective_mode != SolverMode::BIG_M_FORMULATION_COVERAGE){
+        for (int i = 0; i < instance.number_interventions; i++){
+            postpone_vars.push_back(master.addVar(0.0, 1.0, 0.0, GRB_CONTINUOUS));
         }
-        // Create the intervention constraints (each intervention is visited at most once)
+    }
+
+    // ----------------- Constraints -----------------
+    // The vehicle vehicle constraints (each vehicle is used at most once)
+    for (int v = 0; v < instance.vehicles.size(); v++){
+        GRBLinExpr expr = 0;
+        for (int r = 0; r < routes.size(); r++){
+            if (routes[r].vehicle_id == v){
+                expr += route_vars[r];
+            }
+        }
+        vehicle_ctrs.push_back(master.addConstr(expr <= 1));
+    }
+    // Intervention constraints depends on the formulation
+    if (solver_objective_mode == SolverMode::BIG_M_FORMULATION_COVERAGE){
         for (int i = 0; i < instance.number_interventions; i++){
             GRBLinExpr expr = 0;
             for (int r = 0; r < routes.size(); r++){
@@ -38,39 +49,7 @@ GRBModel create_model(
             }
             intervention_ctrs.push_back(master.addConstr(expr <= 1));
         }
-        // And the vehicle constraints (each vehicle is used at most once)
-        for (int v = 0; v < instance.vehicles.size(); v++){
-            GRBLinExpr expr = 0;
-            for (int r = 0; r < routes.size(); r++){
-                if (routes[r].vehicle_id == v){
-                    expr += route_vars[r];
-                }
-            }
-            vehicle_ctrs.push_back(master.addConstr(expr <= 1));
-        }
-        // Finally, we set the objective function
-        GRBLinExpr obj = 0;
-        if (use_duration_only){
-            for (int r = 0; r < routes.size(); r++){
-                obj += routes[r].total_duration * route_vars[r];
-            } 
-        } else {
-            for (int r = 0; r < routes.size(); r++){
-                obj += (instance.M * routes[r].total_duration - routes[r].total_cost) * route_vars[r];
-            }
-        }
-        master.setObjective(obj, GRB_MAXIMIZE);
-
     } else {
-        // Create the variables
-        for(int r = 0; r < routes.size(); r++){
-            route_vars.push_back(master.addVar(0.0, 1.0, 0.0, GRB_CONTINUOUS));
-        }
-        // Is the intervention postponed / outsourced ?
-        for (int i = 0; i < instance.number_interventions; i++){
-            postpone_vars.push_back(master.addVar(0.0, 1.0, 0.0, GRB_CONTINUOUS));
-        }
-        // Create the intervention constraints (each intervention is visited or postponed exactly once)
         for (int i = 0; i < instance.number_interventions; i++){
             GRBLinExpr expr = postpone_vars[i];
             for (int r = 0; r < routes.size(); r++){
@@ -78,32 +57,39 @@ GRBModel create_model(
             }
             intervention_ctrs.push_back(master.addConstr(expr >= 1));
         }
-        // And the vehicle constraints (each vehicle is used at most once)
-        for (int v = 0; v < instance.vehicles.size(); v++){
-            GRBLinExpr expr = 0;
-            for (int r = 0; r < routes.size(); r++){
-                if (routes[r].vehicle_id == v){
-                    expr += route_vars[r];
-                }
-            }
-            vehicle_ctrs.push_back(master.addConstr(expr <= 1));
-        }
+    }
 
-        // Finally, we set the objective function
-        GRBLinExpr obj = 0;
-        if (use_duration_only){
-            for (int i = 0; i < instance.number_interventions; i++){
-                obj += instance.nodes[i].duration * postpone_vars[i];
-            }
-        } else {
-            for (int i = 0; i < instance.number_interventions; i++){
-                obj += instance.M * instance.nodes[i].duration * postpone_vars[i];
-            }
-            for (int r = 0; r < routes.size(); r++){
-                obj += routes[r].total_cost * route_vars[r];
-            }
+    // ----------------- Objective -----------------
+    if (solver_objective_mode == SolverMode::DURATION_ONLY){
+        GRBLinExpr objective = 0;
+        for (int i = 0; i < instance.number_interventions; i++){
+            objective += instance.nodes[i].duration * postpone_vars[i];
         }
-        master.setObjective(obj, GRB_MINIMIZE);
+        master.setObjective(objective, GRB_MINIMIZE);
+
+    } else if (solver_objective_mode == SolverMode::SOLUTION_MINIMISATION){
+        GRBLinExpr objective = 0;
+        for (int r = 0; r < routes.size(); r++){
+            objective += routes[r].total_cost * route_vars[r];
+        }
+        master.setObjective(objective, GRB_MINIMIZE);
+
+    } else if (solver_objective_mode == SolverMode::BIG_M_FORMULATION_OUTSOURCE){
+        GRBLinExpr objective = 0;
+        for (int i = 0; i < instance.number_interventions; i++){
+            objective += instance.M * instance.nodes[i].duration * postpone_vars[i];
+        }
+        for (int r = 0; r < routes.size(); r++){
+            objective += routes[r].total_cost * route_vars[r];
+        }
+        master.setObjective(objective, GRB_MINIMIZE);
+
+    } else if (solver_objective_mode == SolverMode::BIG_M_FORMULATION_COVERAGE){
+        GRBLinExpr objective = 0;
+        for (int r = 0; r < routes.size(); r++){
+            objective += (instance.M * routes[r].total_duration - routes[r].total_cost) * route_vars[r];
+        }
+        master.setObjective(objective, GRB_MAXIMIZE);
     }
 
     return master;
@@ -117,31 +103,25 @@ void add_route(
     std::vector<GRBVar>& route_vars,
     std::vector<GRBConstr>& intervention_ctrs,
     std::vector<GRBConstr>& vehicle_ctrs,
-    bool use_maximisation_formulation,
-    bool use_duration_only
+    SolverMode solver_objective_mode
 ) {
     // Create the new variable and add it to the model & route_vars
     route_vars.push_back(model.addVar(0.0, 1.0, 0.0, GRB_CONTINUOUS));
-    // Update the intervention constraints
+    // Update the intervention constraints - same across all formulations
     for (int i = 0; i < intervention_ctrs.size(); i++){
         model.chgCoeff(intervention_ctrs[i], route_vars.back(), route.is_in_route[i]);
     }
-    // Update the vehicle constraints
+    // Update the vehicle constraints - same across all formulations
     model.chgCoeff(vehicle_ctrs[route.vehicle_id], route_vars.back(), 1);
+    // Update the objective coefficients depending on the formulation
+    if (solver_objective_mode == SolverMode::SOLUTION_MINIMISATION) {
+        route_vars.back().set(GRB_DoubleAttr_Obj, route.total_cost);
+    } else if (solver_objective_mode == SolverMode::BIG_M_FORMULATION_OUTSOURCE) {
+        route_vars.back().set(GRB_DoubleAttr_Obj, route.total_cost);
+    } else if (solver_objective_mode == SolverMode::BIG_M_FORMULATION_COVERAGE) {
+        route_vars.back().set(GRB_DoubleAttr_Obj, instance.M * route.total_duration - route.total_cost);
+    } 
 
-    if (use_maximisation_formulation){
-        double coeff = 0;
-        if (use_duration_only){
-            coeff = route.total_duration;
-        } else {
-            coeff = instance.M * route.total_duration - route.total_cost;
-        }
-        route_vars.back().set(GRB_DoubleAttr_Obj, coeff);
-    } else {
-        if (!use_duration_only){
-            route_vars.back().set(GRB_DoubleAttr_Obj, route.total_cost);
-        }
-    }
 }
 
 int solve_model(GRBModel& model, double time_limit) {

@@ -142,17 +142,12 @@ void PulseAlgorithmMultithreadedGrouped::pulse_parallel(int vertex, int time, st
 }
 
 
-int PulseAlgorithmMultithreadedGrouped::solve(double fixed_cost, double dual_value, std::vector<int> available_interventions, bool use_maximisation_formulation) {
+int PulseAlgorithmMultithreadedGrouped::solve(std::vector<int> available_interventions) {
     // Launch the pulse algorithm
     PulseAlgorithmWithSubsets::reset();
     set_available_interventions(available_interventions);
     PartialPath path = EmptyPath(N);
-    double initial_cost;
-    if (use_maximisation_formulation) {
-        initial_cost = fixed_cost + dual_value;
-    } else {
-        initial_cost = fixed_cost - dual_value;
-    }
+    double initial_cost = problem->getObj()->getNodeCost(origin);
     PulseAlgorithmMultithreadedGrouped::pulse_parallel(origin, 0, std::vector<int>(K, 0), initial_cost, path);
 
     if(best_path.sequence.size() == 0) {

@@ -30,7 +30,7 @@ inline constexpr int S_TO_MS = 1000;
 std::map<std::string, std::any> pathwyse_parameters_dict(
     const ColumnGenerationParameters& parameters,
     double remaining_time,
-    bool using_cyclic_pricing = false
+    bool using_cyclic_pricing
 ){
     return std::map<std::string, std::any>({
         {"time_limit", remaining_time},
@@ -46,7 +46,6 @@ std::map<std::string, std::any> pathwyse_parameters_dict(
 
 CGResult column_generation(
     const Instance & instance,
-    BPNode & node,
     std::vector<Route> & routes,
     const ColumnGenerationParameters& parameters
     ){
@@ -55,6 +54,8 @@ CGResult column_generation(
     using std::vector, std::string, std::to_string;
     using std::unique_ptr;
     namespace chrono = std::chrono;
+
+    auto procedure_start = chrono::steady_clock::now();
 
     int master_time = 0;
     int pricing_time = 0;
@@ -71,8 +72,7 @@ CGResult column_generation(
         postpone_vars, 
         intervention_ctrs,
         vehicle_ctrs,
-        parameters.use_maximisation_formulation,
-        parameters.use_duration_only
+        parameters.solver_objective_mode
     );
 
     // Main loop of the column generation algorithm
@@ -85,6 +85,9 @@ CGResult column_generation(
     // Master Solutions - Do a first solve before the loop
     int status = solve_model(model);
     MasterSolution solution = extract_solution(model, route_vars, intervention_ctrs, vehicle_ctrs);
+    if (parameters.verbose){
+        cout << "Initial solution : " << solution.objective_value << endl;
+    }
     DualSolution& dual_solution = solution.dual_solution;
     DualSolution previous_dual_solution{};
 
@@ -92,7 +95,6 @@ CGResult column_generation(
     IntegerSolution intermediary_integer_solution {};
     vector<Route> intermediary_integer_routes {};
     if (parameters.compute_intermediate_integer_solutions){
-        cout << "Solving intermediary integer model at iteration " << iteration << endl;
         intermediary_integer_solution = solve_intermediary_integer_model(model, route_vars, postpone_vars, parameters.time_limit);
     }
 
@@ -158,8 +160,7 @@ CGResult column_generation(
                 convex_dual_solution,
                 instance,
                 vehicle_order,
-                parameters.use_maximisation_formulation,
-                parameters.use_duration_only,
+                parameters.solver_objective_mode,
                 using_cyclic_pricing,
                 n_ressources_dominance
             );
@@ -169,7 +170,7 @@ CGResult column_generation(
                 convex_dual_solution,
                 instance,
                 vehicle_order,
-                parameters.use_maximisation_formulation,
+                parameters.solver_objective_mode,
                 using_cyclic_pricing,
                 n_ressources_dominance,
                 iteration
@@ -179,7 +180,7 @@ CGResult column_generation(
                 convex_dual_solution,
                 instance,
                 vehicle_order,
-                parameters.use_maximisation_formulation,
+                parameters.solver_objective_mode,
                 parameters.delta,
                 parameters.solution_pool_size,
                 parameters.pricing_verbose
@@ -190,39 +191,7 @@ CGResult column_generation(
                 convex_dual_solution,
                 instance,
                 vehicle_groups,
-                parameters.use_maximisation_formulation,
-                parameters.delta,
-                parameters.solution_pool_size,
-                parameters.pricing_verbose
-            );
-        } else if (parameters.pricing_function == PRICING_MPA) {
-            new_routes = full_pricing_problems_multithreaded_pulse(
-                convex_dual_solution,
-                instance,
-                vehicle_order,
-                parameters.use_maximisation_formulation,
-                parameters.delta,
-                parameters.solution_pool_size,
-                parameters.pricing_verbose
-            );
-        } else if (parameters.pricing_function == PRICING_MPA_GROUPED){
-            auto vehicle_groups = regroup_vehicles_by_depot(instance.vehicles);
-            new_routes = full_pricing_problems_grouped_pulse_multithreaded(
-                convex_dual_solution,
-                instance,
-                vehicle_groups,
-                parameters.use_maximisation_formulation,
-                parameters.delta,
-                parameters.solution_pool_size,
-                parameters.pricing_verbose
-            );
-        } else if (parameters.pricing_function == PRICING_MPA_GROUPED_PAR){
-            auto vehicle_groups = regroup_vehicles_by_depot(instance.vehicles);
-            new_routes = full_pricing_problems_grouped_pulse_par_par(
-                convex_dual_solution,
-                instance,
-                vehicle_groups,
-                parameters.use_maximisation_formulation,
+                parameters.solver_objective_mode,
                 parameters.delta,
                 parameters.solution_pool_size,
                 parameters.pricing_verbose
@@ -236,11 +205,11 @@ CGResult column_generation(
         double min_reduced_cost = std::numeric_limits<double>::infinity();
         double max_reduced_cost = - std::numeric_limits<double>::infinity();
         if (pricing_time + master_time < S_TO_MS * parameters.time_limit) {
-            if (parameters.use_maximisation_formulation ){
+            if (parameters.solver_objective_mode == SolverMode::BIG_M_FORMULATION_COVERAGE){
                 for (Route& new_route : new_routes){
                     max_reduced_cost = std::max(max_reduced_cost, new_route.reduced_cost);
                     if (new_route.reduced_cost > parameters.reduced_cost_threshold){
-                        add_route(model, new_route, instance, route_vars, intervention_ctrs, vehicle_ctrs, true, parameters.use_duration_only);
+                        add_route(model, new_route, instance, route_vars, intervention_ctrs, vehicle_ctrs, parameters.solver_objective_mode);
                         n_added_routes++;
                         routes.push_back(new_route);
 
@@ -250,7 +219,7 @@ CGResult column_generation(
                 for (Route& new_route : new_routes){
                     min_reduced_cost = std::min(min_reduced_cost, new_route.reduced_cost);
                     if (new_route.reduced_cost < - parameters.reduced_cost_threshold){
-                        add_route(model, new_route, instance, route_vars, intervention_ctrs, vehicle_ctrs, false, parameters.use_duration_only);
+                        add_route(model, new_route, instance, route_vars, intervention_ctrs, vehicle_ctrs, parameters.solver_objective_mode);
                         n_added_routes++;
                         routes.push_back(new_route);
                     }
@@ -260,7 +229,7 @@ CGResult column_generation(
 
         if (parameters.verbose) {
             cout << "Pricing sub problems solved in " << diff_pricing << " ms - Added " << n_added_routes << " routes";
-            if (parameters.use_maximisation_formulation) {
+            if (parameters.solver_objective_mode == SolverMode::BIG_M_FORMULATION_COVERAGE){
                 cout << " - Max RC : " << setprecision(8) << max_reduced_cost << "\n";
             } else {
                 cout << " - Min RC : " << setprecision(8) << min_reduced_cost << "\n";
@@ -269,38 +238,28 @@ CGResult column_generation(
 
         // ----------------- Master problem -----------------
 
-        // Solve the master problem
         auto start = chrono::steady_clock::now();
         int status = solve_model(model);
         solution = extract_solution(model, route_vars, intervention_ctrs, vehicle_ctrs);
         auto end = chrono::steady_clock::now();
         int diff = chrono::duration_cast<chrono::milliseconds>(end - start).count();
-        // At this point, if the solution is not feasible, it it because the cuts give a non feasible problem
-        // We can stop the algorithm
-        if (!solution.is_feasible){
-            return CGResult{};
-        }
-        // Extract the dual solution from the master solution
         DualSolution& dual_solution = solution.dual_solution;
 
         // ----------------- Intermediate integer solutions -----------------
 
-        // Every five iterations, we compute an integer solution
         if (parameters.compute_intermediate_integer_solutions && iteration % 5 == 0 && iteration > 0){
             cout << "Solving intermediary integer model at iteration " << iteration << endl;
             intermediary_integer_solution = solve_intermediary_integer_model(model, route_vars, postpone_vars, parameters.time_limit);
 
             intermediary_integer_routes = routes;
-            if (!parameters.use_maximisation_formulation){
+            if (!(parameters.solver_objective_mode == SolverMode::BIG_M_FORMULATION_COVERAGE)){
                 // Repair the integer solution
                 repair_routes(intermediary_integer_routes, intermediary_integer_solution, instance);
             }
         }
-    
 
         // ----------------- Objective tracking -----------------
 
-        // Update the objective tracking
         objective_values.push_back(solution.objective_value); 
         solution_costs.push_back(relaxed_solution_cost(solution, routes));
         covered_interventions.push_back(count_covered_interventions(solution, routes, instance));
@@ -359,10 +318,10 @@ CGResult column_generation(
             stop = true;
         }
         // Count the number of consecutive non improvement
-        if (parameters.use_maximisation_formulation 
+        if (parameters.solver_objective_mode == SolverMode::BIG_M_FORMULATION_COVERAGE 
             && solution.objective_value <= previous_solution_objective){
             consecutive_non_improvement++;
-        } else if (!parameters.use_maximisation_formulation 
+        } else if (!(parameters.solver_objective_mode == SolverMode::BIG_M_FORMULATION_COVERAGE) 
             && solution.objective_value >= previous_solution_objective){
             consecutive_non_improvement++;
         } else {
@@ -372,6 +331,8 @@ CGResult column_generation(
         previous_dual_solution = dual_solution;
         iteration++;
     }
+
+    // ----------------- End of the column generation -----------------
 
     cout << "-----------------------------------" << endl;
     if (stop) {
@@ -389,57 +350,79 @@ CGResult column_generation(
     for (int i = 0; i < instance.number_interventions; i++){
         total_outsource_cost += instance.nodes[i].duration * instance.M;
     }
-    double relaxed_maximum_objective;
-    double relaxed_minimum_objective;
-    if (parameters.use_maximisation_formulation){
-        relaxed_maximum_objective = solution.objective_value;
-        relaxed_minimum_objective = total_outsource_cost - solution.objective_value;
-    } else {
-        relaxed_maximum_objective = total_outsource_cost - solution.objective_value;
-        relaxed_minimum_objective = solution.objective_value;
+    if (parameters.solver_objective_mode == SolverMode::BIG_M_FORMULATION_COVERAGE){
+        cout << "Relaxed RMP minimization objective value : " << setprecision(8) << total_outsource_cost - solution.objective_value << endl;
+        cout << "Relaxed RMP maximization objective value : " << setprecision(8) << solution.objective_value << endl;
+    } else if (parameters.solver_objective_mode == SolverMode::BIG_M_FORMULATION_OUTSOURCE){
+        cout << "Relaxed RMP minimization objective value : " << setprecision(8) << solution.objective_value << endl;
+        cout << "Relaxed RMP maximization objective value : " << setprecision(8) << total_outsource_cost - solution.objective_value << endl;
+    } else if (parameters.solver_objective_mode == SolverMode::SOLUTION_MINIMISATION){
+        cout << "Relaxed RMP solution cost : " << setprecision(8) << solution.objective_value << endl;
+    } else if (parameters.solver_objective_mode == SolverMode::DURATION_ONLY){
+        cout << "Relaxed RMP outsourced duration : " << setprecision(8) << solution.objective_value << endl;
     }
-    cout << "Relaxed RMP minimization objective value : " << setprecision(8) << relaxed_minimum_objective << endl;
-    cout << "Relaxed RMP maximization objective value : " << setprecision(8) << relaxed_maximum_objective << endl;
+    
 
-
-
-    // Update the node's upper bound
-    node.upper_bound = solution.objective_value;
-    // If the upper bound is lower than the lower bound, it isn't worth computing the integer solution
-    bool compute_integer_solution = parameters.compute_integer_solution;
-    if (node.upper_bound < node.lower_bound){
-        compute_integer_solution = false;
-    }
+    // ----------------- Integer solution -----------------
 
     int integer_time = 0;
     auto integer_solution = IntegerSolution{};
-    if (compute_integer_solution) {
+    if (parameters.compute_integer_solution) {
         auto start_integer = chrono::steady_clock::now();
         integer_solution = solve_intermediary_integer_model(model, route_vars, postpone_vars, parameters.time_limit);
+        // If applicable, repair the integer solution
+        if (!(parameters.solver_objective_mode == SolverMode::BIG_M_FORMULATION_COVERAGE)){
+            repair_routes(routes, integer_solution, instance);
+        }
         auto end_integer = chrono::steady_clock::now();
         integer_time = chrono::duration_cast<chrono::milliseconds>(end_integer - start_integer).count();
         
         // Objective values tracking
         double integer_max_objective;
         double integer_min_objective;
-        if (parameters.use_maximisation_formulation){
-            integer_max_objective = integer_solution.objective_value;
-            integer_min_objective = total_outsource_cost - integer_max_objective;
-        } else {
-            integer_max_objective = total_outsource_cost - integer_solution.objective_value;
-            integer_min_objective = integer_solution.objective_value;
+        if (parameters.solver_objective_mode == SolverMode::BIG_M_FORMULATION_COVERAGE){
+            cout << "Integer RMP minimization objective value : " << setprecision(8) << total_outsource_cost - integer_solution.objective_value;
+            double minimisation_gap = (solution.objective_value - integer_solution.objective_value) / (total_outsource_cost - integer_solution.objective_value);
+            cout << " - Minimisation integrality Gap : " << setprecision(3) << minimisation_gap * 100 << "%" << endl;
+        } else if (parameters.solver_objective_mode == SolverMode::BIG_M_FORMULATION_OUTSOURCE){
+            cout << "Integer RMP minimization objective value : " << setprecision(8) << integer_solution.objective_value;
+            double minimisation_gap = (integer_solution.objective_value - solution.objective_value) / integer_solution.objective_value;
+            cout << " - Minimisation integrality Gap : " << setprecision(3) << minimisation_gap * 100 << "%" << endl;
+        } else if (parameters.solver_objective_mode == SolverMode::SOLUTION_MINIMISATION){
+            cout << "Integer RMP solution cost : " << setprecision(8)  << endl;
+        } else if (parameters.solver_objective_mode == SolverMode::DURATION_ONLY){
+            cout << "Integer RMP covered duration : " << setprecision(8) << time_spent_working(integer_solution, routes, instance) << endl;
         }
-        // Gaps
-        double minimisation_gap = (integer_min_objective - relaxed_minimum_objective) / integer_min_objective;
-        double maximisation_gap = (relaxed_maximum_objective - integer_max_objective) / integer_max_objective;
-        cout << "Integer RMP minimization objective value : " << setprecision(8) << integer_min_objective;
-        cout << " - Minimisation integrality Gap : " << setprecision(3) << minimisation_gap * 100 << "%" << endl;
-        cout << "Integer RMP maximization objective value : " << setprecision(8) << integer_max_objective;
-        cout << " - Maximisation integrality Gap : " << setprecision(3) << maximisation_gap * 100 << "%" << endl;
+
     }
 
-    // Build the result object
-    CGResult result = CGResult{
+    // ----------------- Data analysis -----------------
+
+    // If the integer solution is not feasible, we can't do much
+    if (!integer_solution.is_feasible){
+        cout << "-----------------------------------" << endl;
+        cout << "The integer solution is not feasible" << endl;
+        return CGResult{};
+    }
+
+    int n_routes_generated = routes.size();
+    cout << "Number of routes generated : " << n_routes_generated;
+    cout << " - Number of duplicate routes : " << count_routes_with_duplicates(routes);
+    cout << " - Average time to generate a route : " << pricing_time / n_routes_generated << " ms" << endl;
+    
+    int elapsed_time = chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - procedure_start).count();
+    // Print the time it took to solve the master problem
+    cout << "-----------------------------------" << endl;
+    cout << "Total time spent solving the master problem : " << master_time << " ms" << endl;
+    cout << "Total time spent solving the pricing problems : " << pricing_time << " ms - Average : " << pricing_time / iteration << " ms" << endl;
+    cout << "Total time spent solving the integer problem : " << integer_time << " ms" << endl;
+    cout << "Total elapsed time : " << elapsed_time << " ms" << endl;
+
+    full_analysis(integer_solution, routes, instance, true);
+
+    cout << "-----------------------------------" << endl;
+
+    return CGResult{
         solution,
         integer_solution,
         iteration,
@@ -454,6 +437,4 @@ CGResult column_generation(
         integer_covered_interventions,
         time_points
     };
-
-    return result;
 }

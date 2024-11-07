@@ -23,7 +23,7 @@ public:
     void reset();
 
     // Only after the bounding, solve the problem for a vehicle with a given fixed cost, dual value, and available interventions
-    int solve(double fixed_cost, double dual_value, std::vector<int> available_interventions, bool use_maximisation_formulation);
+    int solve(std::vector<int> available_interventions);
 
 protected:
     // Available interventions

@@ -4,7 +4,6 @@
 #include "routes/route.h"
 #include "routes/route_optimizer.h"
 #include "clustering/clustering.h"
-#include "tabu.h"
 
 #include <vector>
 #include <execution>
@@ -19,8 +18,7 @@ std::vector<Route> full_pricing_problems_basic(
     const DualSolution & solution,
     const Instance & instance,
     const std::vector<int> &vehicle_order,
-    bool use_maximisation_formulation,
-    bool use_duration_only,
+    SolverMode solver_objective_mode,
     bool using_cyclic_pricing,
     int n_ressources_dominance
     ){
@@ -30,7 +28,7 @@ std::vector<Route> full_pricing_problems_basic(
     
     auto single_pricer = [&](int v){
             return solve_pricing_problem(instance, instance.vehicles.at(v), solution,
-                use_maximisation_formulation, use_duration_only, using_cyclic_pricing, n_ressources_dominance);
+                solver_objective_mode, using_cyclic_pricing, n_ressources_dominance);
         };
 
     vector<packaged_task<Route(int)>> tasks;
@@ -63,7 +61,7 @@ std::vector<Route> full_pricing_problems_diversification(
     const DualSolution & solution,
     const Instance & instance,
     const std::vector<int> &vehicle_order,
-    bool use_maximisation_formulation,
+    SolverMode solver_objective_mode,
     bool using_cyclic_pricing,
     int n_ressources_dominance,
     int seed
@@ -98,7 +96,7 @@ std::vector<Route> full_pricing_problems_diversification(
             }
             // Solve the pricing problem for the vehicle
             Route new_route = solve_pricing_problem(instance, vehicle, solution,
-                use_maximisation_formulation, using_cyclic_pricing, n_ressources_dominance);
+                solver_objective_mode, using_cyclic_pricing, n_ressources_dominance);
             // If the reduced cost is greater than the threshold, we add the route
             if (new_route.id_sequence.size() > 2){
                 private_new_routes.push_back(new_route);
@@ -144,92 +142,11 @@ std::vector<Route> full_pricing_problems_diversification(
 }
 
 
-std::vector<Route> full_pricing_problems_clustering(
-    const DualSolution & solution,
-    const Instance & instance,
-    const std::vector<int> &vehicle_order,
-    bool use_maximisation_formulation,
-    bool using_cyclic_pricing,
-    int n_ressources_dominance,
-    int seed
-    ){
-    using std::vector;
-    using std::unique_ptr;
-
-    // Randomize the seed
-    if (seed == RANDOM_SEED){
-        seed = std::chrono::system_clock::now().time_since_epoch().count();
-    }
-
-
-    // Initialize the new routes
-    vector<Route> new_routes = {};
-
-    // Generate clusters
-    auto clusters = optimal_2_clustering(instance.similarity_matrix);
-    // Perform 5 swaps
-    for (int i = 0; i < 1; i++){
-        clusters = greedy_neighbor(instance.similarity_matrix, clusters, i + seed);
-    }
-
-    // Use the previous function to solve the pricing problems
-    for (auto cluster : clusters){
-        vector<int> vehicle_order = cluster;
-        vector<Route> new_routes_cluster = full_pricing_problems_diversification(
-            solution, 
-            instance, 
-            vehicle_order, 
-            use_maximisation_formulation,
-            using_cyclic_pricing, 
-            n_ressources_dominance
-            );
-        new_routes.insert(new_routes.end(), new_routes_cluster.begin(), new_routes_cluster.end());
-    }
-
-    return new_routes;
-}
-
-
-std::vector<Route> full_pricing_problems_tabu_search(
-    const DualSolution & solution,
-    const Instance & instance,
-    const std::vector<int> &vehicle_order,
-    bool use_maximisation_formulation,
-    bool using_cyclic_pricing,
-    int n_ressources_dominance,
-    int max_iterations,
-    int max_modifications,
-    int seed
-    ){
-    using std::vector, std::unique_ptr;
-
-    vector<Route> new_routes = {};
-
-    for (int v : vehicle_order){
-        // Compute a first route using the pricing problem
-        const Vehicle& vehicle = instance.vehicles.at(v);
-        Route new_route = solve_pricing_problem(instance, vehicle, solution,
-            use_maximisation_formulation, using_cyclic_pricing, n_ressources_dominance);
-        // If this route is empty, we skip it
-        if (new_route.id_sequence.size() <= 2){
-            continue;
-        }        
-        // Then, we perform the tabu search
-        vector<Route> tabu_list = tabu_search(new_route, max_iterations, max_modifications, solution, vehicle, instance);
-
-        // We add the new routes to the list of new routes
-        new_routes.insert(new_routes.end(), tabu_list.begin(), tabu_list.end());
-    }
-
-    return new_routes;
-}
-
-
 std::vector<Route> full_pricing_problems_basic_pulse(
     const DualSolution & solution,
     const Instance & instance,
     const std::vector<int> & vehicle_order,
-    bool use_maximisation_formulation,
+    SolverMode solver_objective_mode,
     int delta,
     int pool_size,
     bool verbose
@@ -240,7 +157,7 @@ std::vector<Route> full_pricing_problems_basic_pulse(
     
     auto single_pricer = [&](int v){
             return solve_pricing_problem_pulse(instance, instance.vehicles.at(v), solution,
-                use_maximisation_formulation, delta, pool_size, verbose);
+                solver_objective_mode, delta, pool_size, verbose);
         };
 
     vector<packaged_task<vector<Route>(int)>> tasks;
@@ -280,7 +197,7 @@ std::vector<Route> full_pricing_problems_grouped_pulse(
     const DualSolution & solution,
     const Instance & instance,
     const std::map<int, std::vector<int>> & vehicle_groups,
-    bool use_maximisation_formulation,
+    SolverMode solver_objective_mode,
     int delta,
     int pool_size,
     bool verbose
@@ -291,100 +208,7 @@ std::vector<Route> full_pricing_problems_grouped_pulse(
 
     auto single_pricer = [&](int id){
             return solve_pricing_problem_pulse_grouped(instance, vehicle_groups.at(id), solution,
-                use_maximisation_formulation, delta, pool_size, verbose);
-        };
-
-    vector<packaged_task<vector<Route>(int)>> tasks;
-    vector<int> task_id_to_depot = {};
-    for (const auto& [id, vehicles] : vehicle_groups){
-        tasks.push_back(packaged_task<vector<Route>(int)>(single_pricer));
-        task_id_to_depot.push_back(id);
-    }
-    vector<future<vector<Route>>> futures;
-    for (auto& task : tasks){
-        futures.push_back(task.get_future());
-    }
-    // Multi-threaded execution
-    vector<std::thread> threads(tasks.size());
-    for (int i = 0; i < tasks.size(); i++){
-        threads[i] = std::thread(std::move(tasks[i]), task_id_to_depot[i]);
-    }
-
-    vector<vector<Route>> new_routes_parallel(vehicle_groups.size());
-    for (int i = 0; i < tasks.size(); i++){
-        threads[i].join();
-        new_routes_parallel[i] = futures[i].get();
-    }
-
-    // Regroup all the routes in a single vector
-    vector<Route> new_routes;
-    for (auto routes : new_routes_parallel){
-        new_routes.insert(new_routes.end(), routes.begin(), routes.end());
-    }
-
-    return new_routes;
-}
-
-std::vector<Route> full_pricing_problems_multithreaded_pulse(
-    const DualSolution & solution,
-    const Instance & instance,
-    const std::vector<int> & vehicle_order,
-    bool use_maximisation_formulation,
-    int delta,
-    int pool_size,
-    bool verbose
-) {
-    // Solve each problem sequentially using the multi-threaded pulse algorithm
-    using std::vector;
-    vector<Route> new_routes;
-    for (int v : vehicle_order){
-        vector<Route> new_routes_v = solve_pricing_problem_pulse_parallel(instance, instance.vehicles.at(v), solution,
-            use_maximisation_formulation, delta, pool_size, verbose);
-        new_routes.insert(new_routes.end(), new_routes_v.begin(), new_routes_v.end());
-    }
-
-    return new_routes;
-}
-
-
-std::vector<Route> full_pricing_problems_grouped_pulse_multithreaded(
-    const DualSolution & solution,
-    const Instance & instance,
-    const std::map<int, std::vector<int>> & vehicle_groups,
-    bool use_maximisation_formulation,
-    int delta,
-    int pool_size,
-    bool verbose
-) {
-    using std::vector;
-
-    vector<Route> new_routes;
-    for (const auto& [id, vehicles] : vehicle_groups){
-        vector<Route> new_routes_v = solve_pricing_problem_pulse_grouped_par(instance, vehicles, solution,
-            use_maximisation_formulation, delta, pool_size, verbose);
-        new_routes.insert(new_routes.end(), new_routes_v.begin(), new_routes_v.end());
-    }
-
-    return new_routes;
-}
-
-
-std::vector<Route> full_pricing_problems_grouped_pulse_par_par(
-    const DualSolution & solution,
-    const Instance & instance,
-    const std::map<int, std::vector<int>> & vehicle_groups,
-    bool use_maximisation_formulation,
-    int delta,
-    int pool_size,
-    bool verbose
-) {
-    using std::vector;
-    using std::packaged_task;
-    using std::future;
-
-    auto single_pricer = [&](int id){
-            return solve_pricing_problem_pulse_grouped_par(instance, vehicle_groups.at(id), solution,
-                use_maximisation_formulation, delta, pool_size, verbose);
+                solver_objective_mode, delta, pool_size, verbose);
         };
 
     vector<packaged_task<vector<Route>(int)>> tasks;

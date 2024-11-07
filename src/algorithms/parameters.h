@@ -4,6 +4,7 @@
 #include <any>
 #include <string>
 
+#include "master_problem/master.h"
 #include "pricing_problem/full_pricing.h"
 #include "../../pathwyse/core/utils/param.h"
 
@@ -17,9 +18,8 @@ struct ColumnGenerationParameters {
     bool verbose = false;
     int max_iterations = 1000;
     int max_consecutive_non_improvement = 5;
-    bool compute_integer_solution = false;
-    bool use_maximisation_formulation = false;
-    bool use_duration_only = false;
+    bool compute_integer_solution = true;
+    SolverMode solver_objective_mode = SolverMode::BIG_M_FORMULATION_OUTSOURCE;
     bool compute_intermediate_integer_solutions = false;
 
 

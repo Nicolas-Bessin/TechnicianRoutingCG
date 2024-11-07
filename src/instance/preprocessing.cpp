@@ -104,10 +104,12 @@ int max_a_priori_feasible_time(const Instance &instance, bool verbose){
 
     int total_time = 0;
     int total_count = 0;
+    int total_discarded_time = 0;
     // Go through the interventions
     for (int i = 0; i < instance.number_interventions; i++){
         // If the intervention is trivially non feasible, we skip it
         if (is_trivially_non_feasible(instance.nodes[i], instance, available_vehicles[i])){
+            total_discarded_time += instance.nodes[i].duration;
             continue;
         }
         total_time += instance.nodes[i].duration;
@@ -115,6 +117,7 @@ int max_a_priori_feasible_time(const Instance &instance, bool verbose){
     }
     if (verbose){
         cout << "Total time of the a-priori feasible interventions: " << total_time << endl;
+        cout << "Total time of the trivially non feasible interventions: " << total_discarded_time << endl;
         cout << "Number of a-priori feasible interventions: " << total_count << endl;
         cout << "----------------------------------------" << endl;
     }

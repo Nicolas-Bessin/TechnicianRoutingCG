@@ -4,6 +4,15 @@
 #include <tuple>
 #include <map>
 
+
+// Solver modes : duration only, solution cost minimization, big M either with outsource or coverage
+enum SolverMode {
+    DURATION_ONLY,
+    SOLUTION_MINIMISATION,
+    BIG_M_FORMULATION_OUTSOURCE,
+    BIG_M_FORMULATION_COVERAGE,
+};
+
 // This represents a solution to the RMP dual problem
 struct DualSolution {
     std::vector<double> alphas; // Intervention duals

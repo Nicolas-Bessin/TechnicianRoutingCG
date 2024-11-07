@@ -12,7 +12,6 @@
 #include "repair/repair.h"
 
 #include "algorithms/column_generation.h"
-#include "algorithms/full_procedure.h"
 
 #include "data_analysis/analysis.h"
 #include "data_analysis/export.h"
@@ -45,25 +44,9 @@ int main(int argc, char *argv[]){
     // Create the parameters for the column generation algorithm
     ColumnGenerationParameters parameters = ColumnGenerationParameters({
         {"time_limit", TIME_LIMIT},
-        {"reduced_cost_threshold", 1e-6},
         {"verbose", true},
-        {"max_iterations", 1000},
-        {"max_consecutive_non_improvement", 5},
-        {"compute_integer_solution", true},
         {"compute_intermediate_integer_solutions", false},
-        {"use_maximisation_formulation", false},
-        {"use_duration_only", true},
-        {"max_resources_dominance", MAX_RESOURCES_DOMINANCE},
-        {"ng", NG_STANDARD},
-        {"dssr", DSSR_STANDARD},
-        {"use_visited", true},
-        {"bidirectional_DP", false},
-        {"pathwyse_time_limit", 0.0},
-        {"switch_to_cyclic_price", true},
-        {"delta ", 50},
-        {"solution_pool_size", 10},
-        {"alpha", 0.5},
-        {"use_stabilisation", false},
+        {"solver_objective_mode", SolverMode::DURATION_ONLY},
         {"pricing_function", PRICING_PATHWYSE_BASIC},
         {"pricing_verbose", false}
     });
@@ -80,7 +63,7 @@ int main(int argc, char *argv[]){
     routes.push_back(EmptyRoute(instance.nodes.size()));
     cout << "Starting the column generation algorithm" << endl;
 
-    CGResult result = full_cg_procedure(instance, routes, parameters);
+    CGResult result = column_generation(instance, routes, parameters);
 
     return 0;
 }

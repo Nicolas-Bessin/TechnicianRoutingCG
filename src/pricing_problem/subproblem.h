@@ -17,8 +17,7 @@ Route solve_pricing_problem(
     const Instance &instance, 
     const Vehicle &vehicle,
     const DualSolution &dual_solution,
-    bool use_maximisation_formulation,
-    bool use_duration_only = false,
+    SolverMode solver_objective_mode = SolverMode::BIG_M_FORMULATION_OUTSOURCE,
     bool use_cyclic_pricing = false,
     int n_res_dom = -1
     );
@@ -28,7 +27,7 @@ std::vector<Route> solve_pricing_problem_pulse(
     const Instance &instance, 
     const Vehicle &vehicle,
     const DualSolution &dual_solution,
-    bool use_maximisation_formulation,
+    SolverMode solver_objective_mode = SolverMode::BIG_M_FORMULATION_OUTSOURCE,
     int delta = 10,
     int pool_size = 10,
     bool verbose = false
@@ -39,29 +38,8 @@ std::vector<Route> solve_pricing_problem_pulse_grouped(
     const Instance &instance, 
     const std::vector<int> & vehicle_indexes,
     const DualSolution &dual_solution,
-    bool use_maximisation_formulation,
-    int delta,
-    int pool_size,
-    bool verbose = false
-    );
-
-std::vector<Route> solve_pricing_problem_pulse_parallel(
-    const Instance &instance, 
-    const Vehicle &vehicle,
-    const DualSolution &dual_solution,
-    bool use_maximisation_formulation,
+    SolverMode solver_objective_mode = SolverMode::BIG_M_FORMULATION_OUTSOURCE,
     int delta = 10,
     int pool_size = 10,
-    bool verbose = false
-    );
-
-
-std::vector<Route> solve_pricing_problem_pulse_grouped_par(
-    const Instance &instance, 
-    const std::vector<int> & vehicle_indexes,
-    const DualSolution &dual_solution,
-    bool use_maximisation_formulation,
-    int delta,
-    int pool_size,
     bool verbose = false
     );

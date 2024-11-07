@@ -12,7 +12,6 @@
 #include "repair/repair.h"
 
 #include "algorithms/column_generation.h"
-#include "algorithms/full_procedure.h"
 
 #include "data_analysis/analysis.h"
 #include "data_analysis/export.h"
@@ -51,7 +50,7 @@ int main(int argc, char *argv[]){
         {"max_consecutive_non_improvement", 5},
         {"compute_integer_solution", true},
         {"compute_intermediate_integer_solutions", true},
-        {"use_maximisation_formulation", false},
+        {"rmp_solver_mode", SolverMode::BIG_M_FORMULATION_OUTSOURCE},
         {"max_resources_dominance", MAX_RESOURCES_DOMINANCE},
         {"ng", NG_STANDARD},
         {"dssr", DSSR_STANDARD},
@@ -155,7 +154,7 @@ int main(int argc, char *argv[]){
                 parameters.max_resources_dominance = instance.capacities_labels.size() + 1;
                 instance.M = current_M;
 
-                CGResult result = full_cg_procedure(instance, routes, parameters);
+                CGResult result = column_generation(instance, routes, parameters);
 
                 // Plot the objective value over time
                 string plot_name = name + " - M = " + std::to_string(current_M);

@@ -17,8 +17,7 @@
 // @param route_vars : the vector of variables associated with the routes
 // @param intervention_ctrs : the vector of constraints associated with the interventions
 // @param vehicle_ctrs : the vector of constraints associated with the vehicles
-// @param use_maximisation_formulation : whether to use the maximisation version of the master problem
-// @param use_duration_only : whether to use the duration only version of the master problem
+// @param solver_objective_mode : the mode of the objective function - see SolverMode in master.h
 GRBModel create_model(
     const Instance& instance,
     const std::vector<Route>& routes,
@@ -26,8 +25,7 @@ GRBModel create_model(
     std::vector<GRBVar>& postpone_vars,
     std::vector<GRBConstr>& intervention_ctrs,
     std::vector<GRBConstr>& vehicle_ctrs,
-    bool use_maximisation_formulation = false,
-    bool use_duration_only = false
+    SolverMode solver_objective_mode = SolverMode::BIG_M_FORMULATION_OUTSOURCE
 );
 
 // Adds a route to the model
@@ -42,8 +40,7 @@ void add_route(
     std::vector<GRBVar>& route_vars,
     std::vector<GRBConstr>& intervention_ctrs,
     std::vector<GRBConstr>& vehicle_ctrs,
-    bool use_maximisation_formulation = false,
-    bool use_duration_only = false
+    SolverMode solver_objective_mode = SolverMode::BIG_M_FORMULATION_OUTSOURCE
 );
 
 

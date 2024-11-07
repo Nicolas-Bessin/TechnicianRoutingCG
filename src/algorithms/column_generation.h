@@ -27,6 +27,13 @@ struct CGResult {
     std::vector<int> time_points;
 };
 
+
+std::map<std::string, std::any> pathwyse_parameters_dict(
+    const ColumnGenerationParameters& parameters,
+    double remaining_time,
+    bool using_cyclic_pricing = false
+);
+
 /*
     Solve the column generation problem for the given instance and initial node
     using the given initial routes and reduced cost threshold.
@@ -40,21 +47,13 @@ struct CGResult {
     an integer solution to the problem.
 
     @param instance: The instance of the problem to solve
-    @param node: The root node of the branch and price tree
     @param initial_routes: The initial routes to use in the column generation algorithm
-
-    @param max_resources_dominance: The maximum number of resources to use in the dominance test
-    @param switch_to_cyclic_pricing: Whether to switch to cyclic pricing when no new routes are added
-    @param compute_integer_solution: Whether to compute an integer solution to the problem
-    @param time_limit: The time limit for the column generation algorithm
-    @param reduced_cost_threshold: The reduced cost threshold to stop the column generation algorithm
-    @param verbose: Whether to print information about the column generation algorithm
+    @param parameters: The parameters of the column generation algorithm, see parameters.h
 
     Returns a CGResult object containing the results of the column generation algorithm.
 */
 CGResult column_generation(
     const Instance & instance,
-    BPNode & node,
     std::vector<Route> & routes,
     const ColumnGenerationParameters & parameters
     );

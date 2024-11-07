@@ -31,7 +31,7 @@ endif ()
 
 #Source code
 set(
-    SOURCE_FILES_LIB
+    SOURCE_FILES_CORE
 
     src/instance/constants.h
     src/instance/instance.h
@@ -73,26 +73,16 @@ set(
     src/pricing_problem/subproblem.cpp
     src/pricing_problem/time_window_lunch.h
     src/pricing_problem/time_window_lunch.cpp
-    src/pricing_problem/tabu.h
-    src/pricing_problem/tabu.cpp
 
     src/repair/repair.h
     src/repair/repair.cpp
 
-    src/compact_formulation/compact_solution.h 
-    src/compact_formulation/compact_solver.h
-    src/compact_formulation/compact_solver.cpp
-    src/compact_formulation/solution_converter.h
-    src/compact_formulation/solution_converter.cpp
-
-    src/algorithms/branch_and_price.h
-    src/algorithms/branch_and_price.cpp
     src/algorithms/column_generation.h
     src/algorithms/column_generation.cpp
     src/algorithms/parameters.h
     src/algorithms/parameters.cpp
-    src/algorithms/full_procedure.h
-    src/algorithms/full_procedure.cpp
+    src/algorithms/sequential_column_generation.h
+    src/algorithms/sequential_column_generation.cpp
 
     src/data_analysis/analysis.h 
     src/data_analysis/analysis.cpp
@@ -102,60 +92,57 @@ set(
     src/data_analysis/export.cpp
 )
 
-# Add the library
-add_library(technician_routing_lib ${SOURCE_FILES_LIB})
-# Add the include directory
-target_include_directories(technician_routing_lib PUBLIC src)
+set(
+    SOURCE_FILES_COMPACT
+    src/compact_formulation/compact_solution.h 
+    src/compact_formulation/compact_solver.h
+    src/compact_formulation/compact_solver.cpp
+    src/compact_formulation/solution_converter.h
+    src/compact_formulation/solution_converter.cpp
+)
 
-# Add the cmake folder to the module path
+set(
+    SOURCE_FILES_BRANCH_PRICE
+    src/algorithms/branch_and_price.h
+    src/algorithms/branch_and_price.cpp
+)
+
+################# Libraries #################
+# Add the core library
+add_library(technician_routing_core ${SOURCE_FILES_CORE})
+target_include_directories(technician_routing_core PUBLIC src)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
-
-# Add the Gurobi headers from /opt/gurobi/include
 find_package(GUROBI REQUIRED)
-
 include_directories(${GUROBI_INCLUDE_DIRS})
-
-# Add the pathwyse subdirectory
+target_link_libraries(technician_routing_core PUBLIC gurobi)
 add_subdirectory(pathwyse)
-
-# Add Matplotplusplus
+target_link_libraries(technician_routing_core PUBLIC pathwyse_core)
 add_subdirectory(matplotplusplus)
+target_link_libraries(technician_routing_core PUBLIC matplot)
+find_package(TBB REQUIRED)
+target_link_libraries(technician_routing_core PUBLIC TBB::tbb)
 
-#Link against the Gurobi library
-target_link_libraries(technician_routing_lib PUBLIC gurobi)
-#Link against the pathwyse core library
-target_link_libraries(technician_routing_lib PUBLIC pathwyse_core)
-#Link against Matplotplusplus
-target_link_libraries(technician_routing_lib PUBLIC matplot)
-# Add the necessary library for parallel running
-target_link_libraries(technician_routing_lib PUBLIC tbb)
+# Add the compact formulation library
+add_library(technician_routing_compact ${SOURCE_FILES_COMPACT})
 
+# Add the branch and price library
+add_library(technician_routing_BP ${SOURCE_FILES_BRANCH_PRICE})
+target_link_libraries(technician_routing_BP PUBLIC technician_routing_core)
 
+################# Executables #################
 # Create the column generation executable
 add_executable(TRP_cg src/main_column_generation.cpp)
-# Link against the core library
-target_link_libraries(TRP_cg PUBLIC technician_routing_lib)
+target_link_libraries(TRP_cg PUBLIC technician_routing_core)
 
+# Create a testing executable
+add_executable(TRP_test src/main_testing.cpp)
+target_link_libraries(TRP_test PUBLIC technician_routing_core)
 
 # Also create a compact formulation executable
 add_executable(TRP_compact src/main_compact_formulation.cpp)
-# Link against the core library
-target_link_libraries(TRP_compact PUBLIC technician_routing_lib)
-
+target_link_libraries(TRP_compact PUBLIC technician_routing_compact)
 
 # Create the branch & price executable
 add_executable(TRP_BP src/main_branch_price.cpp)
-# Link against the core library
-target_link_libraries(TRP_BP PUBLIC technician_routing_lib) 
-
-
-# Create an executable to test out predifined solutions
-add_executable(TRP_test src/main_testing.cpp)
-# Link against the core library
-target_link_libraries(TRP_test PUBLIC technician_routing_lib)
-
-
-# Create an executable to plot solution quality from results files
-add_executable(TRP_plot src/quality_plot.cpp)
-# Add matplot
-target_link_libraries(TRP_plot PUBLIC matplot)
+target_link_libraries(TRP_BP PUBLIC technician_routing_BP) 

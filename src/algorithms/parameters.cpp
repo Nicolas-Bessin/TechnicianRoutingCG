@@ -16,10 +16,8 @@ ColumnGenerationParameters::ColumnGenerationParameters(std::map<std::string, std
         max_consecutive_non_improvement = std::any_cast<int>(args["max_consecutive_non_improvement"]);
     if (args.contains("compute_integer_solution"))
         compute_integer_solution = std::any_cast<bool>(args["compute_integer_solution"]);
-    if (args.contains("use_maximisation_formulation"))
-        use_maximisation_formulation = std::any_cast<bool>(args["use_maximisation_formulation"]);
-    if (args.contains("use_duration_only"))
-        use_duration_only = std::any_cast<bool>(args["use_duration_only"]);
+    if (args.contains("solver_objective_mode"))
+        solver_objective_mode = std::any_cast<SolverMode>(args["solver_objective_mode"]);
     if (args.contains("compute_intermediate_integer_solutions"))
         compute_intermediate_integer_solutions = std::any_cast<bool>(args["compute_intermediate_integer_solutions"]);
 
