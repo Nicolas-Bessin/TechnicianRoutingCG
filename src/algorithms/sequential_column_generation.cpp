@@ -9,7 +9,7 @@
 #include "gurobi_c++.h"
 
 
-CGResult sequential_column_generation(const Instance & instance, std::vector<Route> & routes, const ColumnGenerationParameters & initial_parameters){
+SequentialCGResult sequential_column_generation(const Instance & instance, std::vector<Route> & routes, const ColumnGenerationParameters & initial_parameters){
 
     using std::vector, std::string;
     using std::cout, std::endl, std::setprecision;
@@ -36,5 +36,28 @@ CGResult sequential_column_generation(const Instance & instance, std::vector<Rou
     parameters.max_outsourced_duration = max_outsourced_duration;
     CGResult result_phase_2 = column_generation(instance, routes, parameters);
 
-    return result_phase_2;
+    // Combine the results
+    CGResult result = result_phase_1;
+    for (int i = 0; i < result_phase_2.objective_values.size(); i++){
+        result.time_points.push_back(result_phase_1.time_points.back() + result_phase_2.time_points[i]);
+        result.objective_values.push_back(result_phase_2.objective_values[i]);
+        result.solution_costs.push_back(result_phase_2.solution_costs[i]);
+        result.covered_interventions.push_back(result_phase_2.covered_interventions[i]);
+    }
+    // Add the eventual intermediary integer solutions
+    result.integer_objective_values.insert(result.integer_objective_values.end(), result_phase_2.integer_objective_values.begin(), result_phase_2.integer_objective_values.end());
+    result.integer_solution_costs.insert(result.integer_solution_costs.end(), result_phase_2.integer_solution_costs.begin(), result_phase_2.integer_solution_costs.end());
+    result.integer_covered_interventions.insert(result.integer_covered_interventions.end(), result_phase_2.integer_covered_interventions.begin(), result_phase_2.integer_covered_interventions.end());
+    // Set the solution to those of the phase 2
+    result.master_solution = result_phase_2.master_solution;
+    result.integer_solution = result_phase_2.integer_solution;
+    result.master_time = result_phase_1.master_time + result_phase_2.master_time;
+    result.pricing_time = result_phase_1.pricing_time + result_phase_2.pricing_time;
+    result.number_of_iterations = result_phase_1.number_of_iterations + result_phase_2.number_of_iterations;
+
+    return SequentialCGResult{
+        result,
+        result_phase_1.time_points.back(),
+        result_phase_1.number_of_iterations
+    };
 }

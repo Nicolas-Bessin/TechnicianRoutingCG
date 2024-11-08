@@ -14,4 +14,11 @@
 #include <vector>
 
 
-CGResult sequential_column_generation(const Instance & instance, std::vector<Route> & routes, const ColumnGenerationParameters & parameters);
+struct SequentialCGResult {
+    CGResult combined_result;
+    double phase_1_time;
+    int phase_1_iterations;
+};
+
+
+SequentialCGResult sequential_column_generation(const Instance & instance, std::vector<Route> & routes, const ColumnGenerationParameters & parameters);

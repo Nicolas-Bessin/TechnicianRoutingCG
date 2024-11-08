@@ -26,7 +26,7 @@ void plot_instance(
 */
 void plot_objective_values(
     matplot::axes_handle& ax,
-    const std::vector<int>& time_points,
+    const std::vector<double>& time_points,
     const std::vector<double>& values,
     const std::string& name,
     bool use_semilogy = false,

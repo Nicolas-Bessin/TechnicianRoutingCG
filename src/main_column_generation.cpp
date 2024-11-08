@@ -12,6 +12,7 @@
 #include "repair/repair.h"
 
 #include "algorithms/column_generation.h"
+#include "algorithms/sequential_column_generation.h"
 
 #include "data_analysis/analysis.h"
 #include "data_analysis/export.h"
@@ -26,7 +27,7 @@
 #include <format>
 #include <filesystem>
 
-inline constexpr int TIME_LIMIT = 60;
+inline constexpr int TIME_LIMIT = 300;
 inline constexpr bool VERBOSE = true;
 inline constexpr bool EXPORT_SOLUTION = true;
 
@@ -44,33 +45,12 @@ int main(int argc, char *argv[]){
     // Create the parameters for the column generation algorithm
     ColumnGenerationParameters parameters = ColumnGenerationParameters({
         {"time_limit", TIME_LIMIT},
-        {"reduced_cost_threshold", 1e-6},
         {"verbose", false},
-        {"max_iterations", 1000},
-        {"max_consecutive_non_improvement", 5},
         {"compute_integer_solution", true},
         {"max_resources_dominance", MAX_RESOURCES_DOMINANCE},
-        {"ng", NG_STANDARD},
-        {"dssr", DSSR_STANDARD},
-        {"use_visited", true},
-        {"bidirectional_DP", false},
-        {"pathwyse_time_limit", 0.0},
-        {"switch_to_cyclic_price", true},
-        {"delta ", 50},
-        {"solution_pool_size", 10},
-        {"alpha", 0.5},
-        {"use_stabilisation", false},
-        {"pricing_function", PRICING_PATHWYSE_BASIC},
-        {"pricing_verbose", false}
     });
 
-    std::map<int, string> NG_DSSR_MODES = {
-        {NG_OFF, "off"},
-        {NG_RESTRICTED, "restricted"},
-        {NG_STANDARD, "standard"}
-    };
-
-    const string size = "small";
+    const string size = "large";
 
     int intervention_size = -1;
     int vehicle_size = -1;
@@ -93,7 +73,7 @@ int main(int argc, char *argv[]){
         return 1;
     }
     // Subfolder for the results
-    string subfolder = "bigMcomparisons/";
+    string subfolder = "seqVSBigM/";
     // If the subfolder does not exist, create it
     if (!std::filesystem::exists("../results/plots/" + subfolder)){
         std::filesystem::create_directory("../results/plots/" + subfolder);
@@ -124,64 +104,80 @@ int main(int argc, char *argv[]){
         gcf()->width(2000);
         gcf()->height(800);
 
-        auto ax1 = subplot(1, 2, 0);
-        auto ax2 = subplot(1, 2, 1);
-        std::string ax1_title = "Number of covered interventions value and intermediary integer solutions every 5 iterations";
+        auto ax1 = subplot(1, 1, 0);
+        std::string ax1_title = "Solution cost over time";
         title(ax1, ax1_title);
         xlabel(ax1, "Time (s)");
-        ylabel(ax1, "Number of covered interventions ");
-        string ax2_title = "Solution cost value and intermediary integer solutions every 5 iterations";
-        title(ax2, ax2_title);
-        xlabel(ax2, "Time (s)");
-        ylabel(ax2, "Solution cost");
-
-        // Set the axis size to the maximum time
+        ylabel(ax1, "Solution cost");
         xlim(ax1, {0, TIME_LIMIT * 1.2});
-        xlim(ax2, {0, TIME_LIMIT * 1.2});
         hold(ax1, on);
-        hold(ax2, on);
 
-        for (const auto& current_M : {5.0, 10.0, compute_M_naive(instance), compute_M_perV(instance)}){
-                vector<Route> routes;
-                cout << "-----------------------------------" << endl;
-                cout << "Current parameters : ";
-                cout << " Using big M of " << current_M << " - ";
-                routes = vector<Route>();
-                routes.push_back(EmptyRoute(instance.nodes.size()));
-                cout << "Starting the column generation algorithm" << endl;
-                parameters.max_resources_dominance = instance.capacities_labels.size() + 1;
-                instance.M = current_M;
+        // auto ax2 = subplot(1, 2, 1);
+        // string ax2_title = "Solution cost value and intermediary integer solutions every 5 iterations";
+        // title(ax2, ax2_title);
+        // xlabel(ax2, "Time (s)");
+        // ylabel(ax2, "Solution cost");
+        // xlim(ax2, {0, TIME_LIMIT * 1.2});
+        // hold(ax2, on);
 
-                CGResult result = column_generation(instance, routes, parameters);
+        vector<Route> routes;
+        cout << "-----------------------------------" << endl;
+        cout << " Using big M formulation" << endl;
+        routes = vector<Route>();
+        routes.push_back(EmptyRoute(instance.nodes.size()));
+        parameters.max_resources_dominance = instance.capacities_labels.size() + 1;
 
-                // Plot the objective value over time
-                string plot_name = name + " - M = " + std::to_string(current_M);
-                std::replace(plot_name.begin(), plot_name.end(), '_', ' ');
-                plot_objective_values(ax1, result.time_points, result.covered_interventions, plot_name);
-                plot_objective_values(ax1, result.time_points, result.integer_covered_interventions, plot_name + " - Integer");
-                plot_objective_values(ax2, result.time_points, result.solution_costs, plot_name, false, 10);
-                plot_objective_values(ax2, result.time_points, result.integer_solution_costs, plot_name + " - Integer", false, 10);
-                
-                
+        CGResult result = column_generation(instance, routes, parameters);
 
-                if (EXPORT_SOLUTION){
-                    // Dump the results to a file & append the time to the filename
-                    const auto now = chrono::zoned_time(std::chrono::current_zone(), chrono::system_clock::now());
-                    string date = std::format("{:%Y-%m-%d-%H-%M-%OS}", now);
-                    string output_filename = "../results/" + subfolder + size + "_" + name + "_" + date + ".json";
-                    export_solution(
-                        output_filename, 
-                        instance, 
-                        result,
-                        routes, 
-                        parameters
-                    );
-                }
-            }
+        vector<Route> routes_seq;
+        cout << "-----------------------------------" << endl;
+        cout << "Using sequential column generation" << endl;
+        routes_seq.push_back(EmptyRoute(instance.nodes.size()));
+
+        SequentialCGResult full_result_seq = sequential_column_generation(instance, routes_seq, parameters);
+        CGResult result_seq = full_result_seq.combined_result;
+
+        // Plot the objective value over time
+        string plot_name = "";
+        std::replace(plot_name.begin(), plot_name.end(), '_', ' ');
+        plot_objective_values(ax1, result.time_points, result.solution_costs, plot_name + " - Big M", false, 1);
+        plot_objective_values(ax1, result_seq.time_points, result_seq.solution_costs, plot_name + " - Sequential", false, 1);
+        // Plot a vertical line separating the two phases
+        double min_line = *std::min_element(result_seq.solution_costs.begin(), result_seq.solution_costs.end());
+        double max_line = *std::max_element(result_seq.solution_costs.begin(), result_seq.solution_costs.end());
+        line(ax1, full_result_seq.phase_1_time, min_line, full_result_seq.phase_1_time, max_line)
+            ->line_style(":")
+            .color("red")
+            .line_width(1.5);
+        
+        
+
+        if (EXPORT_SOLUTION){
+            // Dump the results to a file & append the time to the filename
+            const auto now = chrono::zoned_time(std::chrono::current_zone(), chrono::system_clock::now());
+            string date = std::format("{:%Y-%m-%d-%H-%M-%OS}", now);
+            string output_filename_bigM = "../results/" + subfolder + size + "_" + name + "_bigM_" + date + ".json";
+            export_solution(
+                output_filename_bigM, 
+                instance, 
+                result,
+                routes, 
+                parameters
+            );
+            string output_filename_seq = "../results/" + subfolder + size + "_" + name + "_seq_" + date + ".json";
+            export_solution(
+                output_filename_seq, 
+                instance, 
+                result_seq,
+                routes_seq, 
+                parameters
+            );
+
+        }
+        
 
         // Set the legend
-        //legend(ax1);
-        legend(ax2);
+        legend(ax1);
 
         // Save the plot
         string plot_filename = "../results/plots/" + subfolder + size + "_" + name + ".png";

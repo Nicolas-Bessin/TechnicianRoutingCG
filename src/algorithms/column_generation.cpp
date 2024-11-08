@@ -119,7 +119,7 @@ CGResult column_generation(
 
     // Intermediate integer solution tracking
     vector<double> integer_objective_values = {};
-    vector<int> integer_covered_interventions = {};
+    vector<double> integer_covered_interventions = {};
     vector<double> integer_solution_costs = {};
     if (parameters.compute_intermediate_integer_solutions){
         integer_objective_values.push_back(intermediary_integer_solution.objective_value);
